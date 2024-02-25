@@ -2,8 +2,7 @@ import streamlit as st, ast, sqlite3
 import time
 import pymongo
 from pymongo import MongoClient
-from util import logo
-
+import util
 import logging
 
 logging.basicConfig(level=logging.DEBUG, format = "%(asctime)s - %(levelname)s - schema - %(message)s")
@@ -14,7 +13,7 @@ mongo_db = cluster["faq"]
 category = mongo_db["category"]
 qa = mongo_db["qa"]
 
-logo()
+util.logo()
 st.write("### FAQ-Kategorien")
 
 if "submitted" not in st.session_state:
@@ -65,13 +64,6 @@ y = sorted(y, key=lambda x: x['rang'])
 for x in y:
   with st.expander(x["name_de"], expanded = (True if x["name_de"] == st.session_state.expanded else False)):
     with st.form(f'ID-{x["_id"]}'):
-      col1, col2, col3 = st.columns([1,2,1]) 
-      with col1: 
-        st.form_submit_button('down', on_click = move_down, args = (x, ))
-      with col2:
-        st.write("Position in der Liste")
-      with col3:
-        st.form_submit_button('up', on_click = move_up, args = (x, ))
       kurzname=st.text_input('Kurzname', x["kurzname"])
       name_de=st.text_input('Name (de)', x["name_de"])
       name_en=st.text_input('Name (en)', x["name_en"])
@@ -96,6 +88,13 @@ for x in y:
             st.warning("Eintrag wirklich löschen?")
         with col3: 
             st.form_submit_button(label="Nein", on_click = reset_and_confirm, args=("Nicht gelöscht!",))
+      col1, col2, col3 = st.columns([1,2,1]) 
+      with col1: 
+        st.form_submit_button('down', on_click = move_down, args = (x, ))
+      with col2:
+        st.write("Position in der Liste")
+      with col3:
+        st.form_submit_button('up', on_click = move_up, args = (x, ))
 
 if submit:
   st.rerun()

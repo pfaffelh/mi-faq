@@ -16,5 +16,13 @@ logging.info("Connected to MongoDB")
 logging.info("Database contains collections: ")
 logging.info(str(mongo_db.list_collection_names()))
 
+studiengaenge = {"bsc": "BSc Mathematik", 
+                 "2hfb" : "Zwei-Hauptfächer-Bachelor", 
+                 "msc": "MSc Mathematik", 
+                 "mscdata": "MSc Data and Technology", 
+                 "med": "MEd Mathematik", 
+                 "mederw": "MEd Mathematik Erweiterungsfach", 
+                 "meddual": "MEd Mathematik dual"}
+
 logo()
 st.write("### FAQ")

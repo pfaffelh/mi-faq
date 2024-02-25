@@ -33,19 +33,39 @@ categories = [
                 "rang": 50
               }]
 
-myqa = {
+qas = [{
         "category": "abschlussarbeit",
-        "studiengang": ["all"],
-        "q-de": "Wie bekomme ich das Thema für meine Abschlussarbeit?", 
-        "q-en": "How can I get the topic of my final thesis?",
-        "a-de": "Sprechen Sie mit einem Dozenten und lassen sich beraten.",
-        "a-_en": "Meet a teacher and ask for advice.",
+        "studiengang": ["msc"],
+        "q_de": "Wie bekomme ich das Thema für meine Abschlussarbeit?", 
+        "q_en": "How can I get the topic of my final thesis?",
+        "a_de": "Sprechen Sie mit einem Dozenten und lassen sich beraten.",
+        "a_en": "Meet a teacher and ask for advice.",
         "rang": 20
-    }
+        },
+        {
+        "category": "abschlussarbeit",
+        "studiengang": [],
+        "q_de": "Wie laufen Prüfungen ab?", 
+        "q_en": "",
+        "a_de": "Sie müssen Fragen beantworten",
+        "a_en": "",
+        "rang": 10
+        },  
+        {
+        "category": "sonst",
+        "studiengang": ["med", "mederw"],
+        "q_de": "Wer ist das LLPA?", 
+        "q_en": "",
+        "a_de": "Das Landeslehrerprüfungsamt!",
+        "a_en": "",
+        "rang": 30
+        }  ]
+
 category.delete_many({})
 qa.delete_many({})
     
-qa.insert_one(myqa)
+for x in qas:
+    qa.insert_one(x)
 for x in categories:
     category.insert_one(x)
 
