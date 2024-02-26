@@ -3,8 +3,10 @@ import time
 import pymongo
 from pymongo import MongoClient
 from util import logo
-
+from data import studiengaenge
 import logging
+
+st.set_page_config(page_title="QA-Paare", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items=None)
 
 logging.basicConfig(level=logging.DEBUG, format = "%(asctime)s - %(levelname)s - schema - %(message)s")
 
@@ -24,7 +26,7 @@ if "submitted" not in st.session_state:
 if "expanded" not in st.session_state:
    st.session_state.expanded = ""
 if "category" not in st.session_state:
-   st.session_state.category = ""
+   st.session_state.category = None
 
 def reset_and_confirm(text=None):
   st.session_state.submitted = False 
@@ -33,62 +35,72 @@ def reset_and_confirm(text=None):
     st.success(text)
 
 def delete_confirm_one(x):
-  category.delete_one(x)
+  qa.delete_one(x)
   reset_and_confirm()
   st.success("Erfolgreich gelöscht!")
 
 def update_confirm(x, x_updated):
-  category.update_one(x, {"$set": x_updated })
+  qa.update_one(x, {"$set": x_updated })
   reset_and_confirm()
   st.success("Erfolgreich geändert!")
 
 def move_up(x):
-  target = category.find_one({"rang": {"$lt": x["rang"]}}, sort = [("rang",-1)])
+  target = qa.find_one( {"category": st.session_state["category"], "rang": {"$lt": x["rang"]}}, sort = [("rang",-1)])
   if target:
     n= target["rang"]
-    category.update_one(target, {"$set": {"rang": x["rang"]}})    
-    category.update_one(x, {"$set": {"rang": n}})    
+    qa.update_one(target, {"$set": {"rang": x["rang"]}})    
+    qa.update_one(x, {"$set": {"rang": n}})    
 
 def move_down(x):
-  target = category.find_one({"rang": {"$gt": x["rang"]}}, sort = [("rang",+1)])
+  target = qa.find_one({"category": st.session_state["category"], "rang": {"$gt": x["rang"]}}, sort = [("rang",+1)])
   if target:
     n= target["rang"]
-    category.update_one(target, {"$set": {"rang": x["rang"]}})    
-    category.update_one(x, {"$set": {"rang": n}})    
+    qa.update_one(target, {"$set": {"rang": x["rang"]}})    
+    qa.update_one(x, {"$set": {"rang": n}})    
 
-
-cats = category.find()
-cats = sorted(cats, key=lambda x: x['rang']) 
 
 def name_of_kurzname(kurzname):
     x = category.find_one({"kurzname": kurzname})
     return x["name_de"]
 
-cat = st.selectbox(label="Kategorie", options = [x["kurzname"] for x in cats], index = None, format_func = name_of_kurzname, placeholder = "Wähle eine Kategorie", label_visibility = "collapsed")
-st.session_state.category = cat
-y = qa.find({"category": cat})
-y = sorted(y, key=lambda x: x['rang']) 
-studiengaenge = {"bsc": "BSc Mathematik", 
-                 "2hfb" : "Zwei-Hauptfächer-Bachelor", 
-                 "msc": "MSc Mathematik", 
-                 "mscdata": "MSc Data and Technology", 
-                 "med": "MEd Mathematik", 
-                 "mederw": "MEd Mathematik Erweiterungsfach", 
-                 "meddual": "MEd Mathematik dual"}
-
 def studiengang_name_of_kurzname(kurzname):
     studiengaenge[kurzname]
 
+cats = list(category.find(sort=[("rang", pymongo.ASCENDING)]))
+
+cat = st.selectbox(label="Kategorie", options = [x["kurzname"] for x in cats], index = None, format_func = name_of_kurzname, placeholder = "Wähle eine Kategorie", label_visibility = "collapsed")
+st.session_state.category = cat
+
 submit = False
-if cat != "":
+if cat is not None:
+
+    y = list(qa.find({"category": cat}, sort=[("rang", pymongo.ASCENDING)]))
+    try: 
+       rang = sorted([x["rang"] for x in y])[0]-1
+    except:
+       rang = 100
+       
+    if st.button('Neues Paar hinzufügen'):
+        x = qa.insert_one({"category": cat, "q_de": "Neue Frage", "q_en": "", "a_de": "Neue Antwort", "a_en": "", "studiengang": [], "rang": rang})
+        st.session_state.expanded=x.inserted_id
+        st.rerun()
+
     for x in y:
-        with st.expander(x["q_de"], expanded = (True if x["q_de"] == st.session_state.expanded else False)):
+        with st.expander(x["q_de"], expanded = (True if x["_id"] == st.session_state.expanded else False)):
             with st.form(f'ID-{x["_id"]}'):
+                index = [cat["kurzname"] for cat in cats].index(x["category"])
+                cat_loc = st.selectbox(label="Kategorie", options = [z["kurzname"] for z in cats], index = index, format_func = name_of_kurzname, placeholder = "Wähle eine Kategorie", label_visibility = "collapsed")
+                st.write("Studiengänge (alle, falls keiner angegeben ist)")
+                cols = st.columns([1 for n in studiengaenge.keys()]) 
+                cols_dict = dict(zip(studiengaenge.keys(), cols))
+                for key, value in studiengaenge.items():
+                    with cols_dict[key]: 
+                        st.checkbox(key, value = (True if key in x["studiengang"] else False), key=f'ID-{x["_id"]}{key}')
                 q_de = st.text_input('Frage (de)', x["q_de"])
                 q_en = st.text_input('Frage (en)', x["q_en"])
                 a_de = st.text_area('Antwort (de)', x["a_de"])
                 a_en = st.text_area('Antwort (en)', x["a_en"])
-                x_updated = {"q_de": q_de, "q_en": q_en, "a_de": a_de, "a_en": a_en}
+                x_updated = {"category": cat_loc, "q_de": q_de, "q_en": q_en, "a_de": a_de, "a_en": a_en, "studiengang": [key for key in studiengaenge if st.session_state[f'ID-{x["_id"]}{key}'] == True] }
                 col1, col2, col3 = st.columns([1,2,1]) 
                 with col1: 
                     submit = st.form_submit_button('Speichern')
@@ -100,35 +112,24 @@ if cat != "":
                     deleted = st.form_submit_button("Löschen")
                     if deleted:
                         st.session_state.submitted = True
-                        st.session_state.expanded = x["name_de"]
-                    if st.session_state.submitted:
-                        col1, col2, col3 = st.columns([1,2,1]) 
-                        with col1: 
-                            st.form_submit_button(label = "Ja", on_click = delete_confirm_one, args = (x,))        
-                        with col2: 
-                            st.warning("Eintrag wirklich löschen?")
-                        with col3: 
-                            st.form_submit_button(label="Nein", on_click = reset_and_confirm, args=("Nicht gelöscht!",))
-
-                st.write("Studiengänge (alle, falls keiner angegeben ist)")
-                st.write(x["studiengang"])
-                for stud in x["studiengang"]:
-                    st.write(stud)
-                    col1, col2 = st.columns([3,1]) 
-                    with col1:
-                        st.write(studiengaenge[stud])
+                        st.session_state.expanded = x["_id"]
+                if st.session_state.submitted:
+                    col1, col2, col3 = st.columns([1,2,1]) 
+                    with col1: 
+                        st.form_submit_button(label = "Ja", on_click = delete_confirm_one, args = (x,))        
                     with col2: 
-                        st.form_submit_button("🗑️")
-                    studiengaenge_loc = [z for z in studiengaenge.keys() if z not in x["studiengang"]]
-                    studiengaenge_plus = st.selectbox(label="Studiengang hinzufügen", options = studiengaenge_loc, index = None, format_func = studiengang_name_of_kurzname, placeholder = "Studiengang hinzufügen", label_visibility = "collapsed")
+                        st.warning("Eintrag wirklich löschen?")
+                    with col3: 
+                        st.form_submit_button(label="Nein", on_click = reset_and_confirm, args=("Nicht gelöscht!",))
+
 
                 col1, col2, col3 = st.columns([1,2,1]) 
                 with col1: 
-                    st.form_submit_button('down', on_click = move_down, args = (x, ))
+                    st.form_submit_button('↓', on_click = move_down, args = (x, ))
                 with col2:
                     st.write("Position in der Liste")
                 with col3:
-                    st.form_submit_button('up', on_click = move_up, args = (x, ))
+                    st.form_submit_button('↑', on_click = move_up, args = (x, ))
 
 if submit:
   st.rerun()

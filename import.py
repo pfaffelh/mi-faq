@@ -10,27 +10,38 @@ categories = [
               { "kurzname": "allgemein", 
                 "name_de": "Allgemeines",
                 "name_en": "General",
+                "kommentar": "",
                 "rang": 10
               },
               {  "kurzname": "verwendung", 
                 "name_de": "Belegung und Verwendung von Veranstaltungen",
                 "name_en": "Booking and utilisation of classes",
+                "kommentar": "",
                 "rang": 20
               },
               {  "kurzname": "pruefung", 
                 "name_de": "Prüfungen und deren Anmeldung",
                 "name_en": "Exams and their registration",
+                "kommentar": "",
                 "rang": 30
               },
               {  "kurzname": "abschlussarbeit", 
                 "name_de": "Abschlussarbeiten",
                 "name_en": "Final Thesis",
+                "kommentar": "",
                 "rang": 40
               },
               {  "kurzname": "sonst", 
                 "name_de": "Sonstiges",
                 "name_en": "Other",
+                "kommentar": "",
                 "rang": 50
+              },
+              {  "kurzname": "unsichtbar", 
+                "name_de": "Unsichtbar",
+                "name_en": "Invisible",
+                "kommentar": "Diese Kategorie erscheint nicht auf der Homepage.",
+                "rang": 60
               }]
 
 qas = [{
