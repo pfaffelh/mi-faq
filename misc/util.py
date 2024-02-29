@@ -1,4 +1,5 @@
 from streamlit_extras.app_logo import add_logo
 
 def logo():
-    add_logo("ufr.png", height=600)
+    add_logo("misc/ufr.png", height=600)
+

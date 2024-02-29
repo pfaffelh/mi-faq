@@ -51,7 +51,8 @@ qas = [{
         "q_en": "How can I get the topic of my final thesis?",
         "a_de": "Sprechen Sie mit einem Dozenten und lassen sich beraten.",
         "a_en": "Meet a teacher and ask for advice.",
-        "rang": 20
+        "rang": 20,
+        "kommentar": ""
         },
         {
         "category": "abschlussarbeit",
@@ -60,7 +61,8 @@ qas = [{
         "q_en": "",
         "a_de": "Sie müssen Fragen beantworten",
         "a_en": "",
-        "rang": 10
+        "rang": 10,
+        "kommentar": ""
         },  
         {
         "category": "sonst",
@@ -69,7 +71,8 @@ qas = [{
         "q_en": "",
         "a_de": "Das Landeslehrerprüfungsamt!",
         "a_en": "",
-        "rang": 30
+        "rang": 30,
+        "kommentar": ""
         }  ]
 
 category.delete_many({})

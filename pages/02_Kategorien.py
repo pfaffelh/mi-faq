@@ -1,28 +1,34 @@
-import streamlit as st, ast, sqlite3
+import streamlit as st
 import time
 import pymongo
-from pymongo import MongoClient
-import util
+import misc.util as util
 import logging
 
-st.set_page_config(page_title="QA-Paare", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items=None)
 
 logging.basicConfig(level=logging.DEBUG, format = "%(asctime)s - %(levelname)s - schema - %(message)s")
 
-# This is the mongodb
-cluster = MongoClient("mongodb://127.0.0.1:27017")
+# Verbindung zur MongoDB
+cluster = pymongo.MongoClient("mongodb://127.0.0.1:27017")
 mongo_db = cluster["faq"]
 category = mongo_db["category"]
 qa = mongo_db["qa"]
 
+# Seiten-Layout
+st.set_page_config(page_title="QA-Paare", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items=None)
 util.logo()
+
+# Ab hier wird die Webseite erzeugt
+
 st.write("### FAQ-Kategorien")
 
+# submitted wird benötigt, um nachzufragen ob etwas wirklich gelöscht werden soll
 if "submitted" not in st.session_state:
    st.session_state.submitted = False
+# expanded zeigt an, welches Element ausgeklappt sein soll
 if "expanded" not in st.session_state:
    st.session_state.expanded = ""
 
+# Alles auf Anfang
 def reset_and_confirm(text=None):
   st.session_state.submitted = False 
   st.session_state.expanded = ""
@@ -39,6 +45,7 @@ def update_confirm(x, x_updated):
   reset_and_confirm()
   st.success("Erfolgreich geändert!")
 
+# Ändert die Reihenfolge der Darstellung
 def move_up(x):
   target = category.find_one({"rang": {"$lt": x["rang"]}}, sort = [("rang",pymongo.DESCENDING)])
   if target:

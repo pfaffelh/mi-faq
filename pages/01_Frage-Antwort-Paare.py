@@ -2,29 +2,33 @@ import streamlit as st, ast, sqlite3
 import time
 import pymongo
 from pymongo import MongoClient
-from util import logo
-from data import studiengaenge
+from misc.util import logo
+from misc.data import studiengaenge
 import logging
-
-st.set_page_config(page_title="QA-Paare", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items=None)
 
 logging.basicConfig(level=logging.DEBUG, format = "%(asctime)s - %(levelname)s - schema - %(message)s")
 
-# This is the mongodb
+# Verbindung zur MongoDB
 cluster = MongoClient("mongodb://127.0.0.1:27017")
 mongo_db = cluster["faq"]
 category = mongo_db["category"]
 qa = mongo_db["qa"]
 
+# Seiten-Layout
+st.set_page_config(page_title="QA-Paare", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items=None)
 st.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"/>', unsafe_allow_html=True)
-
 logo()
+
+# Ab hier wird die Webseite erzeugt
 st.write("### Frage-Antwort-Paare für das FAQ")
 
+# submitted wird benötigt, um nachzufragen ob etwas wirklich gelöscht werden soll
 if "submitted" not in st.session_state:
    st.session_state.submitted = False
+# expanded zeigt an, welches Element ausgeklappt sein soll
 if "expanded" not in st.session_state:
    st.session_state.expanded = ""
+# category gibt an, welche category angezeigt wird
 if "category" not in st.session_state:
    st.session_state.category = None
 
