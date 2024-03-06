@@ -53,5 +53,5 @@ def authenticate(username, password):
         return False
 
 def can_edit(username):
-    user = user.find_one( {"rz": username} )
-    return (True if "faq" in user["groups"] else False)
+    u = user.find_one({"rz": username})
+    return (True if "faq" in list(u["groups"]) else False)
