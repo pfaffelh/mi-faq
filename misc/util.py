@@ -44,7 +44,6 @@ def authenticate(username, password):
     try:
         l = ldap.initialize(server)
         l.protocol_version = ldap.VERSION3
-        
         l.simple_bind_s(user_dn, password)
         return True
     except ldap.INVALID_CREDENTIALS:
@@ -52,3 +51,7 @@ def authenticate(username, password):
     except ldap.LDAPError as error:
         print("Error:", error)
         return False
+
+def can_edit(username):
+    user = user.find_one( {"rz": username} )
+    return (True if "faq" in user["groups"] else False)

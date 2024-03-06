@@ -22,10 +22,13 @@ logging.basicConfig(level=logging.INFO, format = "%(asctime)s - %(levelname)s - 
 # QA-Paar ist ein Frage-Antwort-Paar aus dem FAQ.
 # category enthält alle Kategorien von QA-Paaren. "invisible" muss es geben!
 # qa enthält alle Frage-Antwort-Paare.
+# user ist aus dem Cluster users und wird nur bei der Authentifizierung benötigt
 cluster = pymongo.MongoClient("mongodb://127.0.0.1:27017")
 mongo_db = cluster["faq"]
+mongo_db_users = cluster["users"]
 category = mongo_db["category"]
 qa = mongo_db["qa"]
+user = mongo_db_users["user"]
 
 logging.info("Connected to MongoDB")
 logging.info("Database contains collections: ")

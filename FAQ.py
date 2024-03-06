@@ -53,7 +53,8 @@ else:
         password = st.text_input("Passwort", type="password")
         submit = st.form_submit_button("Login")
         st.session_state.user = kennung
-    if submit and authenticate(kennung, password):
+        
+    if submit and authenticate(kennung, password) and can_edit(kennung):
         # If the form is submitted and the email and password are correct,
         # clear the form/container and display a success message
         placeholder.empty()
