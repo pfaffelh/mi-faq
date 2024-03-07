@@ -48,13 +48,13 @@ if st.session_state.logged_in:
 else:
     placeholder = st.empty()
     with placeholder.form("login"):
-        st.markdown("#### Benutzerkennung")
+        st.markdown("#### Login")
         kennung = st.text_input("Benutzerkennung")
         password = st.text_input("Passwort", type="password")
-        submit = st.form_submit_button("Login")
+        submit = st.form_submit_button("Anmelden")
         st.session_state.user = kennung
         
-    if submit and authenticate(kennung, password) and can_edit(st.session_state.user):
+    if submit and can_edit(st.session_state.user) and authenticate(kennung, password): 
         # If the form is submitted and the email and password are correct,
         # clear the form/container and display a success message
         placeholder.empty()

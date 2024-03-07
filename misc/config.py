@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO, format = "%(asctime)s - %(levelname)s - 
 # user ist aus dem Cluster users und wird nur bei der Authentifizierung benötigt
 cluster = pymongo.MongoClient("mongodb://127.0.0.1:27017")
 mongo_db = cluster["faq"]
-mongo_db_users = cluster["users"]
+mongo_db_users = cluster["user"]
 category = mongo_db["category"]
 qa = mongo_db["qa"]
 user = mongo_db_users["user"]
