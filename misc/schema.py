@@ -32,7 +32,7 @@ category_validator = {
             },
             "kommentar": {
                 "bsonType": "string",
-                "description": "Ein Kommentar (erscheint nicht auf der Homepage)"
+                "description": "Kommentar zur Kategorie"
             },
             "rang": {
                 "bsonType": "int",
@@ -65,13 +65,13 @@ qa_validator = {
                 "bsonType": "string",
                 "description": "Die Antwort (als markdown, in deutsch) -- required"
             },
-            "a-_en": {
+            "a_en": {
                 "bsonType": "string",
                 "description": "Die Antwort (als markdown, in englisch)"
             },
             "kommentar": {
                 "bsonType": "string",
-                "description": "Ein Kommentar (erscheint nicht auf der Homepage)"
+                "description": "Ein Kommentar für das qa-Paar."
             },
             "rang": {
                 "bsonType": "int",
