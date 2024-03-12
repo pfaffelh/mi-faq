@@ -52,24 +52,22 @@ if st.session_state.logged_in:
 else:
     placeholder = st.empty()
     with placeholder.form("login"):
-        st.markdown("#### Login")
+        st.markdown("#### Benutzerkennung")
         kennung = st.text_input("Benutzerkennung")
         password = st.text_input("Passwort", type="password")
-        submit = st.form_submit_button("Anmelden")
-        
-    if submit:
+        submit = st.form_submit_button("Login")
         st.session_state.user = kennung
-        if True: #can_edit(st.session_state.user) and authenticate2(kennung, password): 
-            # If the form is submitted and the email and password are correct,
-            # clear the form/container and display a success message
-            placeholder.empty()
-            login()
-            st.rerun()
-        else:
-            st.error("Login fehlgeschlagen.")
-            time.sleep(1)
-            logger.error(f"Login für User {st.session_state.user} ist fehlgeschlagen.")
-            st.rerun()
+        
+    if submit and authenticate2(kennung, password) and can_edit(st.session_state.user):
+        # If the form is submitted and the email and password are correct,
+        # clear the form/container and display a success message
+        placeholder.empty()
+        st.session_state.logged_in = True
+        st.success("Login successful")
+        st.rerun()
+    elif submit:
+        st.error("Login failed")
+        st.rerun()
     else:
         pass
 

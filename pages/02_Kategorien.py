@@ -16,13 +16,6 @@ if st.session_state.logged_in:
 
   st.header("FAQ-Kategorien")
 
-  # submitted wird benötigt, um nachzufragen ob etwas wirklich gelöscht werden soll
-  if "submitted" not in st.session_state:
-    st.session_state.submitted = False
-  # expanded zeigt an, welches Element ausgeklappt sein soll
-  if "expanded" not in st.session_state:
-    st.session_state.expanded = ""
-
   # Alles auf Anfang
   def reset_and_confirm(text=None):
     st.session_state.submitted = False 
@@ -45,7 +38,6 @@ if st.session_state.logged_in:
     logger.info(f"User {st.session_state.user}  hat Kategorie {x['name_de']} geändert.")
     reset_and_confirm()
     st.success("Erfolgreich geändert!")
-#    st.rerun()
 
   # Ändert die Reihenfolge der Darstellung
   def move_up(x):
@@ -67,6 +59,7 @@ if st.session_state.logged_in:
     rang = (sorted(z, key=lambda x: x['rang'])[0])["rang"]-1
     x = category.insert_one({"kurzname": "neu", "name_de": "Neue Kategorie", "name_en": "", "kommentar": "", "rang": rang})
     st.session_state.expanded=x.inserted_id
+    logger.info(f"User {st.session_state.user} hat eine neue Kategorie angelegt.")
     st.rerun()
 
   y = list(category.find(sort=[("rang", pymongo.ASCENDING)]))
@@ -85,6 +78,7 @@ if st.session_state.logged_in:
                   with col1: 
                       submit = st.form_submit_button('Speichern', type="primary")
                   if submit:
+                      st.session_state.expanded = x["_id"]
                       update_confirm(x, x_updated)
                       time.sleep(2)
                       st.rerun()      
@@ -96,7 +90,6 @@ if st.session_state.logged_in:
                   if deleted:
                       st.session_state.submitted = True
                       st.session_state.expanded = x["_id"]
-                      # st.rerun()
                   if st.session_state.submitted and st.session_state.expanded == x["_id"]:
                       with col1: 
                           st.form_submit_button(label = "Ja", type="primary", on_click = delete_confirm_one, args = (x,))        

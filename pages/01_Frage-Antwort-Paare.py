@@ -52,7 +52,7 @@ def name_of_kurzname(kurzname):
 # Ab hier wird die Webseite erzeugt
 if st.session_state.logged_in:
     st.header("Frage-Antwort-Paare für das FAQ")
- 
+
     cats = list(category.find(sort=[("rang", pymongo.ASCENDING)]))
 
     cat = st.selectbox(label="Kategorie", options = [x["kurzname"] for x in cats], index = None, format_func = name_of_kurzname, placeholder = "Wähle eine Kategorie", label_visibility = "collapsed")
@@ -95,6 +95,7 @@ if st.session_state.logged_in:
                         with col1: 
                             submit = st.form_submit_button('Speichern', type="primary", args = (x, x_updated,))
                         if submit:
+                            st.session_state.expanded = x["_id"]
                             update_confirm(x, x_updated, )
                             time.sleep(2)
                             st.rerun()      

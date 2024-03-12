@@ -2,7 +2,7 @@ import streamlit as st
 from misc.config import *
 import ldap
 from streamlit_extras.app_logo import add_logo
-
+import pymongo
 
 # Initialize logging
 import logging
@@ -92,7 +92,8 @@ def authenticate(username, password):
 
 def can_edit(username):
     u = user.find_one({"rz": username})
-    return (True if "faq" in u["groups"] else False)
+    faq_id = group.find_one({"name": "faq"})["_id"]
+    return (True if faq_id in u["groups"] else False)
 
 # Das ist die mongodb; 
 # QA-Paar ist ein Frage-Antwort-Paar aus dem FAQ.
@@ -106,6 +107,7 @@ try:
     category = mongo_db["category"]
     qa = mongo_db["qa"]
     user = mongo_db_users["user"]
+    group = mongo_db_users["group"]
     logger.debug("Connected to MongoDB")
     logger.debug("Database contains collections: ")
     logger.debug(str(mongo_db.list_collection_names()))
