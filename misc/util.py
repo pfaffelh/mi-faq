@@ -1,7 +1,6 @@
 import streamlit as st
 from misc.config import *
 import ldap
-
 from streamlit_extras.app_logo import add_logo
 
 def logo():
@@ -9,10 +8,13 @@ def logo():
 
 def logout():
     st.session_state.logged_in = False
+    logging.info(f"User {st.session_state.user} hat sich ausgeloggt.")
 
+# Sprache zwischen Deutsch und Englisch hin- und herwechseln
 def change_lang():
     st.session_state.lang = ("de" if st.session_state.lang == "en" else "en")
 
+# Wechseln zwischen Aus- und Einklappen aller Fragen
 def change_expand_all():
     st.session_state.expand_all = (False if st.session_state.expand_all == True else True)
 
@@ -37,7 +39,20 @@ def setup_session_state():
         st.session_state.user = ""
     if "logged_in" not in st.session_state:
         st.session_state.logged_in = False
+    # Element to update
+    if "update" not in st.session_state:
+        st.session_state.update = False
+    if "new" not in st.session_state:
+        st.session_state.new = False
+    # Element to delete
+    if "delete" not in st.session_state:
+        st.session_state.delete = False
 
+# Diese Funktion löschen, wenn die Verbindung sicher ist.
+def authenticate2(username, password):
+    return True if password == "0761" else False
+
+# Die Authentifizierung gegen den Uni-LDAP-Server
 def authenticate(username, password):
     ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
     user_dn = "uid={},{}".format(username, base_dn)
@@ -54,5 +69,4 @@ def authenticate(username, password):
 
 def can_edit(username):
     u = user.find_one({"rz": username})
-    print("User is ", username)
     return (True if "faq" in u["groups"] else False)
