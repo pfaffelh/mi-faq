@@ -24,6 +24,9 @@ Files in `pages`:
 * `02_Kategorien.py`: Erzeugt die Seite, die die Kategorien definiert, und auf der man diese löschen und updaten kann.
 * `01_Frage-Antwort-Paare.py`: Erzeugt die Seite, die die QA-Paare definiert, und auf der man diese löschen und updaten kann.
 
+Logging:
+Ereigniss wie login, update, delete, werden mitgeloggt. Die Log-Datei ist in _config.py_ festgelegt.
+
 ### Kommentare zur Funktionalität
 * Ein Login ist momentan möglich, wenn 1) die Benutzerkennung (rz-Kennung) richtig eingegeben wird (diese wird gegen den LDAP-Server der Uni authentifiziert) und 2) der User (d.h. die rz-Kennung) in der Datenbank (user) in der Kategorie "faq" ist.
 * Die Daten dieses FAQs werden verwendet, um auf xxx ein FAQ zu erzeugen.
@@ -31,5 +34,5 @@ Files in `pages`:
 * Die Kategorie _unsichtbar_ gibt es immer, sie lässt sich nicht löschen. Der Grund ist, dass beim Löschen einer Kategorie die übrigen qa-Paare immer hierhin verschoben werden. 
 
 TODO:
-* Einklappen funktioniert manchmal nicht, wenn gespeichert wird
+* Sichern der Datenbank!
 * 
