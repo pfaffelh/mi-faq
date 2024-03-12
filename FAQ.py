@@ -63,14 +63,12 @@ else:
             # If the form is submitted and the email and password are correct,
             # clear the form/container and display a success message
             placeholder.empty()
-            st.session_state.logged_in = True
-            st.success("Login erfolgreich.")
-            logging.info(f"User {st.session_state.user} hat sich eingeloggt.")
+            login()
             st.rerun()
         else:
             st.error("Login fehlgeschlagen.")
             time.sleep(1)
-            logging.error(f"Login für User {st.session_state.user} ist fehlgeschlagen.")
+            logger.error(f"Login für User {st.session_state.user} ist fehlgeschlagen.")
             st.rerun()
     else:
         pass

@@ -3,12 +3,35 @@ from misc.config import *
 import ldap
 from streamlit_extras.app_logo import add_logo
 
+
+# Initialize logging
+import logging
+from misc.config import log_file
+
+@st.cache_resource
+def configure_logging(file_path, level=logging.INFO):
+    logger = logging.getLogger()
+    logger.setLevel(level)
+    file_handler = logging.FileHandler(file_path)
+    file_handler.setLevel(level)
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - MI-FAQ - %(message)s")
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    return logger
+
+logger = configure_logging(log_file)
+
 def logo():
     add_logo("misc/ufr.png", height=600)
 
+def login():
+    st.session_state.logged_in = True
+    st.success("Login erfolgreich.")
+    logger.info(f"User {st.session_state.user} hat sich eingeloggt.")
+
 def logout():
     st.session_state.logged_in = False
-    logging.info(f"User {st.session_state.user} hat sich ausgeloggt.")
+    logger.info(f"User {st.session_state.user} hat sich ausgeloggt.")
 
 # Sprache zwischen Deutsch und Englisch hin- und herwechseln
 def change_lang():
@@ -64,9 +87,29 @@ def authenticate(username, password):
     except ldap.INVALID_CREDENTIALS:
         return False
     except ldap.LDAPError as error:
-        print("Error:", error)
+        logger.warning(f"LDAP-Error: {error}")
         return False
 
 def can_edit(username):
     u = user.find_one({"rz": username})
     return (True if "faq" in u["groups"] else False)
+
+# Das ist die mongodb; 
+# QA-Paar ist ein Frage-Antwort-Paar aus dem FAQ.
+# category enthält alle Kategorien von QA-Paaren. "invisible" muss es geben!
+# qa enthält alle Frage-Antwort-Paare.
+# user ist aus dem Cluster users und wird nur bei der Authentifizierung benötigt
+try:
+    cluster = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+    mongo_db = cluster["faq"]
+    mongo_db_users = cluster["user"]
+    category = mongo_db["category"]
+    qa = mongo_db["qa"]
+    user = mongo_db_users["user"]
+    logger.debug("Connected to MongoDB")
+    logger.debug("Database contains collections: ")
+    logger.debug(str(mongo_db.list_collection_names()))
+except: 
+    logger.error("Verbindung zur Datenbank nicht möglich!")
+    st.write("**Verbindung zur Datenbank nicht möglich!**  \nKontaktieren Sie den Administrator.")
+
