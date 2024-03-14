@@ -101,7 +101,7 @@ def can_edit(username):
 # qa enthält alle Frage-Antwort-Paare.
 # user ist aus dem Cluster users und wird nur bei der Authentifizierung benötigt
 try:
-    cluster = pymongo.MongoClient("mongodb://127.0.0.1:27017")
+    cluster = pymongo.MongoClient(mongo_location)
     mongo_db = cluster["faq"]
     mongo_db_users = cluster["user"]
     category = mongo_db["category"]

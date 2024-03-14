@@ -52,7 +52,7 @@ if st.session_state.logged_in:
 else:
     placeholder = st.empty()
     with placeholder.form("login"):
-        st.markdown("#### Benutzerkennung")
+        st.markdown("#### Login")
         kennung = st.text_input("Benutzerkennung")
         password = st.text_input("Passwort", type="password")
         submit = st.form_submit_button("Login")
