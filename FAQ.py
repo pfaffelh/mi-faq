@@ -13,6 +13,9 @@ setup_session_state()
 # Anzeige des UFR-Logos
 logo()
 
+### While testing only
+st.session_state.logged_in = True
+###
 
 # Ab hier wird die Seite angezeigt
 st.header("FAQ")
