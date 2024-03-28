@@ -24,7 +24,7 @@ if st.session_state.logged_in:
     # Set first to 'lines'
     st.write(["Hier sind Schritt-für-Schritt Anleitungen für das Bearbeiten des FAQs zu finden.",
               "Here you find step-for-step instruction to work on the FAQ"][lang])
-    st.divider()
+
     col1, col2 = st.columns([1,1]) 
     # Der Sprach-Umschalter
     with col1:
@@ -32,8 +32,8 @@ if st.session_state.logged_in:
     # Der Ausklapp-Umschalter
     with col2:
         st.button("Alles einklappen" if st.session_state.expand_all == True else "Alles ausklappen", on_click = change_expand_all)
-    st. divider()
-    
+    st.divider()
+
     # Show each chapter // Import it from misc/docu.py
     for chapter in docu_list:
         with st.expander(f"###### {chapter['name'][lang]}", expanded = st.session_state.expand_all):

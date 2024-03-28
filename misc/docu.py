@@ -20,7 +20,7 @@ docu_list = [{
     Only members of the group 'TODO' are able to log in sucessfully.
     '''
   ]},
-  
+
   {
     "name": ["Frage-Antwort-Paar hinzufügen", "Add question-answer pair"],
     "content": [
@@ -54,7 +54,7 @@ docu_list = [{
     '''
   ]},
   {
-    "name": ["Frage-Antwort-Paar löschen", "Delete question-answer pair"],
+    "name": ["Frage-Antwort-Paar löschen", "Remove question-answer pair"],
     "content": [
     '''
     1) In der Leiste links den Reiter **"Frage-Antwort-Paare"** auswählen.  
@@ -74,6 +74,58 @@ docu_list = [{
     1) In der Leiste links den Reiter **"Frage-Antwort-Paare"** auswählen.  
     2) Im Drop-Down-Menü die Kategorie auswählen deren Fragen umsortiert werden sollen.  
     3) Mit den Pfeilen rechts die Fragen sukzessive nach oben und unten verschieben.
+    ''',
+    '''
+    TODO
+    '''
+  ]},
+
+  {
+    "name": ["Kategorie hinzufügen", "Add category"],
+    "content": [
+    '''
+    1) In der Leiste links den Reiter **"Kategorien"** auswählen.   
+    2) **"Neue Kategorie hinzufügen"** drücken.  
+    3) Kurzname, deutschen und englischen Name der Kategorie angeben.  
+    *Der Kurzname muss eindeutig sein - Keine andere Kategorie darf den gleichen Kurznamen haben.*
+    4) **"Speichern"** drücken.
+    ''',
+    '''
+    TODO
+    '''
+  ]},
+  {
+    "name": ["Kategorie bearbeiten", "Edit category"],
+    "content": [
+    '''
+    1) In der Leiste links den Reiter **"Kategorien"** auswählen.   
+    2) Gewünschte Kategorie auswählen und aufklappen.  
+    3) Bearbeiten.  
+    4) **"Speichern"** drücken.
+    ''',
+    '''
+    TODO
+    '''
+  ]},
+  {
+    "name": ["Kategorie löschen", "Remove category"],
+    "content": [
+    '''
+    1) In der Leiste links den Reiter **"Kategorien"** auswählen.   
+    2) Gewünschte Kategorie auswählen und aufklappen.  
+    3) **"Löschen"** drücken.  
+    4) Bestätigen.
+    ''',
+    '''
+    TODO
+    '''
+  ]},
+  {
+    "name": ["Reihenfolge der Kategorien anpassen", "Reorder categories"],
+    "content": [
+    '''
+    1) In der Leiste links den Reiter **"Kategorien"** auswählen.    
+    2) Mit den Pfeilen rechts die Fragen sukzessive nach oben und unten verschieben.
     ''',
     '''
     TODO
