@@ -114,7 +114,8 @@ docu_list = [{
     1) In der Leiste links den Reiter **"Kategorien"** auswählen.   
     2) Gewünschte Kategorie auswählen und aufklappen.  
     3) **"Löschen"** drücken.  
-    4) Bestätigen.
+    4) Bestätigen.  
+    *Hinweis: Frage-Antwort-Paare, die dieser Kategorie zugeordnet sind, werden nicht gelöscht sondern in die Kategorie "Unsichtbar" verschoben.*
     ''',
     '''
     TODO
