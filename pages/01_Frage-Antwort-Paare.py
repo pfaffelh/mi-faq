@@ -61,7 +61,11 @@ if st.session_state.logged_in:
 
     submit = False
     if cat is not None:
-        y = list(qa.find({"category": cat}, sort=[("rang", pymongo.ASCENDING)]))
+        if st.session_state.saved_image is not None:
+            y = st.session_state.saved_image[0]
+        else:
+            y = list(qa.find({"category": cat}, sort=[("rang", pymongo.ASCENDING)]))
+        
         try: 
             rang = sorted([x["rang"] for x in y])[0]-1
         except:
@@ -95,24 +99,28 @@ if st.session_state.logged_in:
                         col1, col2, col3 = st.columns([1,7,1]) 
                         with col1: 
                             submit = st.form_submit_button('Speichern', type="primary", args = (x, x_updated,))
-                        if submit:
-                            if x_updated["a_de"] == "42":
-                                x_updated["a_de"] = "The answer to everything"  # TODO: Delete                          
+                        if submit:                         
                             st.session_state.expanded = x["_id"]
-                            update_confirm(x, x_updated, )
-                            time.sleep(2)
+                            if st.session_state.saved_image is not None:
+                                update_confirm(st.session_state.saved_image[1], x_updated, )
+                                time.sleep(2)
+                                st.session_state.saved_image = None
+                            else:
+                                update_confirm(x, x_updated, )
+                                time.sleep(2)
                             st.rerun()      
                         with col2:
                             translate = st.form_submit_button("Übersetzen")
                         if translate:
+                            x_old = x.copy()  # Save actual x to be able to update this one afterwards.
                             if x_updated["q_en"] == "":
                                 x_updated["q_en"] = ts.translate_text(q_de, translator="google", from_language="de", to_language="en")
-                                #x["q_en"] = x_updated["q_en"]
+                                x["q_en"] = x_updated["q_en"]
                             if x_updated["a_en"] == "":
                                 x_updated["a_en"] = ts.translate_text(a_de, translator="google", from_language="de", to_language="en")
-                                #x["a_en"] = x_updated["a_en"]
+                                x["a_en"] = x_updated["a_en"]
                             st.session_state.expanded = x["_id"]
-                            update_confirm(x, x_updated, )
+                            st.session_state.saved_image = (y, x_old)
                             time.sleep(2)
                             st.rerun()
                         with col3: 
