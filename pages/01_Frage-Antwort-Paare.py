@@ -1,4 +1,5 @@
 import streamlit as st
+import translators as ts
 from streamlit_extras.switch_page_button import switch_page 
 import pymongo
 import time
@@ -95,10 +96,25 @@ if st.session_state.logged_in:
                         with col1: 
                             submit = st.form_submit_button('Speichern', type="primary", args = (x, x_updated,))
                         if submit:
+                            if x_updated["a_de"] == "42":
+                                x_updated["a_de"] = "The answer to everything"  # TODO: Delete                          
                             st.session_state.expanded = x["_id"]
                             update_confirm(x, x_updated, )
                             time.sleep(2)
                             st.rerun()      
+                        with col2:
+                            translate = st.form_submit_button("Übersetzen")
+                        if translate:
+                            if x_updated["q_en"] == "":
+                                x_updated["q_en"] = ts.translate_text(q_de, translator="google", from_language="de", to_language="en")
+                                #x["q_en"] = x_updated["q_en"]
+                            if x_updated["a_en"] == "":
+                                x_updated["a_en"] = ts.translate_text(a_de, translator="google", from_language="de", to_language="en")
+                                #x["a_en"] = x_updated["a_en"]
+                            st.session_state.expanded = x["_id"]
+                            update_confirm(x, x_updated, )
+                            time.sleep(2)
+                            st.rerun()
                         with col3: 
                             deleted = st.form_submit_button("Löschen")
                         if deleted:
