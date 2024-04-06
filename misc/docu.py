@@ -27,11 +27,13 @@ docu_list = [{
     '''
     1) In der Leiste links den Reiter **"Frage-Antwort-Paare"** auswählen.  
     2) Im Drop-Down-Menü die Kategorie auswählen zu der die Frage zugeordnet werden soll.  
-        *Falls eine neue Kategorie angelegt werden soll, muss diese erst hinzugefügt werden. Siehe Kapitel "TODO".*  
+        *Falls eine neue Kategorie angelegt werden soll, muss diese erst hinzugefügt werden. Siehe Kapitel "Kategorie hinzufügen".*  
     3) **"Neues Paar hinzufügen"** drücken.  
     4) Auswählen, für welche Studiengänge die Frage relevant ist.  
         *Falls sie für alle Studiengänge relevant ist, können entweder alle oder alternativ kein Kästen markiert werden.*  
-    5) Frage und Antwort jeweils auf Deutsch und Englisch eintragen.  
+    5) Frage und Antwort eintragen.  
+        ***Hinweis:** Um eine automatische Übersetzung anzufordern, kann man die entsprechenden Felder leer lassen und "Übersetzen" klicken.
+        Kurz darauf wird ein Übersetzungsvorschlag in den Feldern angezeigt, welcher noch nachbearbeitet werden kann.*  
     6) **"Speichern"** drücken.  
     7) Überprüfen, ob das Frage-Antwort-Paar nun wie gewünscht auftaucht.
     ''',
@@ -87,7 +89,7 @@ docu_list = [{
     1) In der Leiste links den Reiter **"Kategorien"** auswählen.   
     2) **"Neue Kategorie hinzufügen"** drücken.  
     3) Kurzname, deutschen und englischen Name der Kategorie angeben.  
-    *Der Kurzname muss eindeutig sein - Keine andere Kategorie darf den gleichen Kurznamen haben.*
+        *Der Kurzname muss eindeutig sein - Keine andere Kategorie darf den gleichen Kurznamen haben.*
     4) **"Speichern"** drücken.
     ''',
     '''
@@ -115,7 +117,7 @@ docu_list = [{
     2) Gewünschte Kategorie auswählen und aufklappen.  
     3) **"Löschen"** drücken.  
     4) Bestätigen.  
-    *Hinweis: Frage-Antwort-Paare, die dieser Kategorie zugeordnet sind, werden nicht gelöscht sondern in die Kategorie "Unsichtbar" verschoben.*
+        *Hinweis: Frage-Antwort-Paare, die dieser Kategorie zugeordnet sind, werden nicht gelöscht sondern in die Kategorie "Unsichtbar" verschoben.*
     ''',
     '''
     TODO
