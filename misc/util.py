@@ -75,8 +75,8 @@ def setup_session_state():
         st.session_state.saved_image = None
 
 # Diese Funktion löschen, wenn die Verbindung sicher ist.
-def authenticate2(username, password):
-    return True if password == "0761" else False
+#def authenticate2(username, password):
+#    return True if password == "0761" else False
 
 # Die Authentifizierung gegen den Uni-LDAP-Server
 def authenticate(username, password):
