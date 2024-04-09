@@ -45,8 +45,8 @@ if st.session_state.logged_in:
                 stu1 = "Studiengänge" if st.session_state.lang == "de" else "Study programs"
                 stu2 = "alle" if st.session_state == "de" else "all"
                 stu2 = (stu2 if x['studiengang'] == [] else (', '.join(x['studiengang'])))
-                st.write(f"{stu1}: {stu2}")
-                st.write("Antwort" if st.session_state.lang == "de" else "Answer")
+                st.markdown(f"***{stu1}**: {stu2}*")
+                st.markdown("**Antwort:**" if st.session_state.lang == "de" else "**Answer:**")
                 st.write(x["a_de"] if st.session_state.lang == "de" else x["a_en"])
                 if x["kommentar"] != "":
                     st.write("Kommentar:")

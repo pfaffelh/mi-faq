@@ -72,7 +72,7 @@ if st.session_state.logged_in:
             rang = 100
         
         if st.button('Neues Paar hinzufügen'):
-            x = qa.insert_one({"category": cat, "q_de": "Neue Frage", "q_en": "", "a_de": "Neue Antwort", "a_en": "", "studiengang": [], "rang": rang, "kommentar": ""})
+            x = qa.insert_one({"category": cat, "q_de": "", "q_en": "", "a_de": "", "a_en": "", "studiengang": [], "rang": rang, "kommentar": ""})
             st.session_state.expanded=x.inserted_id
             logging.info(f"User {st.session_state.user} hat eine neue Frage hinzugefügt.")
             st.rerun()
@@ -90,10 +90,10 @@ if st.session_state.logged_in:
                         for key, value in studiengaenge.items():
                             with cols_dict[key]: 
                                 st.checkbox(key, value = (True if key in x["studiengang"] else False), key=f'ID-{x["_id"]}{key}')
-                        q_de = st.text_input('Frage (de)', x["q_de"])
-                        q_en = st.text_input('Frage (en)', x["q_en"])
-                        a_de = st.text_area('Antwort (de)', x["a_de"])
-                        a_en = st.text_area('Antwort (en)', x["a_en"])
+                        q_de = st.text_input('Frage (de)', x["q_de"], placeholder="Frage eingeben")
+                        q_en = st.text_input('Frage (en)', x["q_en"], placeholder='Englische Frage eingeben oder automatisch übersetzen lassen ("Übersetzen")')
+                        a_de = st.text_area('Antwort (de)', x["a_de"], placeholder="Antwort eingeben")
+                        a_en = st.text_area('Antwort (en)', x["a_en"], placeholder='Englische Antowort eingeben oder automatisch übersetzen lassen ("Übersetzen")')
                         kommentar = st.text_area('Kommentar', x["kommentar"])
                         x_updated = {"category": cat_loc, "q_de": q_de, "q_en": q_en, "a_de": a_de, "a_en": a_en, "studiengang": [key for key in studiengaenge if st.session_state[f'ID-{x["_id"]}{key}'] == True], "kommentar": x['kommentar'] }
                         col1, col2, col3 = st.columns([1,7,1]) 
