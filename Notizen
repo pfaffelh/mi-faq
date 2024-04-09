@@ -1,0 +1,11 @@
+- Nicht alles ist englisch (Button "Alles ausklappen"/Erster Satz der Seite) -> Soll das überhaupt?
+- Doku verschlanken falls kein Englisch.
+- Checken, ob Studiengangszuordnung funktioniert.
+- Ungültige Eingaben nicht zulassen (bspw. kein englischer Name)
+- Übersetzung kommt von google
+- Neue Frage direkt in Datenbank oder erst als Preview?
+
+Erledigt:
+- "Neue Frage" / "Neue Antwort" muss überschrieben werden. -> Done!
+- Format / Design der Antwort -> Done!
+- Add translators to requirements.txt
