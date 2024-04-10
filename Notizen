@@ -4,10 +4,10 @@
 - Ungültige Eingaben nicht zulassen (bspw. kein englischer Name)
 - Übersetzung kommt von google
 - Neue Frage direkt in Datenbank oder erst als Preview?
-- Error beim verschieben von Fragen im FAQ
 
 Erledigt:
 - "Neue Frage" / "Neue Antwort" muss überschrieben werden. -> Done!
 - Format / Design der Antwort -> Done!
 - Add translators to requirements.txt
 - Buttons zum Fragen verschieben nach links gepackt
+- Error beim verschieben von Fragen im FAQ -> Done (durch merge von main)
