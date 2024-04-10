@@ -14,7 +14,7 @@ setup_session_state()
 logo()
 
 ### While testing only
-st.session_state.logged_in = True
+# st.session_state.logged_in = True
 ###
 
 # Ab hier wird die Seite angezeigt
@@ -61,17 +61,28 @@ else:
         submit = st.form_submit_button("Login")
         st.session_state.user = kennung
         
-    if submit and authenticate2(kennung, password) and can_edit(st.session_state.user):
-        # If the form is submitted and the email and password are correct,
-        # clear the form/container and display a success message
-        placeholder.empty()
-        st.session_state.logged_in = True
-        st.success("Login successful")
-        st.rerun()
-    elif submit:
-        st.error("Login failed")
-        st.rerun()
-    else:
-        pass
+    if submit:
+        if authenticate(kennung, password): 
+            if can_edit(kennung):
+                # If the form is submitted and the email and password are correct,
+                # clear the form/container and display a success message
+                st.session_state.logged_in = True
+                st.success("Login erfolgreich")
+                logger.info(f"User {st.session_state.user} hat in sich erfolgreich eingeloggt.")
+                # make all neccesary variables available to session_state
+                setup_session_state()
+                time.sleep(2)
+                st.rerun()
+            else:
+                st.error("Nicht genügend Rechte, um VVZ zu editieren.")
+                logger.info(f"User {kennung} hatte nicht gebügend Rechte, um sich einzuloggen.")
+                time.sleep(2)
+                st.rerun()
+        else: 
+            st.error("Login nicht korrekt, oder RZ-Authentifizierung nicht möglich. (Z.B., falls nicht mit VPN verbunden.)")
+            logger.info(f"Ein falscher Anmeldeversuch.")
+            time.sleep(2)
+            st.rerun()
 
 st.sidebar.button("logout", on_click = logout)
+
