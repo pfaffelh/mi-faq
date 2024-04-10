@@ -81,8 +81,12 @@ if st.session_state.logged_in:
             st.rerun()
 
         for pair in pair_list:
-            co1, co2, co3, co4 = st.columns([30,2,1,1])
+            co1, co2, co3, co4 = st.columns([1,1,1,20])
             with co1: 
+                st.button('↓', key=f'down-{pair["_id"]}', on_click = move_down, args = (pair, ))
+            with co2:
+                st.button('↑', key=f'up-{pair["_id"]}', on_click = move_up, args = (pair, ))
+            with co4: 
                 with st.expander(pair["q_de"], expanded = (True if pair["_id"] == st.session_state.expanded else False)):
                     with st.form(f'ID-{pair["_id"]}'):
                         index = [cat["kurzname"] for cat in cats].index(pair["category"])
@@ -144,10 +148,6 @@ if st.session_state.logged_in:
                             with col3: 
                                 st.form_submit_button(label="Nein", on_click = reset_and_confirm, args=("Nicht gelöscht!",))
 
-            with co3: 
-                st.button('↓', key=f'down-{pair["_id"]}', on_click = move_down, args = (pair, ))
-            with co4:
-                st.button('↑', key=f'up-{pair["_id"]}', on_click = move_up, args = (pair, ))
 
 
     if submit:
