@@ -5,6 +5,18 @@
 - Übersetzung kommt von google
 - Neue Frage direkt in Datenbank oder erst als Preview?
 
+VVZ:
+- Wenn PW falsche eingegeben: Anzeigeglitch.
+- Farbe der Auswahl bei multiselect-Boxen.
+- "Press Enter to apply": Was wird wann genau gespeichert?
+- Warnings im Terminal
+- Scrollen bei langer Liste
+- Zurück-Button
+- Kürzel für Kategorie (B, Z, ...) wird im SoSe2024 nicht angezeigt.
+- Tutoratstermine werden in der Übersicht / Vorschau alle einzeln angezeigt. Möchte man das?
+- "Organisation" gebt Fehler wenn nicht leer.
+- Konflikt-Checker implementieren?
+
 Erledigt:
 - "Neue Frage" / "Neue Antwort" muss überschrieben werden. -> Done!
 - Format / Design der Antwort -> Done!
