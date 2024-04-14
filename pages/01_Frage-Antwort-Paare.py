@@ -111,7 +111,8 @@ if st.session_state.logged_in:
                             if st.session_state.saved_image is not None:  # Translated or new pair
                                 if pair["_id"] == -1:  # New pair -> Insert instead or replace
                                     del pair["_id"]  # Remove temporary id
-                                    qa.insert_one(pair_updated)
+                                    qa.insert_one(pair)
+                                    update_confirm(pair, pair_updated)
                                 else:
                                     update_confirm(st.session_state.saved_image[1], pair_updated, )
                                     time.sleep(2)
