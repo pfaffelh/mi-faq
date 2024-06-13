@@ -72,7 +72,7 @@ def setup_session_state():
         st.session_state.delete = False
     # Image of the qa-db which can be reloaded without saving it to the db.
     if "saved_image" not in st.session_state:
-        st.session_state.saved_image = None
+        st.session_state.saved_image = None  # TODO: Could be specified
 
 # Diese Funktion löschen, wenn die Verbindung sicher ist.
 #def authenticate2(username, password):
