@@ -1,7 +1,6 @@
 import streamlit as st
 from misc.config import *
 import ldap
-from streamlit_extras.app_logo import add_logo
 import pymongo
 
 # Initialize logging
@@ -21,9 +20,6 @@ def configure_logging(file_path, level=logging.INFO):
 
 logger = configure_logging(log_file)
 
-def logo():
-    add_logo("misc/ufr.png", height=600)
-
 def login():
     st.session_state.logged_in = True
     st.success("Login erfolgreich.")
@@ -42,6 +38,16 @@ def change_expand_all():
     st.session_state.expand_all = (False if st.session_state.expand_all == True else True)
 
 def setup_session_state():
+    if "new_kurzname" not in st.session_state:
+        st.session_state.new_kurzname = "" 
+    if "new_name_de" not in st.session_state:
+        st.session_state.new_name_de = "" 
+    if "new_rolle_de" not in st.session_state:
+        st.session_state.new_rolle_de = "" 
+    if "new_name_en" not in st.session_state:
+       st.session_state.new_name_en = "" 
+    if "new_kommentar" not in st.session_state:
+        st.session_state.new_kommentar = "" 
     # lang ist die Sprache (de, en)
     if "lang" not in st.session_state:
         st.session_state.lang = "de"
@@ -107,8 +113,12 @@ try:
     cluster = pymongo.MongoClient(mongo_location)
     mongo_db = cluster["faq"]
     mongo_db_users = cluster["user"]
-    category = mongo_db["category"]
-    qa = mongo_db["qa"]
+    studiengang = mongo_db["studiengang"]
+    stu_category = mongo_db["stu_category"]
+    stu_qa = mongo_db["stu_qa"]
+    mit_category = mongo_db["mit_category"]
+    mit_qa = mongo_db["mit_qa"]
+    studiendekanat = mongo_db["studiendekanat"]
     user = mongo_db_users["user"]
     group = mongo_db_users["group"]
     logger.debug("Connected to MongoDB")
@@ -117,4 +127,50 @@ try:
 except: 
     logger.error("Verbindung zur Datenbank nicht möglich!")
     st.write("**Verbindung zur Datenbank nicht möglich!**  \nKontaktieren Sie den Administrator.")
+
+collection_name = {
+    studiengang: "Studiengang",
+    stu_qa: "stu_qa",
+    stu_category: "stu_category",
+    mit_qa: "mit_qa",
+    mit_category: "mit_category",
+    studiendekanat: "Studiendekanat"    
+}
+
+st.session_state.abhaengigkeit = {
+    studiengang: [{"collection": stu_qa, "field": "studiengang", "list": True}],
+    stu_category    : [{"collection": stu_qa, "field": "category", "list": False}]
+}
+
+st.session_state.leer = {
+    stu_category: stu_category.find_one({"name_de": "Unsichtbar"})["_id"],
+    mit_category: mit_category.find_one({"name_de": "Unsichtbar"})["_id"]}
+
+st.session_state.new = {
+    studiengang: {"kurzname": "", 
+            "name_de": "", 
+            "name_en": "", 
+            "kommentar": ""},
+    studiendekanat:     {
+      "showstudiendekanat": False,
+      "showstudienberatung": False,
+      "showpruefungsamt": False,
+      "name_de": "",
+      "name_en": "",
+      "link": "",
+      "rolle_de": "",
+      "rolle_en": "",
+      "raum_de": "",
+      "raum_en": "",
+      "tel_de": "",
+      "tel_en": "",
+      "mail": "",
+      "sprechstunde_de": "",
+      "sprechstunde_en": "",
+      "prefix_de": "",
+      "prefix_en": "",
+      "text_de": "",
+      "text_en": ""
+    }
+}
 

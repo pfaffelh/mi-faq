@@ -4,14 +4,15 @@ from streamlit_extras.switch_page_button import switch_page
 import pymongo
 import time
 from misc.config import *
-from misc.util import *
+import misc.util as util
+import misc.tools as tool
 
 # make all neccesary variables available to session_state
-setup_session_state()
+util.setup_session_state()
 
 # Seiten-Layout
 st.set_page_config(page_title="QA-Paare", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items=None)
-logo()
+util.logo()
 
 def reset_and_confirm(text=None):
     st.session_state.submitted = False 
@@ -20,41 +21,41 @@ def reset_and_confirm(text=None):
         st.success(text)
 
 def delete_confirm_one(x):
-    qa.delete_one(x)
+    util.qa.delete_one(x)
     reset_and_confirm()
-    logger.info(f"User {st.session_state.user} hat Frage {x['q_de']} gelöscht.")
+    util.logger.info(f"User {st.session_state.user} hat Frage {x['q_de']} gelöscht.")
     st.success("Erfolgreich gelöscht!")
 
 def update_confirm(x, x_updated):
-    qa.update_one(x, {"$set": x_updated })
+    util.qa.update_one(x, {"$set": x_updated })
     reset_and_confirm()
-    logger.info(f"User {st.session_state.user} hat Frage {x['q_de']} geändert.")
+    util.logger.info(f"User {st.session_state.user} hat Frage {x['q_de']} geändert.")
     st.success("Erfolgreich geändert!")
 
 def move_up(x):
-    target = qa.find_one( {"category": st.session_state["category"], "rang": {"$lt": x["rang"]}}, sort = [("rang",-1)])
+    target = util.qa.find_one( {"category": st.session_state["category"], "rang": {"$lt": x["rang"]}}, sort = [("rang",-1)])
     if target:
         n= target["rang"]
-        qa.update_one(target, {"$set": {"rang": x["rang"]}})    
-        qa.update_one(x, {"$set": {"rang": n}})    
+        util.qa.update_one(target, {"$set": {"rang": x["rang"]}})    
+        util.qa.update_one(x, {"$set": {"rang": n}})    
 
 def move_down(x):
-    target = qa.find_one({"category": st.session_state["category"], "rang": {"$gt": x["rang"]}}, sort = [("rang",+1)])
+    target = util.qa.find_one({"category": st.session_state["category"], "rang": {"$gt": x["rang"]}}, sort = [("rang",+1)])
     if target:
         n= target["rang"]
-        qa.update_one(target, {"$set": {"rang": x["rang"]}})    
-        qa.update_one(x, {"$set": {"rang": n}})    
+        util.qa.update_one(target, {"$set": {"rang": x["rang"]}})    
+        util.qa.update_one(x, {"$set": {"rang": n}})    
 
 
 def name_of_kurzname(kurzname):
-    x = category.find_one({"kurzname": kurzname})
+    x = util.category.find_one({"kurzname": kurzname})
     return x["name_de"]
 
 # Ab hier wird die Webseite erzeugt
 if st.session_state.logged_in:
     st.header("Frage-Antwort-Paare für das FAQ")
 
-    cats = list(category.find(sort=[("rang", pymongo.ASCENDING)]))
+    cats = list(util.category.find(sort=[("rang", pymongo.ASCENDING)]))
 
     cat = st.selectbox(label="Kategorie", options = [x["kurzname"] for x in cats], index = None, format_func = name_of_kurzname, placeholder = "Wähle eine Kategorie", label_visibility = "collapsed")
     st.session_state.category = cat
@@ -64,7 +65,7 @@ if st.session_state.logged_in:
         if st.session_state.saved_image is not None:
             y = st.session_state.saved_image[0]
         else:
-            y = list(qa.find({"category": cat}, sort=[("rang", pymongo.ASCENDING)]))
+            y = list(util.qa.find({"category": cat}, sort=[("rang", pymongo.ASCENDING)]))
         
         try: 
             rang = sorted([x["rang"] for x in y])[0]-1
@@ -72,9 +73,9 @@ if st.session_state.logged_in:
             rang = 100
         
         if st.button('Neues Paar hinzufügen'):
-            x = qa.insert_one({"category": cat, "q_de": "", "q_en": "", "a_de": "", "a_en": "", "studiengang": [], "rang": rang, "kommentar": ""})
+            x = util.qa.insert_one({"category": cat, "q_de": "", "q_en": "", "a_de": "", "a_en": "", "studiengang": [], "rang": rang, "kommentar": ""})
             st.session_state.expanded=x.inserted_id
-            logging.info(f"User {st.session_state.user} hat eine neue Frage hinzugefügt.")
+            util.logging.info(f"User {st.session_state.user} hat eine neue Frage hinzugefügt.")
             st.rerun()
 
         for x in y:
@@ -150,4 +151,4 @@ if st.session_state.logged_in:
 else:
   switch_page("FAQ")
 
-st.sidebar.button("logout", on_click = logout)
+st.sidebar.button("logout", on_click = util.logout)
