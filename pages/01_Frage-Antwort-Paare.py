@@ -80,7 +80,8 @@ if st.session_state.logged_in:
         for x in y:
             co1, co2, co3, co4 = st.columns([30,2,1,1]) 
             with co1: 
-                with st.expander(x["q_de"], expanded = (True if x["_id"] == st.session_state.expanded else False)):
+                with st.expander(f"{x['q_de']}", expanded = (True if x["_id"] == st.session_state.expanded else False)):
+                    st.write(f"id: qa_{str(x['_id'])}")
                     with st.form(f'ID-{x["_id"]}'):
                         index = [cat["kurzname"] for cat in cats].index(x["category"])
                         cat_loc = st.selectbox(label="Kategorie", options = [z["kurzname"] for z in cats], index = index, format_func = name_of_kurzname, placeholder = "Wähle eine Kategorie", label_visibility = "collapsed")
