@@ -34,7 +34,7 @@ if st.session_state.logged_in:
 
     cats = list(util.mit_category.find(sort=[("rang", pymongo.ASCENDING)]))
 
-    cat = st.selectbox(label="Kategorie", options = [x["_id"] for x in cats], index = None, format_func = (lambda id : tools.repr(util.mit_category, id, False)), placeholder = "Wähle eine Kategorie", label_visibility = "collapsed")
+    cat = st.selectbox(label="Kategorie", options = [x['_id'] for x in cats], index = None, format_func = (lambda id : tools.repr(util.mit_category, id, False)), placeholder = "Wähle eine Kategorie", label_visibility = "collapsed")
     st.session_state.category = cat
 
     submit = False
@@ -51,15 +51,15 @@ if st.session_state.logged_in:
         for x in y:
             co1, co2, co3, co4 = st.columns([1,1,20,4]) 
             with co1: 
-                st.button('↓', key=f'down-{x["_id"]}', on_click = tools.move_down, args = (collection, x, {"category" : st.session_state.category},))
+                st.button('↓', key=f"down-{x['_id']}", on_click = tools.move_down, args = (collection, x, {"category" : st.session_state.category},))
             with co2:
-                st.button('↑', key=f'up-{x["_id"]}', on_click = tools.move_up, args = (collection, x, {"category" : st.session_state.category},))
+                st.button('↑', key=f"up-{x['_id']}", on_click = tools.move_up, args = (collection, x, {"category" : st.session_state.category},))
             with co3: 
-                with st.expander(f"{x['q_de']}", expanded = (True if x["_id"] == st.session_state.expanded else False)):
+                with st.expander(f"{x['q_de']}", expanded = (True if x['_id'] == st.session_state.expanded else False)):
                     st.write(f"qa_{str(x['_id'])}")
-                    index = [cat["_id"] for cat in cats].index(x["category"])
+                    index = [cat['_id'] for cat in cats].index(x["category"])
                     
-                    cat_loc = st.selectbox(label="Kategorie", options = [z["_id"] for z in cats], index = ([z["_id"] for z in cats]).index(x["category"]), format_func = lambda id: tools.repr(util.mit_category, id, False), placeholder = "Wähle eine Kategorie", label_visibility = "collapsed", key = f"mit_cat_{x["_id"]}")
+                    cat_loc = st.selectbox(label="Kategorie", options = [z['_id'] for z in cats], index = ([z['_id'] for z in cats]).index(x["category"]), format_func = lambda id: tools.repr(util.mit_category, id, False), placeholder = "Wähle eine Kategorie", label_visibility = "collapsed", key = f"mit_cat_{x['_id']}")
                     q_de = st.text_input('Frage (de)', x["q_de"], placeholder="Frage eingeben", key = f"q_de_{x['_id']}")
                     q_en = st.text_input('Frage (en)', x["q_en"], key = f"q_en_{x['_id']}")
                     a_de = st.text_area('Antwort (de)', x["a_de"], placeholder="Antwort eingeben", key = f"a_de_{x['_id']}")
@@ -73,7 +73,7 @@ if st.session_state.logged_in:
                 with st.popover('Löschen', use_container_width=True):
                     colu1, colu2, colu3 = st.columns([1,1,1])
                     with colu1:
-                        submit = st.button(label = "Wirklich löschen!", type = 'primary', key = f"delete-{x['_id']}", on_click = tools.delete_item_update_dependent_items, args = (collection, x["_id"],))
+                        submit = st.button(label = "Wirklich löschen!", type = 'primary', key = f"delete-{x['_id']}", on_click = tools.delete_item_update_dependent_items, args = (collection, x['_id'],))
                     with colu3: 
                         st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{x['_id']}")
 
