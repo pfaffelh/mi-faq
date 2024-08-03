@@ -153,7 +153,8 @@ st.session_state.abhaengigkeit = {
     stu_category    : [{"collection": stu_qa, "field": "category", "list": False}],
     mit_category    : [{"collection": mit_qa, "field": "category", "list": False}],
     stu_qa    : [],
-    mit_qa    : []
+    mit_qa    : [],
+    studiendekanat : []
 }
 
 st.session_state.leer = {
