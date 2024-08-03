@@ -76,10 +76,15 @@ def display_navigation():
     st.sidebar.page_link("pages/05_mit_cat.py", label="Kategorien (Mitarbeiter*innen)")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
     st.sidebar.page_link("pages/06_studiendekanat.py", label="Studiendekanat")
+    st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
 
-def new(collection, ini = {}, switch = True):
+def new(collection, ini = {}, switch = False):
     z = list(collection.find(sort = [("rang", pymongo.ASCENDING)]))
-    rang = z[0]["rang"]-1
+    try:
+        # if z[0] exists
+        rang = z[0]["rang"]-1
+    except:
+        rang = 0
     st.session_state.new[collection]["rang"] = rang    
     for key, value in ini.items():
         st.session_state.new[collection][key] = value
@@ -104,7 +109,7 @@ def find_dependent_items(collection, id):
     return res
 
 
-def delete_item_update_dependent_items(collection, id, switch = True):
+def delete_item_update_dependent_items(collection, id, switch = False):
     if collection in st.session_state.leer.keys() and id == st.session_state.leer[collection]:
             st.toast("Fehler! Dieses Item kann nicht gelöscht werden!")
             reset_vars("")
@@ -114,7 +119,7 @@ def delete_item_update_dependent_items(collection, id, switch = True):
                 x["collection"].update_many({x["field"].replace(".$",""): { "$elemMatch": { "$eq": id }}}, {"$pull": { x["field"] : id}})
             else:
                 st.write(util.collection_name[x["collection"]])
-                x["collection"].update_many({x["field"]: id}, { "$set": { x["field"].replace(".", ".$."): util.leer[collection]}})             
+                x["collection"].update_many({x["field"]: id}, { "$set": { x["field"].replace(".", ".$."): st.session_state.leer[collection]}})
         s = ("  \n".join(find_dependent_items(collection, id)))
         if s:
             s = f"\n{s}  \ngeändert."     
@@ -122,7 +127,7 @@ def delete_item_update_dependent_items(collection, id, switch = True):
         collection.delete_one({"_id": id})
         reset_vars("")
         st.success(f"🎉 Erfolgreich gelöscht!  {s}")
-        time.sleep(4)
+        time.sleep(1)
         if switch:
             switch_page(util.collection_name[collection].lower())
 
@@ -144,3 +149,15 @@ def repr(collection, id, show_collection = True, short = False):
     if show_collection:
         res = f"{util.collection_name[collection]}: {res}"
     return res
+
+
+def reset_and_confirm(text=None):
+    st.session_state.submitted = False 
+    st.session_state.expanded = ""
+    if text is not None:
+        st.success(text)
+
+def name_of_kurzname(kurzname):
+    x = util.category.find_one({"kurzname": kurzname})
+    return x["name_de"]
+

@@ -82,7 +82,8 @@ for q in qap:
     q["category"] = stu_category.find_one({"kurzname" : q["category"]})["_id"]
     stu_qa.insert_one(q)
     
-mit_category.insert_one({"kurzname": "-", "name_de" : "Unsichtbar", "name_en": "Invisible", "kommentar": "", "rang": 0})
+m = mit_category.insert_one({"kurzname": "-", "name_de" : "Unsichtbar", "name_en": "Invisible", "kommentar": "", "rang": 0})
+mit_qa.insert_one({"q_de": "Wo bin ich?", "q_en": "", "a_de": "In Freiburg", "a_en": "", "kommentar": "", "category": m.inserted_id, "rang": 0})
 
 with open('studiendekanat.json') as json_file:
     studien = json.load(json_file)

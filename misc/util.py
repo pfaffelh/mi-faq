@@ -79,6 +79,17 @@ def setup_session_state():
     # Image of the qa-db which can be reloaded without saving it to the db.
     if "saved_image" not in st.session_state:
         st.session_state.saved_image = None
+    if "new_q_de" not in st.session_state:
+        st.session_state.new_q_de = ""
+    if "new_q_en" not in st.session_state:
+        st.session_state.new_q_en = ""
+    if "new_a_de" not in st.session_state:
+        st.session_state.new_a_de = ""
+    if "new_a_en" not in st.session_state:
+        st.session_state.new_a_en = ""
+    if "new_stu_list" not in st.session_state:
+        st.session_state.new_stu_list = []
+
 
 # Diese Funktion löschen, wenn die Verbindung sicher ist.
 #def authenticate2(username, password):
@@ -130,16 +141,19 @@ except:
 
 collection_name = {
     studiengang: "Studiengang",
-    stu_qa: "stu_qa",
-    stu_category: "stu_category",
-    mit_qa: "mit_qa",
-    mit_category: "mit_category",
+    stu_qa: "Frage-Antwort-Paar (Studierende)",
+    stu_category: "Kategorie (Studierende)",
+    mit_qa: "Frage-Antwort-Paar (Mitarbeiter*innen)",
+    mit_category: "Kategorie (Mitarbeiter*innen)",
     studiendekanat: "Studiendekanat"    
 }
 
 st.session_state.abhaengigkeit = {
     studiengang: [{"collection": stu_qa, "field": "studiengang", "list": True}],
-    stu_category    : [{"collection": stu_qa, "field": "category", "list": False}]
+    stu_category    : [{"collection": stu_qa, "field": "category", "list": False}],
+    mit_category    : [{"collection": mit_qa, "field": "category", "list": False}],
+    stu_qa    : [],
+    mit_qa    : []
 }
 
 st.session_state.leer = {
@@ -151,6 +165,30 @@ st.session_state.new = {
             "name_de": "", 
             "name_en": "", 
             "kommentar": ""},
+    stu_category: {"kurzname": "", 
+            "name_de": "", 
+            "name_en": "", 
+            "kommentar": ""},
+    stu_qa: { "category": st.session_state.leer[stu_category],
+             "studiengang": [],
+             "q_de": "",
+             "q_en": "",
+             "a_de": "",
+             "a_en": "",
+             "kommentar": ""
+               },
+    mit_category: {"kurzname": "", 
+            "name_de": "", 
+            "name_en": "", 
+            "kommentar": ""},
+    mit_qa: { "category": st.session_state.leer[mit_category],
+             "studiengang": [],
+             "q_de": "",
+             "q_en": "",
+             "a_de": "",
+             "a_en": "",
+             "kommentar": ""
+               },
     studiendekanat:     {
       "showstudiendekanat": False,
       "showstudienberatung": False,

@@ -1,111 +1,75 @@
+import streamlit as st
 from streamlit_extras.switch_page_button import switch_page 
 import time
 import pymongo
-from misc.config import *
-from misc.util import *
-
-# make all neccesary variables available to session_state
-setup_session_state()
 
 # Seiten-Layout
-st.set_page_config(page_title="QA-Paare", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items=None)
-logo()
+st.set_page_config(page_title="FAQ", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items=None)
+
+# check if session_state is initialized if not change to main page
+if 'logged_in' not in st.session_state:
+    switch_page("FAQ")
+
+from misc.config import *
+import misc.util as util
+import misc.tools as tools
+
+# Navigation in Sidebar anzeigen
+tools.display_navigation()
+
+# Es geht hier vor allem um diese Collection:
+collection = util.stu_category
+
+def savenew(ini):
+    tools.new(collection, ini = ini, switch = False)
+    st.session_state.new_kurzname = ""
+    st.session_state.new_name_de = ""
+    st.session_state.new_name_en = ""
+    st.session_state.new_kommentar = ""
 
 # Ab hier wird die Webseite erzeugt
 if st.session_state.logged_in:
+    st.header("FAQ-Kategorien (Studierende)")
+    with st.popover(f'Neuen Kategorie anlegen'):
+        kurzname = st.text_input("Kurzname", "", key = "new_kurzname")
+        name_de = st.text_input("Name (de)", "", key = "new_name_de")
+        name_en = st.text_input("Name (en)", "", key = "new_name_en")
+        kommentar = st.text_input("Kommentar", "", key = "new_kommentar")
+        btn = st.button("Kategorie anlegen", on_click=savenew, args = [{"kurzname" : kurzname, "name_de": name_de, "name_en": name_en, "kommentar": kommentar,},])
 
-  st.header("FAQ-Kategorien")
+    y = list(collection.find(sort=[("rang", pymongo.ASCENDING)]))
 
-  # Alles auf Anfang
-  def reset_and_confirm(text=None):
-    st.session_state.submitted = False 
-    st.session_state.expanded = ""
-    if text is not None:
-      st.success(text)
-
-  def delete_confirm_one(x):
-    y = list(qa.find({"category": x["kurzname"]}))
-    for z in y:
-      z_updated = {"category": "unsichtbar"}
-      qa.update_one(z, {"$set": z_updated })
-    category.delete_one(x)
-    reset_and_confirm()
-    logger.info(f"User {st.session_state.user}  hat Kategorie {x['name_de']} gelöscht.")
-    st.success("Erfolgreich gelöscht! Alle qa-Paare der Kategorie sind nun in 'unsichtbar'.")
-
-  def update_confirm(x, x_updated):
-    category.update_one(x, {"$set": x_updated })
-    logger.info(f"User {st.session_state.user}  hat Kategorie {x['name_de']} geändert.")
-    reset_and_confirm()
-    st.success("Erfolgreich geändert!")
-
-  # Ändert die Reihenfolge der Darstellung
-  def move_up(x):
-    target = category.find_one({"rang": {"$lt": x["rang"]}}, sort = [("rang",pymongo.DESCENDING)])
-    if target:
-      n= target["rang"]
-      category.update_one(target, {"$set": {"rang": x["rang"]}})    
-      category.update_one(x, {"$set": {"rang": n}})    
-
-  def move_down(x):
-    target = category.find_one({"rang": {"$gt": x["rang"]}}, sort = [("rang", pymongo.ASCENDING)])
-    if target:
-      n= target["rang"]
-      category.update_one(target, {"$set": {"rang": x["rang"]}})    
-      category.update_one(x, {"$set": {"rang": n}})    
-
-  if st.button('Neue Kategorie hinzufügen'):
-    z = category.find()
-    rang = (sorted(z, key=lambda x: x['rang'])[0])["rang"]-1
-    x = category.insert_one({"kurzname": "neu", "name_de": "Neue Kategorie", "name_en": "", "kommentar": "", "rang": rang})
-    st.session_state.expanded=x.inserted_id
-    logger.info(f"User {st.session_state.user} hat eine neue Kategorie angelegt.")
-    st.rerun()
-
-  y = list(category.find(sort=[("rang", pymongo.ASCENDING)]))
-
-  for x in y:
-      co1, co2, co3, co4 = st.columns([30,2,1,1]) 
-      with co1: 
-          with st.expander(x["name_de"], (True if x["_id"] == st.session_state.expanded else False)):
-              with st.form(f'ID-{x["_id"]}'):
-                  kurzname=st.text_input('Kurzname', x["kurzname"])
-                  name_de=st.text_input('Name (de)', x["name_de"])
-                  name_en=st.text_input('Name (en)', x["name_en"])
-                  kommentar=st.text_area('Kommentar', x["kommentar"])
-                  x_updated = {"kurzname": kurzname, "name_de": name_de, "name_en": name_en, "kommentar": kommentar}
-                  col1, col2, col3 = st.columns([1,7,1]) 
-                  with col1: 
-                      submit = st.form_submit_button('Speichern', type="primary")
-                  if submit:
-                      st.session_state.expanded = x["_id"]
-                      update_confirm(x, x_updated)
-                      time.sleep(2)
-                      st.rerun()      
-                  with col3: 
-                      if x["kurzname"] == "unsichtbar":
-                          st.write("kann nicht gelöscht werden")
-                      else:
-                          deleted = st.form_submit_button("Löschen")
-                  if deleted:
-                      st.session_state.submitted = True
-                      st.session_state.expanded = x["_id"]
-                  if st.session_state.submitted and st.session_state.expanded == x["_id"]:
-                      with col1: 
-                          st.form_submit_button(label = "Ja", type="primary", on_click = delete_confirm_one, args = (x,))        
-                      with col2: 
-                          st.warning("Eintrag wirklich löschen?")
-                      with col3: 
-                          st.form_submit_button(label="Nein", on_click = reset_and_confirm, args=("Nicht gelöscht!",))
-      with co3: 
-          st.button('↓', key=f'down-{x["_id"]}', on_click = move_down, args = (x, ))
-      with co4:
-          st.button('↑', key=f'up-{x["_id"]}', on_click = move_up, args = (x, ))
-
-#  if submit:
-#      st.rerun()
-
+    for x in y:
+        co1, co2, co3, co4 = st.columns([1,1,20,2]) 
+        with co1: 
+            st.button('↓', key=f'down-{x["_id"]}', on_click = tools.move_down, args = (collection, x, ))
+        with co2:
+            st.button('↑', key=f'up-{x["_id"]}', on_click = tools.move_up, args = (collection, x, ))
+        with co3: 
+            with st.expander(x["name_de"]):
+                st.write(f"stu_kat_{str(x['_id'])}")
+                kurzname = st.text_input("Kurzname", x["kurzname"], key = f"kurzname_{x['_id']}")
+                name_de = st.text_input("Name (de)", x["name_de"], key = f"name_de_{x['_id']}")
+                name_en = st.text_input("Name (en)", x["name_en"], key = f"name_en_{x['_id']}")
+                kommentar = st.text_input("Kommentar", x["kommentar"], key = f"kommentar_{x['_id']}")
+                save = st.button("Speichern", key=f"save-{x['_id']}")
+                if save:
+                    collection.update_one({"_id": x["_id"]}, { "$set": {"kurzname" : kurzname, "name_de": name_de, "name_en": name_en, "kommentar": kommentar}})
+                    st.toast("Erfolgreich gespeichert!")
+                    time.sleep(0.5)
+                    st.rerun()
+        with co4:
+            with st.popover('Löschen', use_container_width=True):
+                st.write("Folgende Fragen sind in dieser Kategorie:")
+                st.write("\n\n".join([x["q_de"] for x in list(util.stu_qa.find({"category": x["_id"]}))]))
+                colu1, colu2, colu3 = st.columns([1,1,1])
+                with colu1:                  
+                    submit = st.button(label = "Wirklich löschen!", type = 'primary', key = f"delete-{x['_id']}")
+                if submit: 
+                    tools.delete_item_update_dependent_items(collection, x["_id"])
+                with colu3: 
+                    st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{x['_id']}")
 else: 
   switch_page("FAQ")
 
-st.sidebar.button("logout", on_click = logout)
+st.sidebar.button("logout", on_click = tools.logout)

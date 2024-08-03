@@ -1,149 +1,84 @@
 import streamlit as st
-import translators as ts
 from streamlit_extras.switch_page_button import switch_page 
-import pymongo
 import time
-from misc.config import *
-import misc.util as util
-import misc.tools as tool
-
-# make all neccesary variables available to session_state
-util.setup_session_state()
+import pymongo
 
 # Seiten-Layout
-st.set_page_config(page_title="QA-Paare", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items=None)
-util.logo()
+st.set_page_config(page_title="FAQ", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items=None)
 
-def reset_and_confirm(text=None):
-    st.session_state.submitted = False 
-    st.session_state.expanded = ""
-    if text is not None:
-        st.success(text)
+# check if session_state is initialized if not change to main page
+if 'logged_in' not in st.session_state:
+    switch_page("FAQ")
 
-def delete_confirm_one(x):
-    util.qa.delete_one(x)
-    reset_and_confirm()
-    util.logger.info(f"User {st.session_state.user} hat Frage {x['q_de']} gelöscht.")
-    st.success("Erfolgreich gelöscht!")
+from misc.config import *
+import misc.util as util
+import misc.tools as tools
 
-def update_confirm(x, x_updated):
-    util.qa.update_one(x, {"$set": x_updated })
-    reset_and_confirm()
-    util.logger.info(f"User {st.session_state.user} hat Frage {x['q_de']} geändert.")
-    st.success("Erfolgreich geändert!")
+# Navigation in Sidebar anzeigen
+tools.display_navigation()
 
-def move_up(x):
-    target = util.qa.find_one( {"category": st.session_state["category"], "rang": {"$lt": x["rang"]}}, sort = [("rang",-1)])
-    if target:
-        n= target["rang"]
-        util.qa.update_one(target, {"$set": {"rang": x["rang"]}})    
-        util.qa.update_one(x, {"$set": {"rang": n}})    
+# Es geht hier vor allem um diese Collection:
+collection = util.stu_qa
 
-def move_down(x):
-    target = util.qa.find_one({"category": st.session_state["category"], "rang": {"$gt": x["rang"]}}, sort = [("rang",+1)])
-    if target:
-        n= target["rang"]
-        util.qa.update_one(target, {"$set": {"rang": x["rang"]}})    
-        util.qa.update_one(x, {"$set": {"rang": n}})    
-
-
-def name_of_kurzname(kurzname):
-    x = util.category.find_one({"kurzname": kurzname})
-    return x["name_de"]
+def savenew(ini):
+    tools.new(collection, ini = ini, switch = False)
+    st.session_state.new_q_de = ""
+    st.session_state.new_q_en = ""
+    st.session_state.new_a_de = ""
+    st.session_state.new_a_en = ""
+    st.session_state.new_kommentar = ""
+    st.session_state.new_stu_list = []
 
 # Ab hier wird die Webseite erzeugt
 if st.session_state.logged_in:
-    st.header("Frage-Antwort-Paare für das FAQ")
+    st.header("Frage-Antwort-Paare (Studierende)")
 
-    cats = list(util.category.find(sort=[("rang", pymongo.ASCENDING)]))
+    cats = list(util.stu_category.find(sort=[("rang", pymongo.ASCENDING)]))
 
-    cat = st.selectbox(label="Kategorie", options = [x["kurzname"] for x in cats], index = None, format_func = name_of_kurzname, placeholder = "Wähle eine Kategorie", label_visibility = "collapsed")
+    cat = st.selectbox(label="Kategorie", options = [x["_id"] for x in cats], index = None, format_func = (lambda id : tools.repr(util.stu_category, id, False)), placeholder = "Wähle eine Kategorie", label_visibility = "collapsed")
     st.session_state.category = cat
 
     submit = False
     if cat is not None:
-        if st.session_state.saved_image is not None:
-            y = st.session_state.saved_image[0]
-        else:
-            y = list(util.qa.find({"category": cat}, sort=[("rang", pymongo.ASCENDING)]))
-        
-        try: 
-            rang = sorted([x["rang"] for x in y])[0]-1
-        except:
-            rang = 100
-        
-        if st.button('Neues Paar hinzufügen'):
-            x = util.qa.insert_one({"category": cat, "q_de": "", "q_en": "", "a_de": "", "a_en": "", "studiengang": [], "rang": rang, "kommentar": ""})
-            st.session_state.expanded=x.inserted_id
-            util.logging.info(f"User {st.session_state.user} hat eine neue Frage hinzugefügt.")
-            st.rerun()
+        y = list(util.stu_qa.find({"category": cat}, sort=[("rang", pymongo.ASCENDING)]))        
+        with st.popover(f'Neues QA-Paar anlegen'):
+            studiengang_list = st.multiselect("Studiengänge (alle, falls keiner angegeben ist)", [x["_id"] for x in util.studiengang.find({}, sort = [("rang", pymongo.ASCENDING)])], [], format_func = (lambda a: tools.repr(util.studiengang, a, False)), placeholder = "Bitte auswählen", key = "new_stu_list")
+            q_de = st.text_input("Frage (de)", "", key = "new_q_de")
+            q_en = st.text_input("Frage (en)", "", key = "new_q_en")
+            a_de = st.text_input("Antwort (de)", "", key = "new_a_de")
+            a_en = st.text_input("Antwort (en)", "", key = "new_a_en")
+            kommentar = st.text_input("Kommentar", "", key = "new_kommentar")
+            btn = st.button("QA-Paar anlegen", on_click=savenew, args = [{"studiengang" : studiengang_list, "q_de": q_de, "q_en": q_en, "a_de": a_de, "a_en": a_en, "kommentar": kommentar,},])
 
         for x in y:
-            co1, co2, co3, co4 = st.columns([30,2,1,1]) 
+            co1, co2, co3, co4 = st.columns([1,1,20,4]) 
             with co1: 
-                with st.expander(f"{x['q_de']}", expanded = (True if x["_id"] == st.session_state.expanded else False)):
-                    st.write(f"id: qa_{str(x['_id'])}")
-                    with st.form(f'ID-{x["_id"]}'):
-                        index = [cat["kurzname"] for cat in cats].index(x["category"])
-                        cat_loc = st.selectbox(label="Kategorie", options = [z["kurzname"] for z in cats], index = index, format_func = name_of_kurzname, placeholder = "Wähle eine Kategorie", label_visibility = "collapsed")
-                        st.write("Studiengänge (alle, falls keiner angegeben ist)")
-                        cols = st.columns([1 for n in studiengaenge.keys()]) 
-                        cols_dict = dict(zip(studiengaenge.keys(), cols))
-                        for key, value in studiengaenge.items():
-                            with cols_dict[key]: 
-                                st.checkbox(key, value = (True if key in x["studiengang"] else False), key=f'ID-{x["_id"]}{key}')
-                        q_de = st.text_input('Frage (de)', x["q_de"], placeholder="Frage eingeben")
-                        q_en = st.text_input('Frage (en)', x["q_en"], placeholder='Englische Frage eingeben oder automatisch übersetzen lassen ("Übersetzen")')
-                        a_de = st.text_area('Antwort (de)', x["a_de"], placeholder="Antwort eingeben")
-                        a_en = st.text_area('Antwort (en)', x["a_en"], placeholder='Englische Antowort eingeben oder automatisch übersetzen lassen ("Übersetzen")')
-                        kommentar = st.text_area('Kommentar', x["kommentar"])
-                        x_updated = {"category": cat_loc, "q_de": q_de, "q_en": q_en, "a_de": a_de, "a_en": a_en, "studiengang": [key for key in studiengaenge if st.session_state[f'ID-{x["_id"]}{key}'] == True], "kommentar": x['kommentar'] }
-                        col1, col2, col3 = st.columns([1,7,1]) 
-                        with col1: 
-                            submit = st.form_submit_button('Speichern', type="primary", args = (x, x_updated,))
-                        if submit:                         
-                            st.session_state.expanded = x["_id"]
-                            if st.session_state.saved_image is not None:
-                                update_confirm(st.session_state.saved_image[1], x_updated, )
-                                time.sleep(2)
-                                st.session_state.saved_image = None
-                            else:
-                                update_confirm(x, x_updated, )
-                                time.sleep(2)
-                            st.rerun()      
-                        with col2:
-                            translate = st.form_submit_button("Übersetzen")
-                        if translate:
-                            x_old = x.copy()  # Save actual x to be able to update this one afterwards.
-                            if x_updated["q_en"] == "":
-                                x_updated["q_en"] = ts.translate_text(q_de, translator="google", from_language="de", to_language="en")
-                                x["q_en"] = x_updated["q_en"]
-                            if x_updated["a_en"] == "":
-                                x_updated["a_en"] = ts.translate_text(a_de, translator="google", from_language="de", to_language="en")
-                                x["a_en"] = x_updated["a_en"]
-                            st.session_state.expanded = x["_id"]
-                            st.session_state.saved_image = (y, x_old)
-                            time.sleep(2)
-                            st.rerun()
-                        with col3: 
-                            deleted = st.form_submit_button("Löschen")
-                        if deleted:
-                            st.session_state.submitted = True
-                            st.session_state.expanded = x["_id"]
-                            st.rerun()
-                        if st.session_state.submitted and st.session_state.expanded == x["_id"]:
-                            with col1: 
-                                st.form_submit_button(label = "Ja", type="primary", on_click = delete_confirm_one, args = (x,))        
-                            with col2: 
-                                st.warning("Eintrag wirklich löschen?")
-                            with col3: 
-                                st.form_submit_button(label="Nein", on_click = reset_and_confirm, args=("Nicht gelöscht!",))
-
+                st.button('↓', key=f'down-{x["_id"]}', on_click = tools.move_down, args = (collection, x, {"category" : st.session_state.category},))
+            with co2:
+                st.button('↑', key=f'up-{x["_id"]}', on_click = tools.move_up, args = (collection, x, {"category" : st.session_state.category},))
             with co3: 
-                st.button('↓', key=f'down-{x["_id"]}', on_click = move_down, args = (x, ))
+                with st.expander(f"{x['q_de']}", expanded = (True if x["_id"] == st.session_state.expanded else False)):
+                    st.write(f"qa_{str(x['_id'])}")
+                    index = [cat["_id"] for cat in cats].index(x["category"])
+                    
+                    cat_loc = st.selectbox(label="Kategorie", options = [z["_id"] for z in cats], index = ([z["_id"] for z in cats]).index(x["category"]), format_func = lambda id: tools.repr(util.stu_category, id, False), placeholder = "Wähle eine Kategorie", label_visibility = "collapsed", key = f"stu_cat_{x["_id"]}")
+                    studiengang_list = st.multiselect("Studiengänge (alle, falls keiner angegeben ist)", [x["_id"] for x in util.studiengang.find({}, sort = [("rang", pymongo.ASCENDING)])], x["studiengang"], format_func = (lambda a: tools.repr(util.studiengang, a, False)), placeholder = "Bitte auswählen", key = f"stu_list_{x["_id"]}")
+                    q_de = st.text_input('Frage (de)', x["q_de"], placeholder="Frage eingeben", key = f"q_de_{x['_id']}")
+                    q_en = st.text_input('Frage (en)', x["q_en"], key = f"q_en_{x['_id']}")
+                    a_de = st.text_area('Antwort (de)', x["a_de"], placeholder="Antwort eingeben", key = f"a_de_{x['_id']}")
+                    a_en = st.text_area('Antwort (en)', x["a_en"], key = f"a_en_{x['_id']}")
+                    kommentar = st.text_area('Kommentar', x["kommentar"], key = f"kommentar_{x['_id']}")
+                    x_updated = {"category": cat_loc, "q_de": q_de, "q_en": q_en, "a_de": a_de, "a_en": a_en, "studiengang": studiengang_list, "kommentar": x['kommentar'] }
+                    save = st.button("Speichern", key=f"save-{x['_id']}")
+                    if save:
+                        tools.update_confirm(collection, x, x_updated)
             with co4:
-                st.button('↑', key=f'up-{x["_id"]}', on_click = move_up, args = (x, ))
-
+                with st.popover('Löschen', use_container_width=True):
+                    colu1, colu2, colu3 = st.columns([1,1,1])
+                    with colu1:
+                        submit = st.button(label = "Wirklich löschen!", type = 'primary', key = f"delete-{x['_id']}", on_click = tools.delete_item_update_dependent_items, args = (collection, x["_id"],))
+                    with colu3: 
+                        st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{x['_id']}")
 
     if submit:
         st.rerun()
