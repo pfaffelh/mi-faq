@@ -27,6 +27,9 @@ def savenew(ini):
     st.session_state.new_name_en = ""
     st.session_state.new_kommentar = ""
 
+st.write("new:")
+st.write(st.session_state.new)
+
 # Ab hier wird die Webseite erzeugt
 if st.session_state.logged_in:
     st.header("FAQ-Kategorien (Mitarbeiter*innen)")
