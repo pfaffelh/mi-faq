@@ -38,6 +38,71 @@ def change_expand_all():
     st.session_state.expand_all = (False if st.session_state.expand_all == True else True)
 
 def setup_session_state():
+    st.session_state.abhaengigkeit = {
+        studiengang: [{"collection": stu_qa, "field": "studiengang", "list": True}],
+        stu_category    : [{"collection": stu_qa, "field": "category", "list": False}],
+        mit_category    : [{"collection": mit_qa, "field": "category", "list": False}],
+        stu_qa    : [],
+        mit_qa    : [],
+        studiendekanat : []
+    }
+
+    st.session_state.leer = {
+        stu_category: stu_category.find_one({"name_de": "Unsichtbar"})["_id"],
+        mit_category: mit_category.find_one({"name_de": "Unsichtbar"})["_id"]}
+
+    st.session_state.new = {
+        studiengang: {"kurzname": "", 
+                "name_de": "", 
+                "name_en": "", 
+                "kommentar": ""},
+        stu_category: {"kurzname": "", 
+                "name_de": "", 
+                "name_en": "", 
+                "kommentar": ""},
+        stu_qa: { "category": st.session_state.leer[stu_category],
+                "studiengang": [],
+                "q_de": "",
+                "q_en": "",
+                "a_de": "",
+                "a_en": "",
+                "kommentar": ""
+                },
+        mit_category: {"kurzname": "", 
+                "name_de": "", 
+                "name_en": "", 
+                "kommentar": ""},
+        mit_qa: { "category": st.session_state.leer[mit_category],
+                "studiengang": [],
+                "q_de": "",
+                "q_en": "",
+                "a_de": "",
+                "a_en": "",
+                "kommentar": ""
+                },
+        studiendekanat:     {
+        "showstudiendekanat": False,
+        "showstudienberatung": False,
+        "showpruefungsamt": False,
+        "name_de": "",
+        "name_en": "",
+        "link": "",
+        "rolle_de": "",
+        "rolle_en": "",
+        "raum_de": "",
+        "raum_en": "",
+        "tel_de": "",
+        "tel_en": "",
+        "mail": "",
+        "sprechstunde_de": "",
+        "sprechstunde_en": "",
+        "prefix_de": "",
+        "prefix_en": "",
+        "text_de": "",
+        "text_en": ""
+        }
+    }
+
     if "new_kurzname" not in st.session_state:
         st.session_state.new_kurzname = "" 
     if "new_name_de" not in st.session_state:
@@ -71,8 +136,6 @@ def setup_session_state():
     # Element to update
     if "update" not in st.session_state:
         st.session_state.update = False
-    if "new" not in st.session_state:
-        st.session_state.new = False
     # Element to delete
     if "delete" not in st.session_state:
         st.session_state.delete = False
@@ -139,77 +202,12 @@ except:
     logger.error("Verbindung zur Datenbank nicht möglich!")
     st.write("**Verbindung zur Datenbank nicht möglich!**  \nKontaktieren Sie den Administrator.")
 
-collection_name = {
-    studiengang: "Studiengang",
-    stu_qa: "Frage-Antwort-Paar (Studierende)",
-    stu_category: "Kategorie (Studierende)",
-    mit_qa: "Frage-Antwort-Paar (Mitarbeiter*innen)",
-    mit_category: "Kategorie (Mitarbeiter*innen)",
-    studiendekanat: "Studiendekanat"    
-}
-
-st.session_state.abhaengigkeit = {
-    studiengang: [{"collection": stu_qa, "field": "studiengang", "list": True}],
-    stu_category    : [{"collection": stu_qa, "field": "category", "list": False}],
-    mit_category    : [{"collection": mit_qa, "field": "category", "list": False}],
-    stu_qa    : [],
-    mit_qa    : [],
-    studiendekanat : []
-}
-
-st.session_state.leer = {
-    stu_category: stu_category.find_one({"name_de": "Unsichtbar"})["_id"],
-    mit_category: mit_category.find_one({"name_de": "Unsichtbar"})["_id"]}
-
-st.session_state.new = {
-    studiengang: {"kurzname": "", 
-            "name_de": "", 
-            "name_en": "", 
-            "kommentar": ""},
-    stu_category: {"kurzname": "", 
-            "name_de": "", 
-            "name_en": "", 
-            "kommentar": ""},
-    stu_qa: { "category": st.session_state.leer[stu_category],
-             "studiengang": [],
-             "q_de": "",
-             "q_en": "",
-             "a_de": "",
-             "a_en": "",
-             "kommentar": ""
-               },
-    mit_category: {"kurzname": "", 
-            "name_de": "", 
-            "name_en": "", 
-            "kommentar": ""},
-    mit_qa: { "category": st.session_state.leer[mit_category],
-             "studiengang": [],
-             "q_de": "",
-             "q_en": "",
-             "a_de": "",
-             "a_en": "",
-             "kommentar": ""
-               },
-    studiendekanat:     {
-      "showstudiendekanat": False,
-      "showstudienberatung": False,
-      "showpruefungsamt": False,
-      "name_de": "",
-      "name_en": "",
-      "link": "",
-      "rolle_de": "",
-      "rolle_en": "",
-      "raum_de": "",
-      "raum_en": "",
-      "tel_de": "",
-      "tel_en": "",
-      "mail": "",
-      "sprechstunde_de": "",
-      "sprechstunde_en": "",
-      "prefix_de": "",
-      "prefix_en": "",
-      "text_de": "",
-      "text_en": ""
+    collection_name = {
+        studiengang: "Studiengang",
+        stu_qa: "Frage-Antwort-Paar (Studierende)",
+        stu_category: "Kategorie (Studierende)",
+        mit_qa: "Frage-Antwort-Paar (Mitarbeiter*innen)",
+        mit_category: "Kategorie (Mitarbeiter*innen)",
+        studiendekanat: "Studiendekanat"    
     }
-}
 
