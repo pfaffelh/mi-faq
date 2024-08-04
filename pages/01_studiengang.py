@@ -61,9 +61,7 @@ if st.session_state.logged_in:
             with st.popover('Löschen', use_container_width=True):
                 colu1, colu2, colu3 = st.columns([1,1,1])
                 with colu1:
-                    submit = st.button(label = "Wirklich löschen!", type = 'primary', key = f"delete-{x['_id']}")
-                if submit: 
-                    tools.delete_item_update_dependent_items(collection, x["_id"])
+                    submit = st.button(label = "Wirklich löschen!", type = 'primary', key = f"delete-{x['_id']}", on_click = tools.delete_item_update_dependent_items, args = (collection, x["_id"],))
                 with colu3: 
                     st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{x['_id']}")
 else: 
