@@ -54,7 +54,7 @@ def move_down(collection, x, query = {}):
         collection.update_one({"_id": x["_id"]}, {"$set": {"rang": n}})    
 
 def update_confirm(collection, x, x_updated, reset = True):
-    util.logger.info(f"User {st.session_state.user} hat in {util.collection_name[collection]} Item {repr(collection, x['_id'])} geändert.")
+    util.logger.info(f"User {st.session_state.user} hat in {st.session_state.collection_name[collection]} Item {repr(collection, x['_id'])} geändert.")
     collection.update_one({"_id" : x["_id"]}, {"$set": x_updated })
     if reset:
         reset_vars("")
@@ -91,9 +91,9 @@ def new(collection, ini = {}, switch = False):
     st.session_state.new[collection].pop("_id", None)
     x = collection.insert_one(st.session_state.new[collection])
     st.session_state.edit=x.inserted_id
-    util.logger.info(f"User {st.session_state.user} hat in {util.collection_name[collection]} ein neues Item angelegt.")
+    util.logger.info(f"User {st.session_state.user} hat in {st.session_state.collection_name[collection]} ein neues Item angelegt.")
     if switch:
-        switch_page(f"{util.collection_name[collection].lower()} edit")
+        switch_page(f"{st.session_state.collection_name[collection].lower()} edit")
 
 # Finde in collection.field die id, und gebe im Datensatz return_field zurück. Falls list=True,
 # dann ist collection.field ein array.
@@ -118,18 +118,18 @@ def delete_item_update_dependent_items(collection, id, switch = False):
             if x["list"]:
                 x["collection"].update_many({x["field"].replace(".$",""): { "$elemMatch": { "$eq": id }}}, {"$pull": { x["field"] : id}})
             else:
-                st.write(util.collection_name[x["collection"]])
+                st.write(st.session_state.collection_name[x["collection"]])
                 x["collection"].update_many({x["field"]: id}, { "$set": { x["field"].replace(".", ".$."): st.session_state.leer[collection]}})
         s = ("  \n".join(find_dependent_items(collection, id)))
         if s:
             s = f"\n{s}  \ngeändert."     
-        util.logger.info(f"User {st.session_state.user} hat in {util.collection_name[collection]} item {repr(collection, id)} gelöscht, und abhängige Felder geändert.")
+        util.logger.info(f"User {st.session_state.user} hat in {st.session_state.collection_name[collection]} item {repr(collection, id)} gelöscht, und abhängige Felder geändert.")
         collection.delete_one({"_id": id})
         reset_vars("")
         st.success(f"🎉 Erfolgreich gelöscht!  {s}")
         time.sleep(1)
         if switch:
-            switch_page(util.collection_name[collection].lower())
+            switch_page(st.session_state.collection_name[collection].lower())
 
 # short Version ohne abhängige Variablen
 def repr(collection, id, show_collection = True, short = False):
@@ -147,7 +147,7 @@ def repr(collection, id, show_collection = True, short = False):
     elif collection == util.studiendekanat:
         res = f"{x['name_de']} ({x['rolle_de']})"
     if show_collection:
-        res = f"{util.collection_name[collection]}: {res}"
+        res = f"{st.session_state.collection_name[collection]}: {res}"
     return res
 
 

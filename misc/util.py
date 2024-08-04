@@ -103,6 +103,14 @@ def setup_session_state():
         }
     }
 
+    st.session_state.collection_name = {
+        studiengang: "Studiengang",
+        stu_qa: "Frage-Antwort-Paar (Studierende)",
+        stu_category: "Kategorie (Studierende)",
+        mit_qa: "Frage-Antwort-Paar (Mitarbeiter*innen)",
+        mit_category: "Kategorie (Mitarbeiter*innen)",
+        studiendekanat: "Studiendekanat"    
+    }
     if "new_kurzname" not in st.session_state:
         st.session_state.new_kurzname = "" 
     if "new_name_de" not in st.session_state:
@@ -202,12 +210,4 @@ except:
     logger.error("Verbindung zur Datenbank nicht möglich!")
     st.write("**Verbindung zur Datenbank nicht möglich!**  \nKontaktieren Sie den Administrator.")
 
-    collection_name = {
-        studiengang: "Studiengang",
-        stu_qa: "Frage-Antwort-Paar (Studierende)",
-        stu_category: "Kategorie (Studierende)",
-        mit_qa: "Frage-Antwort-Paar (Mitarbeiter*innen)",
-        mit_category: "Kategorie (Mitarbeiter*innen)",
-        studiendekanat: "Studiendekanat"    
-    }
 
