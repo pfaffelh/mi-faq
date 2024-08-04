@@ -85,7 +85,7 @@ def new(collection, ini = {}, switch = False):
         rang = z[0]["rang"]-1
     except:
         rang = 0
-    st.session_state.new[collection]["rang"] = rang    
+    (st.session_state.new[collection])["rang"] = rang    
     for key, value in ini.items():
         st.session_state.new[collection][key] = value
     st.session_state.new[collection].pop("_id", None)
