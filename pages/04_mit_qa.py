@@ -46,7 +46,7 @@ if st.session_state.logged_in:
             a_de = st.text_input("Antwort (de)", "", key = "new_a_de")
             a_en = st.text_input("Antwort (en)", "", key = "new_a_en")
             kommentar = st.text_input("Kommentar", "", key = "new_kommentar")
-            btn = st.button("QA-Paar anlegen", on_click = savenew, args = [{"q_de": q_de, "q_en": q_en, "a_de": a_de, "a_en": a_en, "kommentar": kommentar,},])
+            btn = st.button("QA-Paar anlegen", on_click = savenew, args = [{"category" : cat, "q_de": q_de, "q_en": q_en, "a_de": a_de, "a_en": a_en, "kommentar": kommentar,},])
 
         for x in y:
             co1, co2, co3, co4 = st.columns([1,1,20,4]) 

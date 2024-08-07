@@ -42,13 +42,13 @@ if st.session_state.logged_in:
     if cat is not None:
         y = list(util.stu_qa.find({"category": cat}, sort=[("rang", pymongo.ASCENDING)]))        
         with st.popover(f'Neues QA-Paar anlegen'):
-            studiengang_list = st.multiselect("Studiengänge (alle, falls keiner angegeben ist)", [x['_id'] for x in util.studiengang.find({}, sort = [("rang", pymongo.ASCENDING)])], [], format_func = (lambda a: tools.repr(util.studiengang, a, False)), placeholder = "Bitte auswählen", key = "new_stu_list")
+            studiengang_list = st.multiselect("Studiengänge (alle, falls keiner angegeben ist)", options = [x['_id'] for x in util.studiengang.find({}, sort = [("rang", pymongo.ASCENDING)])],  format_func = (lambda a: tools.repr(util.studiengang, a, False)), placeholder = "Bitte auswählen", key = "new_stu_list")
             q_de = st.text_input("Frage (de)", "", key = "new_q_de")
             q_en = st.text_input("Frage (en)", "", key = "new_q_en")
             a_de = st.text_input("Antwort (de)", "", key = "new_a_de")
             a_en = st.text_input("Antwort (en)", "", key = "new_a_en")
             kommentar = st.text_input("Kommentar", "", key = "new_kommentar")
-            btn = st.button("QA-Paar anlegen", on_click=savenew, args = [{"studiengang" : studiengang_list, "q_de": q_de, "q_en": q_en, "a_de": a_de, "a_en": a_en, "kommentar": kommentar,},])
+            btn = st.button("QA-Paar anlegen", on_click=savenew, args = ({"category": cat, "studiengang" : studiengang_list, "q_de": q_de, "q_en": q_en, "a_de": a_de, "a_en": a_en, "kommentar": kommentar,},))
 
         for x in y:
             co1, co2, co3, co4 = st.columns([1,1,20,4]) 
