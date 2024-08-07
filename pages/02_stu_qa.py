@@ -32,9 +32,9 @@ def savenew(ini):
 # Ab hier wird die Webseite erzeugt
 if st.session_state.logged_in:
     st.header("Frage-Antwort-Paare (Studierende)")
-
+    st.write("[DeepL Translator](https://www.deepl.com/de/translator)")
+    st.write("[HTML to Markdown Converter](https://htmlmarkdown.com/)")
     cats = list(util.stu_category.find(sort=[("rang", pymongo.ASCENDING)]))
-
     cat = st.selectbox(label="Kategorie", options = [x['_id'] for x in cats], index = None, format_func = (lambda id : tools.repr(util.stu_category, id, False)), placeholder = "Wähle eine Kategorie", label_visibility = "collapsed")
     st.session_state.category = cat
 
