@@ -63,7 +63,6 @@ if st.session_state.logged_in:
             with co3: 
                 with st.expander(f"{x['q_de']}", expanded = (True if x['_id'] == st.session_state.expanded else False)):
                     st.write(f"qa_{str(x['_id'])}")
-                    st.write(x["bearbeitet_de"])
                     
                     index = [cat['_id'] for cat in cats].index(x["category"])
                     
@@ -74,11 +73,11 @@ if st.session_state.logged_in:
                     a_en = st.text_area('Antwort (en)', x["a_en"], key = f"a_en_{x['_id']}")
                     kommentar = st.text_area('Kommentar', x["kommentar"], key = f"kommentar_{x['_id']}")
                     
-
                     x_updated = {"category": cat_loc, "q_de": q_de, "q_en": q_en, "a_de": a_de, "a_en": a_en, "kommentar": x['kommentar'], "bearbeitet_de": bearbeitet_de, "bearbeitet_en": bearbeitet_en}
                     save = st.button("Speichern", key=f"save-{x['_id']}")
                     if save:
                         tools.update_confirm(collection, x, x_updated)
+                    st.write(x["bearbeitet_de"])
             with co4:
                 with st.popover('Löschen', use_container_width=True):
                     colu1, colu2, colu3 = st.columns([1,1,1])
