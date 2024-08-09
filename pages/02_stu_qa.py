@@ -2,6 +2,7 @@ import streamlit as st
 from streamlit_extras.switch_page_button import switch_page 
 import time
 import pymongo
+from datetime import datetime
 
 # Seiten-Layout
 st.set_page_config(page_title="FAQ", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items=None)
@@ -19,6 +20,10 @@ tools.display_navigation()
 
 # Es geht hier vor allem um diese Collection:
 collection = util.stu_qa
+date_format_de = '%d.%m.%Y um %H:%M.'
+date_format_en = '%d/%m/%Y at %H:%M.'
+bearbeitet_de = f"Zuletzt bearbeitet von {st.session_state.username} am {datetime.now().strftime(date_format_de)}"
+bearbeitet_en = f"Last edited by {st.session_state.username} on {datetime.now().strftime(date_format_en)}"                    
 
 def savenew(ini):
     tools.new(collection, ini = ini, switch = False)
@@ -48,7 +53,7 @@ if st.session_state.logged_in:
             a_de = st.text_input("Antwort (de)", "", key = "new_a_de")
             a_en = st.text_input("Antwort (en)", "", key = "new_a_en")
             kommentar = st.text_input("Kommentar", "", key = "new_kommentar")
-            btn = st.button("QA-Paar anlegen", on_click=savenew, args = ({"category": cat, "studiengang" : studiengang_list, "q_de": q_de, "q_en": q_en, "a_de": a_de, "a_en": a_en, "kommentar": kommentar,},))
+            btn = st.button("QA-Paar anlegen", on_click=savenew, args = ({"category": cat, "studiengang" : studiengang_list, "q_de": q_de, "q_en": q_en, "a_de": a_de, "a_en": a_en, "kommentar": kommentar, "bearbeitet_de": bearbeitet_de, "bearbeitet_en": bearbeitet_en, },))
 
         for x in y:
             co1, co2, co3, co4 = st.columns([1,1,20,4]) 
@@ -59,8 +64,9 @@ if st.session_state.logged_in:
             with co3: 
                 with st.expander(f"{x['q_de']}", expanded = (True if x['_id'] == st.session_state.expanded else False)):
                     st.write(f"qa_{str(x['_id'])}")
+                    st.write(x["bearbeitet_de"])
                     index = [cat['_id'] for cat in cats].index(x["category"])
-                    
+                                        
                     cat_loc = st.selectbox(label="Kategorie", options = [z['_id'] for z in cats], index = ([z['_id'] for z in cats]).index(x["category"]), format_func = lambda id: tools.repr(util.stu_category, id, False), placeholder = "Wähle eine Kategorie", label_visibility = "collapsed", key = f"stu_cat_{x['_id']}")
                     studiengang_list = st.multiselect("Studiengänge (alle, falls keiner angegeben ist)", [x['_id'] for x in util.studiengang.find({}, sort = [("rang", pymongo.ASCENDING)])], x["studiengang"], format_func = (lambda a: tools.repr(util.studiengang, a, False)), placeholder = "Bitte auswählen", key = f"stu_list_{x['_id']}")
                     q_de = st.text_input('Frage (de)', x["q_de"], placeholder="Frage eingeben", key = f"q_de_{x['_id']}")
@@ -68,7 +74,7 @@ if st.session_state.logged_in:
                     a_de = st.text_area('Antwort (de)', x["a_de"], placeholder="Antwort eingeben", key = f"a_de_{x['_id']}")
                     a_en = st.text_area('Antwort (en)', x["a_en"], key = f"a_en_{x['_id']}")
                     kommentar = st.text_area('Kommentar', x["kommentar"], key = f"kommentar_{x['_id']}")
-                    x_updated = {"category": cat_loc, "q_de": q_de, "q_en": q_en, "a_de": a_de, "a_en": a_en, "studiengang": studiengang_list, "kommentar": x['kommentar'] }
+                    x_updated = {"category": cat_loc, "q_de": q_de, "q_en": q_en, "a_de": a_de, "a_en": a_en, "studiengang": studiengang_list, "kommentar": x['kommentar'], "bearbeitet_de": bearbeitet_de, "bearbeitet_en": bearbeitet_en}
                     save = st.button("Speichern", key=f"save-{x['_id']}")
                     if save:
                         tools.update_confirm(collection, x, x_updated)

@@ -139,6 +139,8 @@ def setup_session_state():
     # Name of the user
     if "user" not in st.session_state:
         st.session_state.user = ""
+    if "username" not in st.session_state:
+        st.session_state.username = ""
     if "logged_in" not in st.session_state:
         st.session_state.logged_in = False
     # Element to update
@@ -202,6 +204,10 @@ try:
     mit_qa = mongo_db["mit_qa"]
     studiendekanat = mongo_db["studiendekanat"]
     user = mongo_db_users["user"]
+
+    u = user.find_one({"rz": st.session_state.user})
+    st.session_state.username = " ".join([u["vorname"], u["name"]])
+
     group = mongo_db_users["group"]
     logger.debug("Connected to MongoDB")
     logger.debug("Database contains collections: ")
@@ -209,5 +215,4 @@ try:
 except: 
     logger.error("Verbindung zur Datenbank nicht möglich!")
     st.write("**Verbindung zur Datenbank nicht möglich!**  \nKontaktieren Sie den Administrator.")
-
 

@@ -27,7 +27,6 @@ with placeholder.form("login"):
     submit = st.form_submit_button("Login")
     st.session_state.user = kennung
 
-
 if submit:
     if tools.authenticate(kennung, password): 
         if tools.can_edit(kennung):
