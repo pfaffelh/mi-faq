@@ -19,9 +19,9 @@ import misc.tools as tools
 tools.display_navigation()
 
 # Es geht hier vor allem um diese Collection:
-collection = util.stu_qa
-date_format_de = '%d.%m.%Y um %H:%M.'
-date_format_en = '%d/%m/%Y at %H:%M.'
+collection = st.session_state.stu_qa
+date_format_de = '%d.%m.%Y um %H:%M:%S.'
+date_format_en = '%d/%m/%Y at %H:%M:%S.'
 bearbeitet_de = f"Zuletzt bearbeitet von {st.session_state.username} am {datetime.now().strftime(date_format_de)}"
 bearbeitet_en = f"Last edited by {st.session_state.username} on {datetime.now().strftime(date_format_en)}"                    
 
@@ -39,15 +39,15 @@ if st.session_state.logged_in:
     st.header("Frage-Antwort-Paare (Studierende)")
     st.write("[DeepL Translator](https://www.deepl.com/de/translator)")
     st.write("[HTML to Markdown Converter](https://htmlmarkdown.com/)")
-    cats = list(util.stu_category.find(sort=[("rang", pymongo.ASCENDING)]))
-    cat = st.selectbox(label="Kategorie", options = [x['_id'] for x in cats], index = None, format_func = (lambda id : tools.repr(util.stu_category, id, False)), placeholder = "Wähle eine Kategorie", label_visibility = "collapsed")
+    cats = list(st.session_state.stu_category.find(sort=[("rang", pymongo.ASCENDING)]))
+    cat = st.selectbox(label="Kategorie", options = [x['_id'] for x in cats], index = None, format_func = (lambda id : tools.repr(st.session_state.stu_category, id, False)), placeholder = "Wähle eine Kategorie", label_visibility = "collapsed")
     st.session_state.category = cat
 
     submit = False
     if cat is not None:
-        y = list(util.stu_qa.find({"category": cat}, sort=[("rang", pymongo.ASCENDING)]))        
+        y = list(st.session_state.stu_qa.find({"category": cat}, sort=[("rang", pymongo.ASCENDING)]))        
         with st.popover(f'Neues QA-Paar anlegen'):
-            studiengang_list = st.multiselect("Studiengänge (alle, falls keiner angegeben ist)", options = [x['_id'] for x in util.studiengang.find({}, sort = [("rang", pymongo.ASCENDING)])],  format_func = (lambda a: tools.repr(util.studiengang, a, False)), placeholder = "Bitte auswählen", key = "new_stu_list")
+            studiengang_list = st.multiselect("Studiengänge (alle, falls keiner angegeben ist)", options = [x['_id'] for x in st.session_state.studiengang.find({}, sort = [("rang", pymongo.ASCENDING)])],  format_func = (lambda a: tools.repr(st.session_state.studiengang, a, False)), placeholder = "Bitte auswählen", key = "new_stu_list")
             q_de = st.text_input("Frage (de)", "", key = "new_q_de")
             q_en = st.text_input("Frage (en)", "", key = "new_q_en")
             a_de = st.text_input("Antwort (de)", "", key = "new_a_de")
@@ -66,8 +66,8 @@ if st.session_state.logged_in:
                     st.write(f"qa_{str(x['_id'])}")
                     index = [cat['_id'] for cat in cats].index(x["category"])
                                         
-                    cat_loc = st.selectbox(label="Kategorie", options = [z['_id'] for z in cats], index = ([z['_id'] for z in cats]).index(x["category"]), format_func = lambda id: tools.repr(util.stu_category, id, False), placeholder = "Wähle eine Kategorie", label_visibility = "collapsed", key = f"stu_cat_{x['_id']}")
-                    studiengang_list = st.multiselect("Studiengänge (alle, falls keiner angegeben ist)", [x['_id'] for x in util.studiengang.find({}, sort = [("rang", pymongo.ASCENDING)])], x["studiengang"], format_func = (lambda a: tools.repr(util.studiengang, a, False)), placeholder = "Bitte auswählen", key = f"stu_list_{x['_id']}")
+                    cat_loc = st.selectbox(label="Kategorie", options = [z['_id'] for z in cats], index = ([z['_id'] for z in cats]).index(x["category"]), format_func = lambda id: tools.repr(st.session_state.stu_category, id, False), placeholder = "Wähle eine Kategorie", label_visibility = "collapsed", key = f"stu_cat_{x['_id']}")
+                    studiengang_list = st.multiselect("Studiengänge (alle, falls keiner angegeben ist)", [x['_id'] for x in st.session_state.studiengang.find({}, sort = [("rang", pymongo.ASCENDING)])], x["studiengang"], format_func = (lambda a: tools.repr(st.session_state.studiengang, a, False)), placeholder = "Bitte auswählen", key = f"stu_list_{x['_id']}")
                     q_de = st.text_input('Frage (de)', x["q_de"], placeholder="Frage eingeben", key = f"q_de_{x['_id']}")
                     q_en = st.text_input('Frage (en)', x["q_en"], key = f"q_en_{x['_id']}")
                     a_de = st.text_area('Antwort (de)', x["a_de"], placeholder="Antwort eingeben", key = f"a_de_{x['_id']}")
@@ -93,4 +93,4 @@ if st.session_state.logged_in:
 else:
   switch_page("FAQ")
 
-st.sidebar.button("logout", on_click = util.logout)
+st.sidebar.button("logout", on_click = tools.logout)

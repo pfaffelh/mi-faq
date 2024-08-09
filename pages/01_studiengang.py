@@ -18,7 +18,7 @@ import misc.tools as tools
 tools.display_navigation()
 
 # Es geht hier vor allem um diese Collection:
-collection = util.studiengang
+collection = st.session_state.studiengang
 
 def savenew(ini):
     tools.new(collection, ini = ini, switch = False)

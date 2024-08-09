@@ -29,15 +29,32 @@ def logout():
     st.session_state.logged_in = False
     logger.info(f"User {st.session_state.user} hat sich ausgeloggt.")
 
-# Sprache zwischen Deutsch und Englisch hin- und herwechseln
-def change_lang():
-    st.session_state.lang = ("de" if st.session_state.lang == "en" else "en")
-
-# Wechseln zwischen Aus- und Einklappen aller Fragen
-def change_expand_all():
-    st.session_state.expand_all = (False if st.session_state.expand_all == True else True)
-
 def setup_session_state():
+    # Das ist die mongodb; 
+    # QA-Paar ist ein Frage-Antwort-Paar aus dem FAQ.
+    # category enthält alle Kategorien von QA-Paaren. "invisible" muss es geben!
+    # qa enthält alle Frage-Antwort-Paare.
+    # user ist aus dem Cluster users und wird nur bei der Authentifizierung benötigt
+    try:
+        cluster = pymongo.MongoClient(mongo_location)
+        mongo_db = cluster["faq"]
+        mongo_db_users = cluster["user"]
+        studiengang = st.session_state.studiengang = mongo_db["studiengang"]
+        stu_category = st.session_state.stu_category = mongo_db["stu_category"]
+        stu_qa = st.session_state.stu_qa = mongo_db["stu_qa"]
+        mit_category = st.session_state.mit_category = mongo_db["mit_category"]
+        mit_qa = st.session_state.mit_qa = mongo_db["mit_qa"]
+        studiendekanat = st.session_state.studiendekanat = mongo_db["studiendekanat"]
+        st.session_state.users = mongo_db_users["user"]
+        st.session_state.group = mongo_db_users["group"]
+        logger.debug("Connected to MongoDB")
+        logger.debug("Database contains collections: ")
+        logger.debug(str(mongo_db.list_collection_names()))
+    except: 
+        logger.error("Verbindung zur Datenbank nicht möglich!")
+        st.write("**Verbindung zur Datenbank nicht möglich!**  \nKontaktieren Sie den Administrator.")
+
+    
     st.session_state.abhaengigkeit = {
         studiengang: [{"collection": stu_qa, "field": "studiengang", "list": True}],
         stu_category    : [{"collection": stu_qa, "field": "category", "list": False}],
@@ -164,10 +181,6 @@ def setup_session_state():
         st.session_state.new_stu_list = []
 
 
-# Diese Funktion löschen, wenn die Verbindung sicher ist.
-#def authenticate2(username, password):
-#    return True if password == "0761" else False
-
 # Die Authentifizierung gegen den Uni-LDAP-Server
 def authenticate(username, password):
     ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
@@ -184,34 +197,9 @@ def authenticate(username, password):
         return False
 
 def can_edit(username):
-    u = user.find_one({"rz": username})
-    faq_id = group.find_one({"name": "faq"})["_id"]
+    u = st.session_state.users.find_one({"rz": username})
+    faq_id = st.session_state.group.find_one({"name": "faq"})["_id"]
     return (True if faq_id in u["groups"] else False)
 
-# Das ist die mongodb; 
-# QA-Paar ist ein Frage-Antwort-Paar aus dem FAQ.
-# category enthält alle Kategorien von QA-Paaren. "invisible" muss es geben!
-# qa enthält alle Frage-Antwort-Paare.
-# user ist aus dem Cluster users und wird nur bei der Authentifizierung benötigt
-try:
-    cluster = pymongo.MongoClient(mongo_location)
-    mongo_db = cluster["faq"]
-    mongo_db_users = cluster["user"]
-    studiengang = mongo_db["studiengang"]
-    stu_category = mongo_db["stu_category"]
-    stu_qa = mongo_db["stu_qa"]
-    mit_category = mongo_db["mit_category"]
-    mit_qa = mongo_db["mit_qa"]
-    studiendekanat = mongo_db["studiendekanat"]
-    user = mongo_db_users["user"]
-    u = user.find_one({"rz": st.session_state.username})
-    st.session_state.username = " ".join([u["vorname"], u["name"]])
-    group = mongo_db_users["group"]
-    logger.debug("Connected to MongoDB")
-    logger.debug("Database contains collections: ")
-    logger.debug(str(mongo_db.list_collection_names()))
-except: 
-    logger.error("Verbindung zur Datenbank nicht möglich!")
-    st.write("**Verbindung zur Datenbank nicht möglich!**  \nKontaktieren Sie den Administrator.")
 
 

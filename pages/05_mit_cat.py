@@ -18,7 +18,7 @@ import misc.tools as tools
 tools.display_navigation()
 
 # Es geht hier vor allem um diese Collection:
-collection = util.mit_category
+collection = st.session_state.mit_category
 
 def savenew(ini):
     tools.new(collection, ini = ini, switch = False)
@@ -61,7 +61,7 @@ if st.session_state.logged_in:
         with co4:
             with st.popover('Löschen', use_container_width=True):
                 st.write("Folgende Fragen sind in dieser Kategorie:")
-                st.write("\n\n".join([x["q_de"] for x in list(util.stu_qa.find({"category": x["_id"]}))]))
+                st.write("\n\n".join([x["q_de"] for x in list(st.session_state.stu_qa.find({"category": x["_id"]}))]))
                 colu1, colu2, colu3 = st.columns([1,1,1])
                 with colu1:                  
                     submit = st.button(label = "Wirklich löschen!", type = 'primary', key = f"delete-{x['_id']}", on_click = tools.delete_item_update_dependent_items, args = (collection, x["_id"], ))

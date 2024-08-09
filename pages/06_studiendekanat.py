@@ -18,7 +18,7 @@ import misc.tools as tools
 tools.display_navigation()
 
 # Es geht hier vor allem um diese Collection:
-collection = util.studiendekanat
+collection = st.session_state.studiendekanat
 
 def savenew(ini):
     tools.new(collection, ini = ini, switch = False)
@@ -30,6 +30,7 @@ if st.session_state.logged_in:
     y = list(collection.find({}, sort=[("rang", pymongo.ASCENDING)]))
     st.header("Personen und Personengruppen")
     st.write("Für diese werden hier Kontaktdaten und Sprechstunden angegeben.")
+    st.write("Siehe [Studienberatung (de)](http://gateway.mathematik.uni-freiburg.de/de/studiendekanat/), [Studienberatung (en)](http://gateway.mathematik.uni-freiburg.de/en/studiendekanat/), sowie [Prüfungsamt (de)](http://gateway.mathematik.uni-freiburg.de/de/studiendekanat/pruefungsamt/) und [Prüfungsamt (en)](http://gateway.mathematik.uni-freiburg.de/en/studiendekanat/pruefungsamt/)")
     with st.popover(f'Neue Person/Personengruppe anlegen.'):
         name_de = st.text_input("Name (de)", "", key = "new_name_de")
         rolle_de = st.text_input("Rolle (de)", "", key = "new_rolle_de")
@@ -42,7 +43,8 @@ if st.session_state.logged_in:
             st.button('↑', key=f'up-{x["_id"]}', on_click = tools.move_up, args = (collection, x, ))
         with co3:
             with st.expander(tools.repr(collection, x["_id"], False)):
-                showstudiendekanat = st.toggle("In Studiendekanat anzeigen", x["showstudiendekanat"], key = f"showstudiendekanat_{x['_id']}")
+                # showstudiendekanat = st.toggle("In Studiendekanat anzeigen", x["showstudiendekanat"], key = f"showstudiendekanat_{x['_id']}")
+                showstudiendekanat = True
                 showstudienberatung = st.toggle("In Studienberatung anzeigen", x["showstudienberatung"], key = f"showstudienberatung_{x['_id']}")
                 showpruefungsamt = st.toggle("In Prüfungsamt anzeigen", x["showpruefungsamt"], key = f"showpruefungsamt_{x['_id']}")
                 name_de = st.text_input("Name (de)", x["name_de"], key = f"name_de_{x['_id']}")

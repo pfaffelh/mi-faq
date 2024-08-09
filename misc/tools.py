@@ -24,8 +24,8 @@ def authenticate(username, password):
         return False
 
 def can_edit(username):
-    u = util.user.find_one({"rz": username})
-    id = util.group.find_one({"name": app_name})["_id"]
+    u = st.session_state.users.find_one({"rz": username})
+    id = st.session_state.group.find_one({"name": app_name})["_id"]
     return (True if id in u["groups"] else False)
 
 def logout():
@@ -77,6 +77,7 @@ def display_navigation():
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
     st.sidebar.page_link("pages/06_studiendekanat.py", label="Studiendekanat")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
+    #st.sidebar.page_link("pages/10_Hilfe.py", label="Dokumentation")
 
 def new(collection, ini = {}, switch = False):
     z = list(collection.find(sort = [("rang", pymongo.ASCENDING)]))
@@ -134,17 +135,17 @@ def delete_item_update_dependent_items(collection, id, switch = False):
 # short Version ohne abhängige Variablen
 def repr(collection, id, show_collection = True, short = False):
     x = collection.find_one({"_id": id})
-    if collection == util.studiengang:
+    if collection == st.session_state.studiengang:
         res = x['name_de']
-    elif collection == util.mit_category:
+    elif collection == st.session_state.mit_category:
         res = x['name_de']
-    elif collection == util.stu_category:
+    elif collection == st.session_state.stu_category:
         res = x['name_de']
-    elif collection == util.mit_qa:
+    elif collection == st.session_state.mit_qa:
         res = x['q_de']
-    elif collection == util.stu_qa:
+    elif collection == st.session_state.stu_qa:
         res = x['q_de']
-    elif collection == util.studiendekanat:
+    elif collection == st.session_state.studiendekanat:
         res = f"{x['name_de']} ({x['rolle_de']})"
     if show_collection:
         res = f"{st.session_state.collection_name[collection]}: {res}"
@@ -156,8 +157,4 @@ def reset_and_confirm(text=None):
     st.session_state.expanded = ""
     if text is not None:
         st.success(text)
-
-def name_of_kurzname(kurzname):
-    x = util.category.find_one({"kurzname": kurzname})
-    return x["name_de"]
 

@@ -1,5 +1,4 @@
 import streamlit as st
-from pymongo import ASCENDING
 import time
 from streamlit_extras.switch_page_button import switch_page 
 
@@ -29,6 +28,7 @@ with placeholder.form("login"):
 
 if submit:
     if tools.authenticate(kennung, password): 
+        st.session_state.user = kennung
         if tools.can_edit(kennung):
             # If the form is submitted and the email and password are correct,
             # clear the form/container and display a success message
@@ -36,11 +36,12 @@ if submit:
             st.session_state.logged_in = True
             st.success("Login successful")
             util.logger.info(f"User {st.session_state.user} hat in sich erfolgreich eingeloggt.")
+            u = st.session_state.users.find_one({"rz": st.session_state.user})
+            st.session_state.username = " ".join([u["vorname"], u["name"]])
             # make all neccesary variables available to session_state
-            util.setup_session_state()
             switch_page("studiengang")
         else:
-            st.error("Nicht genügend Rechte, um VVZ zu editieren.")
+            st.error("Nicht genügend Rechte, um FAQ zu editieren.")
             util.logger.info(f"User {kennung} hatte nicht gebügend Rechte, um sich einzuloggen.")
             time.sleep(2)
             st.rerun()
@@ -48,6 +49,5 @@ if submit:
         st.error("Login nicht korrekt, oder RZ-Authentifizierung nicht möglich. (Z.B., falls nicht mit VPN verbunden.)")
         util.logger.info(f"Ein falscher Anmeldeversuch.")
         time.sleep(2)
-#         st.rerun()
 
 
