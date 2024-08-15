@@ -2,6 +2,7 @@ import streamlit as st
 from misc.config import *
 import ldap
 import pymongo
+from datetime import datetime
 
 # Initialize logging
 import logging
@@ -116,7 +117,10 @@ def setup_session_state():
         "prefix_de": "",
         "prefix_en": "",
         "text_de": "",
-        "text_en": ""
+        "text_en": "",
+        "news_ende": datetime(2025,1,1,0,0),
+        "news_de": "",
+        "news_en": ""
         }
     }
 

@@ -70,8 +70,8 @@ if st.session_state.logged_in:
                     studiengang_list = st.multiselect("Studiengänge (alle, falls keiner angegeben ist)", [x['_id'] for x in st.session_state.studiengang.find({}, sort = [("rang", pymongo.ASCENDING)])], x["studiengang"], format_func = (lambda a: tools.repr(st.session_state.studiengang, a, False)), placeholder = "Bitte auswählen", key = f"stu_list_{x['_id']}")
                     q_de = st.text_input('Frage (de)', x["q_de"], placeholder="Frage eingeben", key = f"q_de_{x['_id']}")
                     q_en = st.text_input('Frage (en)', x["q_en"], key = f"q_en_{x['_id']}")
-                    a_de = st.text_area('Antwort (de)', x["a_de"], placeholder="Antwort eingeben", key = f"a_de_{x['_id']}")
-                    a_en = st.text_area('Antwort (en)', x["a_en"], key = f"a_en_{x['_id']}")
+                    a_de = st.text_area('Antwort (de)', x["a_de"], height = 500, placeholder="Antwort eingeben", key = f"a_de_{x['_id']}")
+                    a_en = st.text_area('Antwort (en)', x["a_en"], height = 500, key = f"a_en_{x['_id']}")
                     kommentar = st.text_area('Kommentar', x["kommentar"], key = f"kommentar_{x['_id']}")
                     x_updated = {"category": cat_loc, "q_de": q_de, "q_en": q_en, "a_de": a_de, "a_en": a_en, "studiengang": studiengang_list, "kommentar": x['kommentar'], "bearbeitet_de": bearbeitet_de, "bearbeitet_en": bearbeitet_en}
                     save = st.button("Speichern", key=f"save-{x['_id']}")

@@ -1,5 +1,6 @@
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page 
+from datetime import datetime
 import time
 import pymongo
 
@@ -63,9 +64,21 @@ if st.session_state.logged_in:
                 prefix_en = st.text_input("Prefix (en)", x["prefix_en"], key = f"prefix_en_{x['_id']}")
                 text_de = st.text_input("Text (de)", x["text_de"], key = f"text_de_{x['_id']}")
                 text_en = st.text_input("Text (en)", x["text_en"], key = f"text_en_{x['_id']}")
+
+                st.write("News")
+                st.write("Bis wann soll die News angezeigt werden?")
+                col1, col2 = st.columns([1,1])
+                with col1:
+                    news_ende_datum = st.date_input("News Ende Datum", value = x["news_ende"], format = "DD.MM.YYYY", label_visibility = "hidden", key = f"news_ende_{x['_id']}_datum")
+                with col2:
+                    news_ende_zeit = st.time_input("News Ende Zeit", value = x["news_ende"], label_visibility = "hidden", key = f"news_ende_{x['_id']}_zeit")
+                news_ende = datetime.combine(news_ende_datum, news_ende_zeit)
+                news_de = st.text_input("News (de)", x["news_de"], key = f"news_de_{x['_id']}")
+                news_en = st.text_input("News (en)", x["news_en"], key = f"news_en_{x['_id']}")
+
                 save = st.button("Speichern", key=f"save-{x['_id']}")
                 if save:
-                    collection.update_one({"_id": x["_id"]}, { "$set": {"showstudiendekanat" : showstudiendekanat, "showstudienberatung": showstudienberatung, "showpruefungsamt": showpruefungsamt, "name_de": name_de, "name_en": name_en, "link": link, "rolle_de": rolle_de, "rolle_en": rolle_en, "raum_de": raum_de, "raum_en":raum_en, "tel_de": tel_de, "tel_en": tel_en, "mail": mail, "sprechstunde_de": sprechstunde_de, "sprechstunde_en": sprechstunde_en, "prefix_de": prefix_de, "prefix_en": prefix_en, "text_de": text_de, "text_en": text_en}})
+                    collection.update_one({"_id": x["_id"]}, { "$set": {"showstudiendekanat" : showstudiendekanat, "showstudienberatung": showstudienberatung, "showpruefungsamt": showpruefungsamt, "name_de": name_de, "name_en": name_en, "link": link, "rolle_de": rolle_de, "rolle_en": rolle_en, "raum_de": raum_de, "raum_en":raum_en, "tel_de": tel_de, "tel_en": tel_en, "mail": mail, "sprechstunde_de": sprechstunde_de, "sprechstunde_en": sprechstunde_en, "prefix_de": prefix_de, "prefix_en": prefix_en, "text_de": text_de, "text_en": text_en, "news_ende": news_ende, "news_de": news_de, "news_en": news_en}})
                     st.toast("Erfolgreich gespeichert!")
                     time.sleep(0.5)
                     st.rerun()
