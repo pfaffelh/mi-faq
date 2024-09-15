@@ -62,8 +62,8 @@ if st.session_state.logged_in:
                 sprechstunde_en = st.text_input("Sprechstunde (en)", x["sprechstunde_en"], key = f"sprechstunde_en_{x['_id']}")
                 prefix_de = st.text_input("Prefix (de)", x["prefix_de"], key = f"prefix_de_{x['_id']}")
                 prefix_en = st.text_input("Prefix (en)", x["prefix_en"], key = f"prefix_en_{x['_id']}")
-                text_de = st.text_input("Text (de)", x["text_de"], key = f"text_de_{x['_id']}")
-                text_en = st.text_input("Text (en)", x["text_en"], key = f"text_en_{x['_id']}")
+                text_de = st.text_area("Text (de)", x["text_de"], key = f"text_de_{x['_id']}")
+                text_en = st.text_area("Text (en)", x["text_en"], key = f"text_en_{x['_id']}")
 
                 st.write("News")
                 st.write("Bis wann soll die News angezeigt werden?")
