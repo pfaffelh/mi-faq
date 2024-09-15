@@ -31,7 +31,7 @@ if st.session_state.logged_in:
     y = list(collection.find({}, sort=[("rang", pymongo.ASCENDING)]))
     st.header("Personen und Personengruppen")
     st.write("Für diese werden hier Kontaktdaten und Sprechstunden angegeben.")
-    st.write("Siehe [Studienberatung (de)](http://gateway.mathematik.uni-freiburg.de/de/studiendekanat/), [Studienberatung (en)](http://gateway.mathematik.uni-freiburg.de/en/studiendekanat/), sowie [Prüfungsamt (de)](http://gateway.mathematik.uni-freiburg.de/de/studiendekanat/pruefungsamt/) und [Prüfungsamt (en)](http://gateway.mathematik.uni-freiburg.de/en/studiendekanat/pruefungsamt/)")
+    st.write("Siehe [Studienberatung (de)](https://www.math.uni-freiburg.de/nlehre/de/studiendekanat/), [Studienberatung (en)](https://www.math.uni-freiburg.de/nlehre/de/studiendekanat/), sowie [Prüfungsamt (de)](https://www.math.uni-freiburg.de/nlehre/de/studiendekanat/pruefungsamt/) und [Prüfungsamt (en)](https://www.math.uni-freiburg.de/nlehre/en/studiendekanat/pruefungsamt/)")
     with st.popover(f'Neue Person/Personengruppe anlegen.'):
         name_de = st.text_input("Name (de)", "", key = "new_name_de")
         rolle_de = st.text_input("Rolle (de)", "", key = "new_rolle_de")
