@@ -11,8 +11,8 @@ stu_qa = mongo_db["stu_qa"]
 # Diesem Schema soll die Datenbank am Ende der Änderung folgen
 import schema20240815
 
-mongo_db.command('collMod','stu_qa', validator=schema20240815.stu_qa_validator, validationLevel='off')
-mongo_db.command("collMod", "studiendekanat", validator = schema20240815.studiendekanat_validator, validationLevel='off')
+mongo_db.command('collMod','stu_qa', validator=schema20240815.stu_qa_validator, validationLevel='moderate')
+mongo_db.command("collMod", "studiendekanat", validator = schema20240815.studiendekanat_validator, validationLevel='moderate')
 
 # Ab hier wird die Datenbank verändert
 print("Ab hier wird verändert")
