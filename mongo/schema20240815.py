@@ -213,7 +213,7 @@ studiendekanat_validator = {
     "$jsonSchema": {
         "bsonType": "object",
         "title": "Beschreibung einer Person oder Personengruppe im Studiendekanat.",
-        "required": ["showstudiendekanat", "showstudienberatung", "showpruefungsamt", "name_de", "name_en", "link", "rolle_de", "rolle_en", "raum_de", "raum_en", "tel_de", "tel_en", "mail", "sprechstunde_de", "sprechstunde_en", "prefix_de", "prefix_en", "text_de", "text_en", "rang"],
+        "required": ["showstudiendekanat", "showstudienberatung", "showpruefungsamt", "name_de", "name_en", "link", "rolle_de", "rolle_en", "raum_de", "raum_en", "tel_de", "tel_en", "mail", "sprechstunde_de", "sprechstunde_en", "prefix_de", "prefix_en", "text_de", "text_en", "news_de", "news_en", "news_ende", "rang"],
         "properties": {
             "showstudiendekanat": {
                 "bsonType": "bool",
@@ -294,14 +294,6 @@ studiendekanat_validator = {
             "news_ende": {
                 "bsonType": "date",
                 "description": "Die Zeit, an dem die News nicht mehr angezeigt wird."
-            },
-            "news_de": {
-                "bsonType": "string",
-                "description": "Text in der Darstellung der Person oder Personengruppe (de). -- required"
-            },
-            "news_en": {
-                "bsonType": "string",
-                "description": "Text in der Darstellung der Person oder Personengruppe (en). -- required"
             },
              "rang": {
                 "bsonType": "int",
