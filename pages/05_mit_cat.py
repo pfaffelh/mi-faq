@@ -47,7 +47,7 @@ if st.session_state.logged_in:
             st.button('↑', key=f'up-{x["_id"]}', on_click = tools.move_up, args = (collection, x, ))
         with co3: 
             with st.expander(x["name_de"]):
-                st.write(f"stu_kat_{str(x['_id'])}")
+                st.write(f"mit_kat_{str(x['_id'])}")
                 kurzname = st.text_input("Kurzname", x["kurzname"], key = f"kurzname_{x['_id']}")
                 name_de = st.text_input("Name (de)", x["name_de"], key = f"name_de_{x['_id']}")
                 name_en = st.text_input("Name (en)", x["name_en"], key = f"name_en_{x['_id']}")
