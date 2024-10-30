@@ -18,7 +18,7 @@ import misc.tools as tools
 tools.display_navigation()
 
 # Es geht hier vor allem um diese Collection:
-collection = st.session_state.studiengang
+collection = st.session_state.sammlung
 
 def savenew(ini):
     tools.new(collection, ini = ini, switch = False)
@@ -29,26 +29,30 @@ def savenew(ini):
 
 # Ab hier wird die Webseite erzeugt
 if st.session_state.logged_in:
-    y = list(collection.find({}, sort=[("rang", pymongo.ASCENDING)]))
-    st.header("Studiengänge")
-    st.write("Diese werden in den Frage-Antworten für Studierende benötigt.")
-    with st.popover(f'Neuen Studiengang anlegen'):
+    st.header("FAQ-Sammlung")
+    st.write("Ein FAQ ist eine Sammlung. In jeder Sammlung gibt es mehrere Kategorien. Jedes Frage/Antwort-Paar ist einer Kategorie zugeordnet.")
+
+    with st.popover(f'Neuen Sammlung anlegen'):
         kurzname = st.text_input("Kurzname", "", key = "new_kurzname")
         name_de = st.text_input("Name (de)", "", key = "new_name_de")
         name_en = st.text_input("Name (en)", "", key = "new_name_en")
         kommentar = st.text_input("Kommentar", "", key = "new_kommentar")
-        btn = st.button("Studiengang anlegen", on_click=savenew, args = [{"kurzname" : kurzname, "name_de": name_de, "name_en": name_en, "kommentar": kommentar,},])
+        btn = st.button("Sammlung anlegen", on_click=savenew, args = [{"kurzname" : kurzname, "name_de": name_de, "name_en": name_en, "kommentar": kommentar,},])
+
+    y = list(collection.find(sort=[("rang", pymongo.ASCENDING)]))
+
     for x in y:
-        co1, co2, co3, co4 = st.columns([1,1,23,3]) 
+        co1, co2, co3, co4 = st.columns([1,1,20,2]) 
         with co1: 
             st.button('↓', key=f'down-{x["_id"]}', on_click = tools.move_down, args = (collection, x, ))
         with co2:
             st.button('↑', key=f'up-{x["_id"]}', on_click = tools.move_up, args = (collection, x, ))
-        with co3:
+        with co3: 
             with st.expander(x["name_de"]):
-                kurzname = st.text_input("Kurzname", x["kurzname"], key = f"kurzname_{x['_id']}")
-                name_de = st.text_input("Name (de)", x["name_de"], key = f"name_de_{x['_id']}")
-                name_en = st.text_input("Name (en)", x["name_en"], key = f"name_en_{x['_id']}")
+                st.write(f"sam_{str(x['_id'])}")
+                kurzname = st.text_input("Kurzname", x["kurzname"], key = f"kurzname_{x['_id']}", disabled = True if x["name_de"] == "Unsichtbar" else False)
+                name_de = st.text_input("Name (de)", x["name_de"], key = f"name_de_{x['_id']}", disabled = True if x["name_de"] == "Unsichtbar" else False)
+                name_en = st.text_input("Name (en)", x["name_en"], key = f"name_en_{x['_id']}", disabled = True if x["name_de"] == "Unsichtbar" else False)
                 kommentar = st.text_input("Kommentar", x["kommentar"], key = f"kommentar_{x['_id']}")
                 save = st.button("Speichern", key=f"save-{x['_id']}")
                 if save:
@@ -56,15 +60,15 @@ if st.session_state.logged_in:
                     st.toast("Erfolgreich gespeichert!")
                     time.sleep(0.5)
                     st.rerun()
-
         with co4:
             with st.popover('Löschen', use_container_width=True):
+                st.write("Es gibt folgende abhängige Items:")
                 colu1, colu2, colu3 = st.columns([1,1,1])
-                with colu1:
-                    submit = st.button(label = "Wirklich löschen!", type = 'primary', key = f"delete-{x['_id']}", on_click = tools.delete_item_update_dependent_items, args = (collection, x["_id"],))
+                with colu1:                  
+                    submit = st.button(label = "Wirklich löschen!", type = 'primary', key = f"delete-{x['_id']}", on_click = tools.delete_item_update_dependent_items, args = (collection, x["_id"], ))
                 with colu3: 
                     st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{x['_id']}")
 else: 
-    switch_page("FAQ")
+  switch_page("FAQ")
 
 st.sidebar.button("logout", on_click = tools.logout)

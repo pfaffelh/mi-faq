@@ -40,12 +40,11 @@ def setup_session_state():
         cluster = pymongo.MongoClient(mongo_location)
         mongo_db = cluster["faq"]
         mongo_db_users = cluster["user"]
-        studiengang = st.session_state.studiengang = mongo_db["studiengang"]
-        stu_category = st.session_state.stu_category = mongo_db["stu_category"]
-        stu_qa = st.session_state.stu_qa = mongo_db["stu_qa"]
-        mit_category = st.session_state.mit_category = mongo_db["mit_category"]
-        mit_qa = st.session_state.mit_qa = mongo_db["mit_qa"]
-        studiendekanat = st.session_state.studiendekanat = mongo_db["studiendekanat"]
+        st.session_state.sammlung = mongo_db["sammlung"]
+        st.session_state.category = mongo_db["category"]
+        st.session_state.qa = mongo_db["qa"]
+        st.session_state.dictionary = mongo_db["dictionary"]
+        st.session_state.studiendekanat = mongo_db["studiendekanat"]
         st.session_state.users = mongo_db_users["user"]
         st.session_state.group = mongo_db_users["group"]
         logger.debug("Connected to MongoDB")
@@ -55,82 +54,12 @@ def setup_session_state():
         logger.error("Verbindung zur Datenbank nicht möglich!")
         st.write("**Verbindung zur Datenbank nicht möglich!**  \nKontaktieren Sie den Administrator.")
 
-    
-    st.session_state.abhaengigkeit = {
-        studiengang: [{"collection": stu_qa, "field": "studiengang", "list": True}],
-        stu_category    : [{"collection": stu_qa, "field": "category", "list": False}],
-        mit_category    : [{"collection": mit_qa, "field": "category", "list": False}],
-        stu_qa    : [],
-        mit_qa    : [],
-        studiendekanat : []
-    }
-
-    st.session_state.leer = {
-        stu_category: stu_category.find_one({"name_de": "Unsichtbar"})["_id"],
-        mit_category: mit_category.find_one({"name_de": "Unsichtbar"})["_id"]}
-
-    st.session_state.new = {
-        studiengang: {"kurzname": "", 
-                "name_de": "", 
-                "name_en": "", 
-                "kommentar": ""},
-        stu_category: {"kurzname": "", 
-                "name_de": "", 
-                "name_en": "", 
-                "kommentar": ""},
-        stu_qa: { "category": st.session_state.leer[stu_category],
-                "studiengang": [],
-                "q_de": "",
-                "q_en": "",
-                "a_de": "",
-                "a_en": "",
-                "kommentar": ""
-                },
-        mit_category: {"kurzname": "", 
-                "name_de": "", 
-                "name_en": "", 
-                "kommentar": ""},
-        mit_qa: { "category": st.session_state.leer[mit_category],
-                "studiengang": [],
-                "q_de": "",
-                "q_en": "",
-                "a_de": "",
-                "a_en": "",
-                "kommentar": ""
-                },
-        studiendekanat:     {
-        "showstudiendekanat": False,
-        "showstudienberatung": False,
-        "showpruefungsamt": False,
-        "name_de": "",
-        "name_en": "",
-        "link": "",
-        "rolle_de": "",
-        "rolle_en": "",
-        "raum_de": "",
-        "raum_en": "",
-        "tel_de": "",
-        "tel_en": "",
-        "mail": "",
-        "sprechstunde_de": "",
-        "sprechstunde_en": "",
-        "prefix_de": "",
-        "prefix_en": "",
-        "text_de": "",
-        "text_en": "",
-        "news_ende": datetime(2025,1,1,0,0),
-        "news_de": "",
-        "news_en": ""
-        }
-    }
-
     st.session_state.collection_name = {
-        studiengang: "Studiengang",
-        stu_qa: "Frage-Antwort-Paar (Studierende)",
-        stu_category: "Kategorie (Studierende)",
-        mit_qa: "Frage-Antwort-Paar (Mitarbeiter*innen)",
-        mit_category: "Kategorie (Mitarbeiter*innen)",
-        studiendekanat: "Studiendekanat"    
+        st.session_state.sammlung: "Sammlung",
+        st.session_state.qa: "Frage-Antwort-Paar",
+        st.session_state.category: "Kategorie",
+        st.session_state.studiendekanat: "Studiendekanat",
+        st.session_state.dictionary: "Lexikon"    
     }
     if "new_kurzname" not in st.session_state:
         st.session_state.new_kurzname = "" 
@@ -157,6 +86,9 @@ def setup_session_state():
     # category gibt an, welche category angezeigt wird
     if "category" not in st.session_state:
         st.session_state.category = None
+    # sammlung gibt an, in welchem FAQ wir sind.
+    if "sammlung" not in st.session_state:
+        st.session_state.sammlung = None
     # Name of the user
     if "user" not in st.session_state:
         st.session_state.user = ""
@@ -183,6 +115,69 @@ def setup_session_state():
         st.session_state.new_a_en = ""
     if "new_stu_list" not in st.session_state:
         st.session_state.new_stu_list = []
+    if "edit" not in st.session_state:
+        st.session_state.edit = ""
+    
+    st.session_state.abhaengigkeit = {
+        st.session_state.sammlung        : [{"collection": st.session_state.category, "field": "sammlung", "list": True}],
+        st.session_state.category    : [{"collection": st.session_state.qa, "field": "category", "list": False}],
+        st.session_state.qa    : [],
+        st.session_state.studiendekanat : [],
+        st.session_state.dictionary    : [],
+    }
+
+    st.session_state.leer = {
+        st.session_state.category: st.session_state.category.find_one({"name_de": "Unsichtbar"})["_id"],
+        st.session_state.sammlung: st.session_state.sammlung.find_one({"name_de": "Unsichtbar"})["_id"]}
+
+    st.session_state.new = {
+        st.session_state.sammlung: {"kurzname": "", 
+                "name_de": "", 
+                "name_en": "", 
+                "kommentar": ""},
+        st.session_state.category: {"kurzname": "", 
+                "name_de": "", 
+                "name_en": "", 
+                "sammlung" : [st.session_state.leer[st.session_state.sammlung]],
+                "kommentar": ""},
+        st.session_state.qa: { "category": st.session_state.leer[st.session_state.category],
+                "q_de": "",
+                "q_en": "",
+                "a_de": "",
+                "a_en": "",
+                "kommentar": ""
+                },
+        st.session_state.studiendekanat:     {
+        "showstudiendekanat": False,
+        "showstudienberatung": False,
+        "showpruefungsamt": False,
+        "name_de": "",
+        "name_en": "",
+        "link": "",
+        "rolle_de": "",
+        "rolle_en": "",
+        "raum_de": "",
+        "raum_en": "",
+        "tel_de": "",
+        "tel_en": "",
+        "mail": "",
+        "sprechstunde_de": "",
+        "sprechstunde_en": "",
+        "prefix_de": "",
+        "prefix_en": "",
+        "text_de": "",
+        "text_en": "",
+        "news_ende": datetime(2025,1,1,0,0),
+        "news_de": "",
+        "news_en": ""
+        },
+        st.session_state.dictionary: {
+            "de": "",
+            "en": "",
+            "kommentar": ""
+        }
+    }
+
 
 
 # Die Authentifizierung gegen den Uni-LDAP-Server
@@ -205,5 +200,10 @@ def can_edit(username):
     faq_id = st.session_state.group.find_one({"name": "faq"})["_id"]
     return (True if faq_id in u["groups"] else False)
 
+setup_session_state()
 
-
+sammlung = st.session_state.sammlung
+category = st.session_state.category
+qa = st.session_state.qa
+studiendekanat = st.session_state.studiendekanat
+dictionary = st.session_state.dictionary

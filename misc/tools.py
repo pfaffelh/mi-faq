@@ -67,15 +67,13 @@ def display_navigation():
         st.image("static/ufr.png", use_column_width=True)
 
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
-    st.sidebar.page_link("pages/01_studiengang.py", label="Studiengänge")
+    st.sidebar.page_link("pages/01_qa.py", label="Frage/Antwort-Paare")
+    st.sidebar.page_link("pages/02_category.py", label="Kategorie")
+    st.sidebar.page_link("pages/03_sammlung.py", label="Sammlung")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
-    st.sidebar.page_link("pages/02_stu_qa.py", label="Frage-Antwort-Paare (Studierende)")
-    st.sidebar.page_link("pages/03_stu_cat.py", label="Kategorien (Studierende)")
+    st.sidebar.page_link("pages/04_studiendekanat.py", label="Studiendekanat")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
-    st.sidebar.page_link("pages/04_mit_qa.py", label="Frage-Antwort-Paare (Mitarbeiter*innen)")
-    st.sidebar.page_link("pages/05_mit_cat.py", label="Kategorien (Mitarbeiter*innen)")
-    st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
-    st.sidebar.page_link("pages/06_studiendekanat.py", label="Studiendekanat")
+    st.sidebar.page_link("pages/05_dictionary.py", label="Lexikon (d/e)")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
     #st.sidebar.page_link("pages/10_Hilfe.py", label="Dokumentation")
 
@@ -133,20 +131,21 @@ def delete_item_update_dependent_items(collection, id, switch = False):
             switch_page(st.session_state.collection_name[collection].lower())
 
 # short Version ohne abhängige Variablen
-def repr(collection, id, show_collection = True, short = False):
+def repr(collection, id, show_collection = False, short = False):
     x = collection.find_one({"_id": id})
-    if collection == st.session_state.studiengang:
-        res = x['name_de']
-    elif collection == st.session_state.mit_category:
-        res = x['name_de']
-    elif collection == st.session_state.stu_category:
-        res = x['name_de']
-    elif collection == st.session_state.mit_qa:
+    if collection == st.session_state.qa:
         res = x['q_de']
-    elif collection == st.session_state.stu_qa:
-        res = x['q_de']
+    elif collection == st.session_state.category:
+        res = f"{x['name_de']} ({', '.join([repr(st.session_state.sammlung, y) for y in x['sammlung']])})"
+    elif collection == st.session_state.sammlung:
+        if short:
+            res = x["kurzname"]
+        else:
+            res = x["name_de"]
     elif collection == st.session_state.studiendekanat:
         res = f"{x['name_de']} ({x['rolle_de']})"
+    elif collection == st.session_state.dictionary:
+        res = f"{x['de']}/{x['en']}"
     if show_collection:
         res = f"{st.session_state.collection_name[collection]}: {res}"
     return res

@@ -11,6 +11,7 @@ import misc.tools as tools
 import time
 # make all neccesary variables available to session_state
 util.setup_session_state()
+st.write("Hallo")
 
 # Ab hier wird die Seite angezeigt
 st.header("FAQ Login")
@@ -39,7 +40,7 @@ if submit:
             u = st.session_state.users.find_one({"rz": st.session_state.user})
             st.session_state.username = " ".join([u["vorname"], u["name"]])
             # make all neccesary variables available to session_state
-            switch_page("studiengang")
+            switch_page("qa")
         else:
             st.error("Nicht genügend Rechte, um FAQ zu editieren.")
             util.logger.info(f"User {kennung} hatte nicht gebügend Rechte, um sich einzuloggen.")

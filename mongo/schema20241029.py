@@ -6,37 +6,36 @@ mongo_db = cluster["faq"]
 
 # collections sind:
 
-# studiengang
-# stu_category
-# stu_qa
-# mit_category
-# mit_qa
-# studiendekanat
+# sammlung (Studierende, Mitarbeiter, Studiengangkoordinatoren)
+# category (HisInOne)
+# qa (Wie reserviere ich einen Raum?)
+# studiendekanat 
+# dictionary
 
 # Here are the details
 
-# studiengang
-studiengang_validator = {
+# stu_category: Beschreibung einer Kategorie von Fragen für das Studiendekanat
+sammlung_validator = {
     "$jsonSchema": {
         "bsonType": "object",
-        "title": "Kurzname und Name eines Studiengangs.",
+        "title": "Beschreibung einer FAQ.",
         "required": ["kurzname", "name_de", "name_en", "kommentar", "rang"],
         "properties": {
             "kurzname": {
                 "bsonType": "string",
-                "description": "Die Abkürzung des Studienganges -- required"
+                "description": "Die Abkürzung der Sammlung -- required"
             },
             "name_de": {
                 "bsonType": "string",
-                "description": "Deutscher Name des Studienganges -- required"
+                "description": "Deutscher Name der Sammlung -- required"
             },
             "name_en": {
                 "bsonType": "string",
-                "description": "Englischer Name des Studienganges -- required"
+                "description": "Englischer Name der Sammlung -- required"
             },
             "kommentar": {
                 "bsonType": "string",
-                "description": "Kommentar zum Studiengang"
+                "description": "Kommentar zur Sammlung."
             },
             "rang": {
                 "bsonType": "int",
@@ -46,102 +45,24 @@ studiengang_validator = {
     }
 }
 
-# stu_category: Beschreibung einer Kategorie von Fragen für das Studiendekanat
-stu_category_validator = {
+# category: Beschreibung einer Kategorie von Fragen für das Studiendekanat
+category_validator = {
     "$jsonSchema": {
         "bsonType": "object",
         "title": "Beschreibung einer Kategorie von Fragen (zB Abschlussarbeiten).",
-        "required": ["kurzname", "name_de", "name_en", "kommentar", "rang"],
+        "required": ["kurzname", "sammlung", "name_de", "name_en", "kommentar", "rang"],
         "properties": {
             "kurzname": {
                 "bsonType": "string",
                 "description": "Die Abkürzung der Kategorie -- required"
             },
-            "name_de": {
-                "bsonType": "string",
-                "description": "Deutscher Name der Kategorie -- required"
-            },
-            "name_en": {
-                "bsonType": "string",
-                "description": "Englischer Name der Kategorie -- required"
-            },
-            "kommentar": {
-                "bsonType": "string",
-                "description": "Kommentar zur Kategorie"
-            },
-            "rang": {
-                "bsonType": "int",
-                "description": "Platzhalter, nachdem die Anzeige sortiert wird."
-            }
-        }
-    }
-}
-
-# qa: Ein Paar aus Frage und Antwort für das Studiendekanat
-stu_qa_validator = {
-    "$jsonSchema": {
-        "bsonType": "object",
-        "title": "Ein Frage-Antwort-Paar für das FAQ.",
-        "required": ["category", "studiengang", "q_de", "q_en", "a_de", "a_en", "kommentar", "bearbeitet_de", "bearbeitet_en", "rang"],
-        "properties": {
-            "category": {
-                "bsonType": "objectId",
-                "description": "Die Id der Kategorie -- required"
-            },
-            "studiengang": {
+            "sammlung": {
                 "bsonType": "array",
                 "items": {
                     "bsonType": "objectId",
-                    "description": "eine Studiengangs-id."
+                    "description": "eine Sammlungs-id."
                 }
             },            
-            "q_de": {
-                "bsonType": "string",
-                "description": "Die Frage (in deutsch) -- required"
-            },
-            "q_en": {
-                "bsonType": "string",
-                "description": "Die Frage (in englisch)"
-            },
-            "a_de": {
-                "bsonType": "string",
-                "description": "Die Antwort (als markdown, in deutsch) -- required"
-            },
-            "a_en": {
-                "bsonType": "string",
-                "description": "Die Antwort (als markdown, in englisch)"
-            },
-            "kommentar": {
-                "bsonType": "string",
-                "description": "Ein Kommentar für das qa-Paar."
-            },
-            "bearbeitet_de": {
-                "bsonType": "string",
-                "description": "Zuletzt bearbeitet von... -- deutsch"
-            },
-            "bearbeitet_en": {
-                "bsonType": "string",
-                "description": "Last edited by... -- englisch"
-            },
-            "rang": {
-                "bsonType": "int",
-                "description": "Platzhalter, nachdem die Anzeige sortiert wird."
-            }
-        }
-    }
-}
-
-# mit_category: Beschreibung einer Kategorie von Fragen für Mitarbeiter
-mit_category_validator = {
-    "$jsonSchema": {
-        "bsonType": "object",
-        "title": "Beschreibung einer Kategorie von Fragen (zB Abschlussarbeiten).",
-        "required": ["kurzname", "name_de", "name_en", "kommentar", "rang"],
-        "properties": {
-            "kurzname": {
-                "bsonType": "string",
-                "description": "Die Abkürzung der Kategorie -- required"
-            },
             "name_de": {
                 "bsonType": "string",
                 "description": "Deutscher Name der Kategorie -- required"
@@ -163,11 +84,11 @@ mit_category_validator = {
 }
 
 # qa: Ein Paar aus Frage und Antwort für das Studiendekanat
-mit_qa_validator = {    
+qa_validator = {
     "$jsonSchema": {
         "bsonType": "object",
         "title": "Ein Frage-Antwort-Paar für das FAQ.",
-        "required": ["q_de", "q_en", "a_de", "a_en", "category", "kommentar", "bearbeitet_de", "bearbeitet_en", "rang"],
+        "required": ["category", "q_de", "q_en", "a_de", "a_en", "kommentar", "bearbeitet_de", "bearbeitet_en", "rang"],
         "properties": {
             "category": {
                 "bsonType": "objectId",
@@ -300,6 +221,28 @@ studiendekanat_validator = {
                 "description": "Platzhalter, nachdem die Anzeige sortiert wird."
             }
        }
+    }
+}
+
+dictionary_validator = {
+    "$jsonSchema": {
+        "bsonType": "object",
+        "title": "Ein Paar aus deutschen und englischen Begriffen.",
+        "required": ["de", "en", "kommentar"],
+        "properties": {
+            "de": {
+                "bsonType": "string",
+                "description": "Der deutsche Begriff -- required"
+            },
+            "en": {
+                "bsonType": "string",
+                "description": "Der englische Begriff -- required"
+            },
+            "kommentar": {
+                "bsonType": "string",
+                "description": "Kommentar zum Begriff."
+            }
+        }
     }
 }
 
