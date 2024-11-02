@@ -133,18 +133,18 @@ def delete_item_update_dependent_items(collection, id, switch = False):
 # short Version ohne abhängige Variablen
 def repr(collection, id, show_collection = False, short = False):
     x = collection.find_one({"_id": id})
-    if collection == st.session_state.qa:
+    if collection == util.qa:
         res = x['q_de']
-    elif collection == st.session_state.category:
+    elif collection == util.category:
         res = f"{x['name_de']} ({', '.join([repr(st.session_state.sammlung, y) for y in x['sammlung']])})"
-    elif collection == st.session_state.sammlung:
+    elif collection == util.sammlung:
         if short:
             res = x["kurzname"]
         else:
             res = x["name_de"]
-    elif collection == st.session_state.studiendekanat:
+    elif collection == util.studiendekanat:
         res = f"{x['name_de']} ({x['rolle_de']})"
-    elif collection == st.session_state.dictionary:
+    elif collection == util.dictionary:
         res = f"{x['de']}/{x['en']}"
     if show_collection:
         res = f"{st.session_state.collection_name[collection]}: {res}"

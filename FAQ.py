@@ -11,7 +11,6 @@ import misc.tools as tools
 import time
 # make all neccesary variables available to session_state
 util.setup_session_state()
-st.write("Hallo")
 
 # Ab hier wird die Seite angezeigt
 st.header("FAQ Login")

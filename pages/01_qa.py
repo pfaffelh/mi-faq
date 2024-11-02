@@ -43,8 +43,8 @@ if st.session_state.logged_in:
     with col1: 
         st.write("[Ansicht auf www.math... (de)](https://www.math.uni-freiburg.de/nlehre/de/studiendekanat/faq/)")
         st.write("[Ansicht auf www.math... (en)](https://www.math.uni-freiburg.de/nlehre/en/studiendekanat/faq/)")
-    cats = list(st.session_state.category.find(sort=[("rang", pymongo.ASCENDING)]))
-    cat = st.selectbox(label="Kategorie", options = [x['_id'] for x in cats], index = None, format_func = (lambda id : tools.repr(st.session_state.category, id, False)), placeholder = "Wähle eine Kategorie", label_visibility = "collapsed")
+    cats = list(util.category.find(sort=[("rang", pymongo.ASCENDING)]))
+    cat = st.selectbox(label="Kategorie", options = [x['_id'] for x in cats], index = None, format_func = (lambda id : tools.repr(util.category, id, False)), placeholder = "Wähle eine Kategorie", label_visibility = "collapsed")
     st.session_state.category = cat
 
     submit = False
@@ -68,8 +68,7 @@ if st.session_state.logged_in:
                 with st.expander(f"{x['q_de']}", expanded = (True if x['_id'] == st.session_state.expanded else False)):
                     st.write(f"qa_{str(x['_id'])}")
                     index = [cat['_id'] for cat in cats].index(x["category"])
-                                        
-                    cat_loc = st.selectbox(label="Kategorie", options = [z['_id'] for z in cats], index = ([z['_id'] for z in cats]).index(x["category"]), format_func = lambda id: tools.repr(st.session_state.category, id, False), placeholder = "Wähle eine Kategorie", label_visibility = "collapsed", key = f"cat_{x['_id']}")
+                    cat_loc = st.selectbox(label="Kategorie", options = [z['_id'] for z in cats], index = ([z['_id'] for z in cats]).index(x["category"]), format_func = lambda id: tools.repr(util.category, id, False), placeholder = "Wähle eine Kategorie", label_visibility = "collapsed", key = f"cat_{x['_id']}")
                     q_de = st.text_input('Frage (de)', x["q_de"], placeholder="Frage eingeben", key = f"q_de_{x['_id']}")
                     q_en = st.text_input('Frage (en)', x["q_en"], key = f"q_en_{x['_id']}")
                     a_de = st.text_area('Antwort (de)', x["a_de"], height = 500, placeholder="Antwort eingeben", key = f"a_de_{x['_id']}")
