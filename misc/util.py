@@ -101,8 +101,7 @@ def setup_session_state():
         st.session_state.dictionary    : [],
     }
 
-    st.session_state.leer = {
-        st.session_state.knoten: st.session_state.knoten.find_one({"kurzname": "unsichtbar"})["_id"]}
+    st.session_state.leer = {}
     st.session_state.new = {
         st.session_state.knoten: {"kurzname": "", 
                 "titel_de": "", 

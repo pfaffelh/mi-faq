@@ -40,6 +40,32 @@ def level(knoten_id):
             res = level(p["_id"]) + [k["_id"]]
     return res
 
+def knoten_ebene0():
+    return collection.find_one({"kurzname" : "wurzel"})["kinder"]
+    
+def knoten_ebene1():
+    kn_ebene0 = list(collection.find({"_id" : { "$in" : knoten_ebene0()}}))
+    res = [item for x in kn_ebene0 for item in x["kinder"]]
+    return res
+
+def knoten_kleinere_ebene(knoten_id):
+    l = len(level(knoten_id))
+    res = []
+    if l == 2:
+        res = knoten_ebene0()
+    elif l == 3:
+        res = knoten_ebene0() + knoten_ebene1()
+    return res
+
+def knoten_dict(knoten_list):
+    kn_dict = {}
+    for item in knoten_list:
+        p = collection.find_one({"kinder" : { "$elemMatch" : { "$eq": item}}})
+        kn_dict[item] = collection.find_one({"_id" : item})["titel_de"]
+        if p["kurzname"] != "wurzel":
+            kn_dict[item] = collection.find_one({"_id" : p["_id"]})["titel_de"][0:15] + "...: " + kn_dict[item]
+    return dict(sorted(kn_dict.items(), key=lambda item: item[1]))
+
 st.session_state.level = level(st.session_state.edit)
 
 def savenew(ini):
@@ -79,6 +105,7 @@ if st.session_state.logged_in:
         col = st.columns([1,1,1])
         with col[n]:
             z = collection.find_one({"_id" : l_id})
+            p = collection.find_one({"kinder" : { "$elemMatch" : { "$eq" : z["_id"]}}})
             abk = f"{z['titel_de'].strip()}".strip()
             if l_id == st.session_state.edit:
                 st.write(f"### {z['titel_de']}")
@@ -88,7 +115,6 @@ if st.session_state.logged_in:
                         with colu1:                  
                             submit = st.button(label = "Wirklich löschen!", type = 'primary', key = f"delete-{z['_id']}")
                             if submit:
-                                p = collection.find_one({"kinder" : { "$elemMatch" : { "$eq" : z["_id"]}}})
                                 collection.update_one({"_id" : p["_id"]}, { "$pull" : { "kinder" : z["_id"]}})
                                 #collection.delete_one({"_id" : z["_id"]})
                                 st.success("Item gelöscht!")
@@ -96,6 +122,18 @@ if st.session_state.logged_in:
                                 st.rerun()
                         with colu3: 
                             st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{x['_id']}")
+                if p["kurzname"] != "wurzel":
+                    with st.popover('Verschieben', use_container_width=True):
+                        k_dict = knoten_dict(knoten_kleinere_ebene(l_id))
+                        k_mo = st.selectbox("Wohin soll das Item verschoben werden?", k_dict.keys(), None, format_func = (lambda a : k_dict[a]), placeholder = "Bitte auswählen")
+                        submit = st.button(label = "Verschieben!", type = 'primary', key = f"move-{z['_id']}")
+                        if submit:
+                            collection.update_one({"_id" : p["_id"]}, { "$pull" : { "kinder" : z["_id"]}})
+                            collection.update_one({"_id" : k_mo}, { "$push" : { "kinder" : z["_id"]}})
+                            #collection.delete_one({"_id" : z["_id"]})
+                            st.success("Item verschoben!")
+                            st.rerun()
+                        
             else:
                 submit = st.button(abk, key=f"edit-{z['_id']}", use_container_width=True)
                 if submit:
