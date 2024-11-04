@@ -81,7 +81,7 @@ if st.session_state.logged_in:
             z = collection.find_one({"_id" : l_id})
             abk = f"{z['titel_de'].strip()}".strip()
             if l_id == st.session_state.edit:
-                st.write(f"### {z["titel_de"]}")
+                st.write(f"### {z['titel_de']}")
                 if z["kinder"] == []:
                     with st.popover('Löschen', use_container_width=True):
                         colu1, colu2, colu3 = st.columns([1,1,1])
