@@ -28,30 +28,30 @@ print("Ab hier wird verändert")
 knoten.drop()
 dictionary.drop()
 
-s = knoten.insert_one({"kurzname" : "faqstud", "titel_de" : "FAQ für Studierende", "titel_en" : "FAQ for students", "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "FAQ für Studierende", "rang": 1})
+s = knoten.insert_one({"kurzname" : "faqstud", "sichtbar" : True, "titel_html" : False, "prefix_html" : False, "suffix_html": False, "titel_de" : "FAQ für Studierende", "titel_en" : "FAQ for students", "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "FAQ für Studierende", "rang": 1})
 stud_id = s.inserted_id
-s = knoten.insert_one({"kurzname" : "faqmit", "titel_de" : "FAQ für Mitarbeiter*innen", "titel_en" : "FAQ for staff", "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "FAQ für Mitarbeiter*innen", "rang": 2})
+s = knoten.insert_one({"kurzname" : "faqmit", "sichtbar" : True, "titel_html" : False, "prefix_html" : False, "suffix_html": False, "titel_de" : "FAQ für Mitarbeiter*innen", "titel_en" : "FAQ for staff", "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "FAQ für Mitarbeiter*innen", "rang": 2})
 mit_id = s.inserted_id
-s = knoten.insert_one({"kurzname" : "faqkoord", "titel_de" : "Studiengangkoordinator*innen", "titel_en" : "", "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "FAQ für Studiengangkoordinator*innen", "rang": 3})
+s = knoten.insert_one({"kurzname" : "faqkoord", "sichtbar" : True, "titel_html" : False, "prefix_html" : False, "suffix_html": False, "titel_de" : "Studiengangkoordinator*innen", "titel_en" : "", "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "FAQ für Studiengangkoordinator*innen", "rang": 3})
 koord_id = s.inserted_id
-s = knoten.insert_one({"kurzname" : "unsichtbar", "titel_de" : "-", "titel_en" : "", "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "", "rang": 4})
+s = knoten.insert_one({"kurzname" : "unsichtbar", "sichtbar" : True, "titel_html" : False, "prefix_html" : False, "suffix_html": False, "titel_de" : "-", "titel_en" : "", "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "", "rang": 4})
 
-knoten.insert_one({"kurzname" : "wurzel", "titel_de" : "Wurzel für alle Seiten", "titel_en" : "", "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [stud_id, mit_id, koord_id, s.inserted_id], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "Wurzel, die bestimmt, in welcher Ebene wir sind.", "rang": 0})
+knoten.insert_one({"kurzname" : "wurzel", "sichtbar" : False, "titel_html" : False, "prefix_html" : False, "suffix_html": False, "titel_de" : "Wurzel für alle Seiten", "titel_en" : "", "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [stud_id, mit_id, koord_id, s.inserted_id], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "Wurzel, die bestimmt, in welcher Ebene wir sind.", "rang": 0})
 
 for s in list(stu_category.find(sort=[("rang", pymongo.ASCENDING)])):
-    t = knoten.insert_one({"kurzname" : s["kurzname"], "titel_de" : s["name_de"], "titel_en" : s["name_en"], "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "", "rang": 0})
+    t = knoten.insert_one({"kurzname" : s["kurzname"], "sichtbar" : True, "titel_html" : False, "prefix_html" : False, "suffix_html": False, "titel_de" : s["name_de"], "titel_en" : s["name_en"], "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "", "rang": 0})
     knoten.update_one({"_id" : stud_id}, { "$push" : { "kinder" : t.inserted_id}})
     for q in list(stu_qa.find({"category" : s["_id"]}, sort=[("rang", pymongo.ASCENDING)])):
         parent_id = t.inserted_id
-        u = knoten.insert_one({"kurzname" : "", "titel_de" : q["q_de"], "titel_en" : q["q_en"], "prefix_de" : q["a_de"], "prefix_en" : q["a_en"], "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : q["bearbeitet_de"], "bearbeitet_en": q["bearbeitet_en"], "kommentar" : q["kommentar"], "rang": q["rang"]})
+        u = knoten.insert_one({"kurzname" : "", "sichtbar" : True, "titel_html" : False, "prefix_html" : False, "suffix_html": False, "titel_de" : q["q_de"], "titel_en" : q["q_en"], "prefix_de" : q["a_de"], "prefix_en" : q["a_en"], "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : q["bearbeitet_de"], "bearbeitet_en": q["bearbeitet_en"], "kommentar" : q["kommentar"], "rang": q["rang"]})
         knoten.update_one({"_id" : parent_id}, { "$push" : { "kinder" : u.inserted_id}})
         
 for s in list(mit_category.find(sort=[("rang", pymongo.ASCENDING)])):
-    t = knoten.insert_one({"kurzname" : s["kurzname"], "titel_de" : s["name_de"], "titel_en" : s["name_en"], "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "", "rang": 0})
+    t = knoten.insert_one({"kurzname" : s["kurzname"], "sichtbar" : True, "titel_html" : False, "prefix_html" : False, "suffix_html": False, "titel_de" : s["name_de"], "titel_en" : s["name_en"], "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "", "rang": 0})
     knoten.update_one({"_id" : koord_id if s["kurzname"] == "studiengangkoordination" else mit_id}, { "$push" : { "kinder" : t.inserted_id}})
     for q in list(mit_qa.find({"category" : s["_id"]}, sort=[("rang", pymongo.ASCENDING)])):
         parent_id = t.inserted_id
-        u = knoten.insert_one({"kurzname" : "", "titel_de" : q["q_de"], "titel_en" : q["q_en"], "prefix_de" : q["a_de"], "prefix_en" : q["a_en"], "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : q["bearbeitet_de"], "bearbeitet_en": q["bearbeitet_en"], "kommentar" : q["kommentar"], "rang": q["rang"]})
+        u = knoten.insert_one({"kurzname" : "", "sichtbar" : True, "titel_html" : False, "prefix_html" : False, "suffix_html": False, "titel_de" : q["q_de"], "titel_en" : q["q_en"], "prefix_de" : q["a_de"], "prefix_en" : q["a_en"], "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : q["bearbeitet_de"], "bearbeitet_en": q["bearbeitet_en"], "kommentar" : q["kommentar"], "rang": q["rang"]})
         knoten.update_one({"_id" : parent_id}, { "$push" : { "kinder" : u.inserted_id}})
 
 for e in list(dictionary_vvz.find()):

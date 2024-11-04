@@ -132,17 +132,23 @@ if st.session_state.logged_in:
             if len(l) > 1:
                 st.warning("Warnung: Kurzname ist nicht eindeutig!")
             kurzname = st.text_input("Kurzname", x["kurzname"], key = f"kurzname_{x['_id']}", disabled = True if x["kurzname"] == "unsichtbar" else False)
-            
+
+            sichtbar = st.checkbox("Auf Homepage sichtbar", x["sichtbar"])
+
             titel_de = st.text_input("Titel (de)", x["titel_de"], key = f"titel_de_{x['_id']}", disabled = True if x["titel_de"] == "unsichtbar" else False)
             titel_en = st.text_input("Titel (en)", x["titel_en"], key = f"titel_en_{x['_id']}", disabled = True if x["titel_de"] == "unsichtbar" else False)
+            titel_html = st.checkbox("Titel enthält html-Tags", x["titel_html"], help = "Andernfalls ist nur markdown-Syntax erlaubt.")
+
             prefix_de = st.text_area('Prefix (de)', x["prefix_de"], height = 500, placeholder="Bitte eingeben", key = f"prefix_de_{x['_id']}")
             prefix_en = st.text_area('Prefix (en)', x["prefix_en"], height = 500, placeholder="Bitte eingeben", key = f"prefix_en_{x['_id']}")
+            prefix_html = st.checkbox("Prefix enthält html-Tags", x["prefix_html"], help = "Andernfalls ist nur markdown-Syntax erlaubt.")
             suffix_de = st.text_area('Suffix (de)', x["suffix_de"], height = 500, placeholder="Bitte eingeben", key = f"suffix_de_{x['_id']}")
             suffix_en = st.text_area('Suffix (en)', x["suffix_en"], height = 500, placeholder="Bitte eingeben", key = f"suffix_en_{x['_id']}")
+            suffix_html = st.checkbox("Suffix enthält html-Tags", x["suffix_html"], help = "Andernfalls ist nur markdown-Syntax erlaubt.")
             kommentar = st.text_input("Kommentar", x["kommentar"], key = f"kommentar_{x['_id']}")
             save = st.button("Speichern", key=f"save-{x['_id']}")
             if save:
-                collection.update_one({"_id": x["_id"]}, { "$set": {"kurzname" : kurzname, "titel_de": titel_de, "titel_en": titel_en, "prefix_de": prefix_de, "prefix_en": prefix_en, "suffix_de": suffix_de, "suffix_en": suffix_en, "bearbeitet_de": bearbeitet_de, "bearbeitet_en" : bearbeitet_en, "kommentar": kommentar}})
+                collection.update_one({"_id": x["_id"]}, { "$set": {"kurzname" : kurzname, "sichtbar" : sichtbar, "titel_de": titel_de, "titel_en": titel_en, "titel_html" : titel_html,  "prefix_de": prefix_de, "prefix_en": prefix_en, "prefix_html" : prefix_html, "suffix_de": suffix_de, "suffix_en": suffix_en, "suffix_html" : suffix_html, "bearbeitet_de": bearbeitet_de, "bearbeitet_en" : bearbeitet_en, "kommentar": kommentar}})
                 st.toast("Erfolgreich gespeichert!")
                 time.sleep(0.5)
                 st.rerun()  

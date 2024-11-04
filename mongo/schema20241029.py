@@ -19,11 +19,15 @@ knoten_validator = {
     "$jsonSchema": {
         "bsonType": "object",
         "title": "Beschreibung einer accordion-Seite.",
-        "required": ["kurzname", "titel_de", "titel_en", "prefix_de", "prefix_en", "suffix_de", "suffix_en", "bearbeitet_de", "bearbeitet_en", "kinder", "kommentar"],
+        "required": ["kurzname", "sichtbar", "titel_de", "titel_en", "titel_html", "prefix_de", "prefix_en", "prefix_html", "suffix_de", "suffix_en", "suffix_html", "bearbeitet_de", "bearbeitet_en", "kinder", "kommentar"],
         "properties": {
             "kurzname": {
                 "bsonType": "string",
                 "description": "Die Abkürzung der Seite für Links -- required"
+            },
+            "sichtbar": {
+                "bsonType": "bool",
+                "description": "bestimmt, ob der Knoten auf der Homepage angezeigt werden soll."
             },
             "titel_de": {
                 "bsonType": "string",
@@ -33,6 +37,10 @@ knoten_validator = {
                 "bsonType": "string",
                 "description": "Englischer Titel der Seite -- required"
             },
+            "titel_html": {
+                "bsonType": "bool",
+                "description": "bestimmt, ob der Knoten auf der Homepage angezeigt werden soll."
+            },
             "prefix_de": {
                 "bsonType": "string",
                 "description": "Prefix vor dem Accordion -- required"
@@ -40,6 +48,10 @@ knoten_validator = {
             "prefix_en": {
                 "bsonType": "string",
                 "description": "Prefix vor dem Accordion -- required"
+            },
+            "prefix_html": {
+                "bsonType": "bool",
+                "description": "bestimmt, ob der Knoten auf der Homepage angezeigt werden soll."
             },
             "kinder": {
                 "bsonType": "array",
@@ -55,6 +67,10 @@ knoten_validator = {
             "suffix_en": {
                 "bsonType": "string",
                 "description": "Prefix vor dem Accordion -- required"
+            },
+            "suffix_html": {
+                "bsonType": "bool",
+                "description": "bestimmt, ob der Knoten auf der Homepage angezeigt werden soll."
             },
             "bearbeitet_de": {
                 "bsonType": "string",
