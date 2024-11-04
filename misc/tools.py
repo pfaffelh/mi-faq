@@ -53,6 +53,24 @@ def move_down(collection, x, query = {}):
         collection.update_one({"_id": target["_id"]}, {"$set": {"rang": x["rang"]}})    
         collection.update_one({"_id": x["_id"]}, {"$set": {"rang": n}})    
 
+def move_up_list(collection, id, field, element):
+    list = collection.find_one({"_id": id})[field]
+    i = list.index(element)
+    if i > 0:
+        x = list[i-1]
+        list[i-1] = element
+        list[i] = x
+    collection.update_one({"_id": id}, { "$set": {field: list}})
+
+def move_down_list(collection, id, field, element):
+    list = collection.find_one({"_id": id})[field]
+    i = list.index(element)
+    if i+1 < len(list):
+        x = list[i+1]
+        list[i+1] = element
+        list[i] = x
+    collection.update_one({"_id": id}, { "$set": {field: list}})
+
 def update_confirm(collection, x, x_updated, reset = True):
     util.logger.info(f"User {st.session_state.user} hat in {st.session_state.collection_name[collection]} Item {repr(collection, x['_id'])} geändert.")
     collection.update_one({"_id" : x["_id"]}, {"$set": x_updated })
@@ -67,9 +85,9 @@ def display_navigation():
         st.image("static/ufr.png", use_column_width=True)
 
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
-    st.sidebar.page_link("pages/01_qa.py", label="Frage/Antwort-Paare")
-    st.sidebar.page_link("pages/02_category.py", label="Kategorie")
-    st.sidebar.page_link("pages/03_sammlung.py", label="Sammlung")
+    st.sidebar.page_link("pages/01_knoten.py", label="Accordion-Seiten")
+#    st.sidebar.page_link("pages/02_Acc_Ebene1.py", label="Ebene 1")
+#    st.sidebar.page_link("pages/03_Acc_Ebene2.py", label="Ebene 2")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
     st.sidebar.page_link("pages/04_studiendekanat.py", label="Studiendekanat")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
@@ -133,15 +151,11 @@ def delete_item_update_dependent_items(collection, id, switch = False):
 # short Version ohne abhängige Variablen
 def repr(collection, id, show_collection = False, short = False):
     x = collection.find_one({"_id": id})
-    if collection == util.qa:
-        res = x['q_de']
-    elif collection == util.category:
-        res = f"{x['name_de']} ({', '.join([repr(st.session_state.sammlung, y) for y in x['sammlung']])})"
-    elif collection == util.sammlung:
+    if collection == util.knoten:
         if short:
             res = x["kurzname"]
         else:
-            res = x["name_de"]
+            res = x["titel_de"]
     elif collection == util.studiendekanat:
         res = f"{x['name_de']} ({x['rolle_de']})"
     elif collection == util.dictionary:

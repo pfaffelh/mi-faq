@@ -8,7 +8,6 @@ mongo_db = cluster["faq"]
 mongo_db_vvz = cluster["vvz"]
 dictionary_vvz = mongo_db_vvz["dictionary"]
 
-
 stu_qa = mongo_db["stu_qa"]
 studiengang = mongo_db["studiengang"]
 stu_category = mongo_db["stu_category"]
@@ -16,43 +15,47 @@ stu_qa = mongo_db["stu_qa"]
 mit_category = mongo_db["mit_category"]
 mit_qa = mongo_db["mit_qa"]
 
+knoten = mongo_db["knoten"]
+
 sammlung = mongo_db["sammlung"]
 category = mongo_db["category"]
 qa = mongo_db["qa"]
+
 dictionary = mongo_db["dictionary"]
 
 # Ab hier wird die Datenbank verändert
 print("Ab hier wird verändert")
-sammlung.drop()
-category.drop()
-qa.drop()
+knoten.drop()
 dictionary.drop()
 
-s = sammlung.insert_one({"kurzname" : "stud", "name_de" : "Studierende", "name_en" : "Students", "kommentar" : "FAQ für Studierende", "rang": 1})
+s = knoten.insert_one({"kurzname" : "faqstud", "titel_de" : "FAQ für Studierende", "titel_en" : "FAQ for students", "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "FAQ für Studierende", "rang": 1})
 stud_id = s.inserted_id
-s = sammlung.insert_one({"kurzname" : "mit", "name_de" : "Mitarbeiter*innen", "name_en" : "Staff", "kommentar" : "FAQ für Mitarbeiter*innen", "rang": 2})
+s = knoten.insert_one({"kurzname" : "faqmit", "titel_de" : "FAQ für Mitarbeiter*innen", "titel_en" : "FAQ for staff", "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "FAQ für Mitarbeiter*innen", "rang": 2})
 mit_id = s.inserted_id
-s = sammlung.insert_one({"kurzname" : "koord", "name_de" : "Studiengangkoordinator*innen", "name_en" : "", "kommentar" : "", "rang": 3})
+s = knoten.insert_one({"kurzname" : "faqkoord", "titel_de" : "Studiengangkoordinator*innen", "titel_en" : "", "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "FAQ für Studiengangkoordinator*innen", "rang": 3})
 koord_id = s.inserted_id
-sammlung.insert_one({"kurzname" : "unsichtbar", "name_de" : "Unsichtbar", "name_en" : "", "kommentar" : "", "rang": 4})
+s = knoten.insert_one({"kurzname" : "unsichtbar", "titel_de" : "-", "titel_en" : "", "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "", "rang": 4})
 
-for s in list(stu_category.find()):
-    s["sammlung"] = [stud_id]
-    category.insert_one(s)
-    
-for s in list(mit_category.find()):
-    s["sammlung"] = [koord_id] if s["kurzname"] == "studiengangkoordination" else [mit_id]
-    category.insert_one(s)
-    
+knoten.insert_one({"kurzname" : "wurzel", "titel_de" : "Wurzel für alle Seiten", "titel_en" : "", "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [stud_id, mit_id, koord_id, s.inserted_id], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "Wurzel, die bestimmt, in welcher Ebene wir sind.", "rang": 0})
+
+for s in list(stu_category.find(sort=[("rang", pymongo.ASCENDING)])):
+    t = knoten.insert_one({"kurzname" : s["kurzname"], "titel_de" : s["name_de"], "titel_en" : s["name_en"], "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "", "rang": 0})
+    knoten.update_one({"_id" : stud_id}, { "$push" : { "kinder" : t.inserted_id}})
+    for q in list(stu_qa.find({"category" : s["_id"]}, sort=[("rang", pymongo.ASCENDING)])):
+        parent_id = t.inserted_id
+        u = knoten.insert_one({"kurzname" : "", "titel_de" : q["q_de"], "titel_en" : q["q_en"], "prefix_de" : q["a_de"], "prefix_en" : q["a_en"], "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : q["bearbeitet_de"], "bearbeitet_en": q["bearbeitet_en"], "kommentar" : q["kommentar"], "rang": q["rang"]})
+        knoten.update_one({"_id" : parent_id}, { "$push" : { "kinder" : u.inserted_id}})
+        
+for s in list(mit_category.find(sort=[("rang", pymongo.ASCENDING)])):
+    t = knoten.insert_one({"kurzname" : s["kurzname"], "titel_de" : s["name_de"], "titel_en" : s["name_en"], "prefix_de" : "", "prefix_en" : "", "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : "Initialer Eintrag", "bearbeitet_en": "Initial entry", "kommentar" : "", "rang": 0})
+    knoten.update_one({"_id" : koord_id if s["kurzname"] == "studiengangkoordination" else mit_id}, { "$push" : { "kinder" : t.inserted_id}})
+    for q in list(mit_qa.find({"category" : s["_id"]}, sort=[("rang", pymongo.ASCENDING)])):
+        parent_id = t.inserted_id
+        u = knoten.insert_one({"kurzname" : "", "titel_de" : q["q_de"], "titel_en" : q["q_en"], "prefix_de" : q["a_de"], "prefix_en" : q["a_en"], "suffix_de" : "", "suffix_en" : "", "kinder" : [], "bearbeitet_de" : q["bearbeitet_de"], "bearbeitet_en": q["bearbeitet_en"], "kommentar" : q["kommentar"], "rang": q["rang"]})
+        knoten.update_one({"_id" : parent_id}, { "$push" : { "kinder" : u.inserted_id}})
+
 for e in list(dictionary_vvz.find()):
     dictionary.insert_one(e)
-
-for q in list(stu_qa.find()):
-    qa.insert_one(q)
-
-for q in list(mit_qa.find()):
-    qa.insert_one(q)
-
 
 studiengang.drop()
 stu_category.drop()
@@ -65,9 +68,7 @@ mit_qa.drop()
 print("Check schema")
 import schema20241029
 
-mongo_db.command('collMod','sammlung', validator=schema20241029.sammlung_validator, validationLevel='moderate')
-mongo_db.command('collMod','category', validator=schema20241029.category_validator, validationLevel='moderate')
-mongo_db.command('collMod','qa', validator=schema20241029.qa_validator, validationLevel='moderate')
+mongo_db.command('collMod','knoten', validator=schema20241029.knoten_validator, validationLevel='moderate')
 mongo_db.command('collMod','dictionary', validator=schema20241029.dictionary_validator, validationLevel='moderate')
 mongo_db.command('collMod','studiendekanat', validator=schema20241029.studiendekanat_validator, validationLevel='moderate')
 

@@ -14,81 +14,122 @@ mongo_db = cluster["faq"]
 
 # Here are the details
 
-# stu_category: Beschreibung einer Kategorie von Fragen für das Studiendekanat
-sammlung_validator = {
+# knoten: Beschreibung einer Seite mit Accordion (Kindern), oder der ersten oder zweiten Ebene im Akkordion
+knoten_validator = {
     "$jsonSchema": {
         "bsonType": "object",
-        "title": "Beschreibung einer FAQ.",
-        "required": ["kurzname", "name_de", "name_en", "kommentar", "rang"],
+        "title": "Beschreibung einer accordion-Seite.",
+        "required": ["kurzname", "titel_de", "titel_en", "prefix_de", "prefix_en", "suffix_de", "suffix_en", "bearbeitet_de", "bearbeitet_en", "kinder", "kommentar"],
         "properties": {
             "kurzname": {
                 "bsonType": "string",
-                "description": "Die Abkürzung der Sammlung -- required"
+                "description": "Die Abkürzung der Seite für Links -- required"
             },
-            "name_de": {
+            "titel_de": {
                 "bsonType": "string",
-                "description": "Deutscher Name der Sammlung -- required"
+                "description": "Deutscher Titel der Seite -- required"
             },
-            "name_en": {
+            "titel_en": {
                 "bsonType": "string",
-                "description": "Englischer Name der Sammlung -- required"
+                "description": "Englischer Titel der Seite -- required"
+            },
+            "prefix_de": {
+                "bsonType": "string",
+                "description": "Prefix vor dem Accordion -- required"
+            },
+            "prefix_en": {
+                "bsonType": "string",
+                "description": "Prefix vor dem Accordion -- required"
+            },
+            "kinder": {
+                "bsonType": "array",
+                "items": {
+                    "bsonType": "objectId",
+                    "description": "eine acc_ebene1-id."
+                }
+            },            
+            "suffix_de": {
+                "bsonType": "string",
+                "description": "Prefix vor dem Accordion -- required"
+            },
+            "suffix_en": {
+                "bsonType": "string",
+                "description": "Prefix vor dem Accordion -- required"
+            },
+            "bearbeitet_de": {
+                "bsonType": "string",
+                "description": "Zuletzt bearbeitet von... -- deutsch"
+            },
+            "bearbeitet_en": {
+                "bsonType": "string",
+                "description": "Last edited by... -- englisch"
             },
             "kommentar": {
                 "bsonType": "string",
                 "description": "Kommentar zur Sammlung."
-            },
-            "rang": {
-                "bsonType": "int",
-                "description": "Platzhalter, nachdem die Anzeige sortiert wird."
             }
         }
     }
 }
 
-# category: Beschreibung einer Kategorie von Fragen für das Studiendekanat
-category_validator = {
+
+
+# acc_ebene1: Beschreibung der ersten Ebene einer Accordion-Seite
+acc_ebene1_validator = {
     "$jsonSchema": {
         "bsonType": "object",
         "title": "Beschreibung einer Kategorie von Fragen (zB Abschlussarbeiten).",
-        "required": ["kurzname", "sammlung", "name_de", "name_en", "kommentar", "rang"],
+        "required": ["kurzname", "titel_de", "titel_en", "kommentar", "rang"],
         "properties": {
             "kurzname": {
                 "bsonType": "string",
                 "description": "Die Abkürzung der Kategorie -- required"
             },
-            "sammlung": {
+            "titel_de": {
+                "bsonType": "string",
+                "description": "Überschrift der Ebene -- required"
+            },
+            "titel_en": {
+                "bsonType": "string",
+                "description": "Überschrift der Ebene -- required"
+            },
+            "prefix_de": {
+                "bsonType": "string",
+                "description": "Prefix vor dem Accordion -- required"
+            },
+            "prefix_en": {
+                "bsonType": "string",
+                "description": "Prefix vor dem Accordion -- required"
+            },
+            "ebene2": {
                 "bsonType": "array",
                 "items": {
                     "bsonType": "objectId",
-                    "description": "eine Sammlungs-id."
+                    "description": "eine acc_ebene2-id."
                 }
             },            
-            "name_de": {
+            "suffix_de": {
                 "bsonType": "string",
-                "description": "Deutscher Name der Kategorie -- required"
+                "description": "Prefix vor dem Accordion -- required"
             },
-            "name_en": {
+            "suffix_en": {
                 "bsonType": "string",
-                "description": "Englischer Name der Kategorie -- required"
+                "description": "Prefix vor dem Accordion -- required"
             },
             "kommentar": {
                 "bsonType": "string",
-                "description": "Kommentar zur Kategorie"
+                "description": "Kommentar zur Ebene1."
             },
-            "rang": {
-                "bsonType": "int",
-                "description": "Platzhalter, nachdem die Anzeige sortiert wird."
-            }
         }
     }
 }
 
-# qa: Ein Paar aus Frage und Antwort für das Studiendekanat
-qa_validator = {
+# acc_ebene2: Beschreibung der zweiten Ebene einer Accordion-Seite
+acc_ebene2_validator = {
     "$jsonSchema": {
         "bsonType": "object",
         "title": "Ein Frage-Antwort-Paar für das FAQ.",
-        "required": ["category", "q_de", "q_en", "a_de", "a_en", "kommentar", "bearbeitet_de", "bearbeitet_en", "rang"],
+        "required": ["q_de", "q_en", "a_de", "a_en", "kommentar", "bearbeitet_de", "bearbeitet_en", "rang"],
         "properties": {
             "category": {
                 "bsonType": "objectId",

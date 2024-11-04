@@ -32,17 +32,13 @@ def logout():
 
 def setup_session_state():
     # Das ist die mongodb; 
-    # QA-Paar ist ein Frage-Antwort-Paar aus dem FAQ.
-    # category enthält alle Kategorien von QA-Paaren. "invisible" muss es geben!
-    # qa enthält alle Frage-Antwort-Paare.
+    # knoten enthält alle Daten für die Akkordion-Seiten
     # user ist aus dem Cluster users und wird nur bei der Authentifizierung benötigt
     try:
         cluster = pymongo.MongoClient(mongo_location)
         mongo_db = cluster["faq"]
         mongo_db_users = cluster["user"]
-        st.session_state.sammlung = mongo_db["sammlung"]
-        st.session_state.category = mongo_db["category"]
-        st.session_state.qa = mongo_db["qa"]
+        st.session_state.knoten = mongo_db["knoten"]
         st.session_state.dictionary = mongo_db["dictionary"]
         st.session_state.studiendekanat = mongo_db["studiendekanat"]
         st.session_state.users = mongo_db_users["user"]
@@ -55,9 +51,7 @@ def setup_session_state():
         st.write("**Verbindung zur Datenbank nicht möglich!**  \nKontaktieren Sie den Administrator.")
 
     st.session_state.collection_name = {
-        st.session_state.sammlung: "Sammlung",
-        st.session_state.qa: "Frage-Antwort-Paar",
-        st.session_state.category: "Kategorie",
+        st.session_state.knoten: "Knoten",
         st.session_state.studiendekanat: "Studiendekanat",
         st.session_state.dictionary: "Lexikon"    
     }
@@ -83,12 +77,6 @@ def setup_session_state():
     # expanded zeigt an, welches Element ausgeklappt sein soll
     if "expanded" not in st.session_state:
         st.session_state.expanded = ""
-    # category gibt an, welche category angezeigt wird
-    if "category" not in st.session_state:
-        st.session_state.category = None
-    # sammlung gibt an, in welchem FAQ wir sind.
-    if "sammlung" not in st.session_state:
-        st.session_state.sammlung = None
     # Name of the user
     if "user" not in st.session_state:
         st.session_state.user = ""
@@ -102,51 +90,31 @@ def setup_session_state():
     # Element to delete
     if "delete" not in st.session_state:
         st.session_state.delete = False
-    # Image of the qa-db which can be reloaded without saving it to the db.
-    if "saved_image" not in st.session_state:
-        st.session_state.saved_image = None
-    if "new_q_de" not in st.session_state:
-        st.session_state.new_q_de = ""
-    if "new_q_en" not in st.session_state:
-        st.session_state.new_q_en = ""
-    if "new_a_de" not in st.session_state:
-        st.session_state.new_a_de = ""
-    if "new_a_en" not in st.session_state:
-        st.session_state.new_a_en = ""
-    if "new_stu_list" not in st.session_state:
-        st.session_state.new_stu_list = []
     if "edit" not in st.session_state:
         st.session_state.edit = ""
+    if "level" not in st.session_state:
+        st.session_state.level = []
     
     st.session_state.abhaengigkeit = {
-        st.session_state.sammlung        : [{"collection": st.session_state.category, "field": "sammlung", "list": True}],
-        st.session_state.category    : [{"collection": st.session_state.qa, "field": "category", "list": False}],
-        st.session_state.qa    : [],
+        st.session_state.knoten : [{"collection": st.session_state.knoten, "field": "kinder", "list": True}],
         st.session_state.studiendekanat : [],
         st.session_state.dictionary    : [],
     }
 
     st.session_state.leer = {
-        st.session_state.category: st.session_state.category.find_one({"name_de": "Unsichtbar"})["_id"],
-        st.session_state.sammlung: st.session_state.sammlung.find_one({"name_de": "Unsichtbar"})["_id"]}
-
+        st.session_state.knoten: st.session_state.knoten.find_one({"kurzname": "unsichtbar"})["_id"]}
     st.session_state.new = {
-        st.session_state.sammlung: {"kurzname": "", 
-                "name_de": "", 
-                "name_en": "", 
+        st.session_state.knoten: {"kurzname": "", 
+                "titel_de": "", 
+                "titel_en": "", 
+                "prefix_de": "", 
+                "prefix_en": "", 
+                "suffix_de": "", 
+                "suffix_en": "",
+                "kinder" : [], 
+                "bearbeitet_de": f"Angelegt von {st.session_state.username} am {datetime.now().strftime('%d.%m.%Y um %H:%M:%S.')}",
+                "bearbeitet_en": f"Initialized by {st.session_state.username} on {datetime.now().strftime('%d/%m/%Y at %H:%M:%S.')}",
                 "kommentar": ""},
-        st.session_state.category: {"kurzname": "", 
-                "name_de": "", 
-                "name_en": "", 
-                "sammlung" : [st.session_state.leer[st.session_state.sammlung]],
-                "kommentar": ""},
-        st.session_state.qa: { "category": st.session_state.leer[st.session_state.category],
-                "q_de": "",
-                "q_en": "",
-                "a_de": "",
-                "a_en": "",
-                "kommentar": ""
-                },
         st.session_state.studiendekanat:     {
         "showstudiendekanat": False,
         "showstudienberatung": False,
@@ -202,8 +170,6 @@ def can_edit(username):
 
 setup_session_state()
 
-sammlung = st.session_state.sammlung
-category = st.session_state.category
-qa = st.session_state.qa
+knoten = st.session_state.knoten
 studiendekanat = st.session_state.studiendekanat
 dictionary = st.session_state.dictionary

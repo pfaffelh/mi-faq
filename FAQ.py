@@ -39,7 +39,7 @@ if submit:
             u = st.session_state.users.find_one({"rz": st.session_state.user})
             st.session_state.username = " ".join([u["vorname"], u["name"]])
             # make all neccesary variables available to session_state
-            switch_page("qa")
+            switch_page("knoten")
         else:
             st.error("Nicht genügend Rechte, um FAQ zu editieren.")
             util.logger.info(f"User {kennung} hatte nicht gebügend Rechte, um sich einzuloggen.")
