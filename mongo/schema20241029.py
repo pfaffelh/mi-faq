@@ -39,7 +39,7 @@ knoten_validator = {
             },
             "titel_html": {
                 "bsonType": "bool",
-                "description": "bestimmt, ob der Knoten auf der Homepage angezeigt werden soll."
+                "description": "bestimmt, ob der Titel html-Code enthält."
             },
             "prefix_de": {
                 "bsonType": "string",
@@ -51,7 +51,7 @@ knoten_validator = {
             },
             "prefix_html": {
                 "bsonType": "bool",
-                "description": "bestimmt, ob der Knoten auf der Homepage angezeigt werden soll."
+                "description": "bestimmt, ob der Prefix html-Code enthält."
             },
             "kinder": {
                 "bsonType": "array",

@@ -104,12 +104,16 @@ def setup_session_state():
     st.session_state.leer = {}
     st.session_state.new = {
         st.session_state.knoten: {"kurzname": "", 
+                "sichtbar" : False,
                 "titel_de": "", 
                 "titel_en": "", 
                 "prefix_de": "", 
                 "prefix_en": "", 
                 "suffix_de": "", 
                 "suffix_en": "",
+                "titel_html" : False,
+                "prefix_html" : False,
+                "suffix_html" : False,
                 "kinder" : [], 
                 "bearbeitet_de": f"Angelegt von {st.session_state.username} am {datetime.now().strftime('%d.%m.%Y um %H:%M:%S.')}",
                 "bearbeitet_en": f"Initialized by {st.session_state.username} on {datetime.now().strftime('%d/%m/%Y at %H:%M:%S.')}",

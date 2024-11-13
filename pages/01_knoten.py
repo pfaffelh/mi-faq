@@ -160,6 +160,7 @@ if st.session_state.logged_in:
                 titel_de = st.text_input("Titel (de)", "", key = "new_titel_de")
                 titel_en = st.text_input("Titel (en)", "", key = "new_titel_en")        
                 kommentar = st.text_input("Kommentar", "", key = "new_kommentar")
+
                 btn = st.button("Item anlegen", on_click=savenew, args = [{"kurzname" : kurzname, "titel_de": titel_de, "titel_en": titel_en, "kommentar": kommentar,},])
 
     if len(st.session_state.level):
