@@ -165,8 +165,8 @@ if st.session_state.logged_in:
 
     if len(st.session_state.level):
         with st.expander("Daten"):
+            save1 = st.button("Speichern", key=f"save1-{x['_id']}", type='primary')
             st.write(x["bearbeitet_de"])
-    #       st.write(f"sam_{str(x['_id'])}")
             l = list(collection.find({"kurzname" : x["kurzname"]}))
             if len(l) > 1:
                 st.warning("Warnung: Kurzname ist nicht eindeutig!")
@@ -174,20 +174,65 @@ if st.session_state.logged_in:
 
             sichtbar = st.checkbox("Auf Homepage sichtbar", x["sichtbar"])
 
+            st.subheader("Titel")
+            titel_html = st.checkbox("Titel enthält html-Tags", x["titel_html"], help = "Andernfalls ist nur markdown-Syntax erlaubt.")
             titel_de = st.text_input("Titel (de)", x["titel_de"], key = f"titel_de_{x['_id']}", disabled = True if x["titel_de"] == "unsichtbar" else False)
             titel_en = st.text_input("Titel (en)", x["titel_en"], key = f"titel_en_{x['_id']}", disabled = True if x["titel_de"] == "unsichtbar" else False)
-            titel_html = st.checkbox("Titel enthält html-Tags", x["titel_html"], help = "Andernfalls ist nur markdown-Syntax erlaubt.")
 
+            st.subheader("Prefix")
+            prefix_html = st.checkbox("Prefix enthält html-Tags", x["prefix_html"], help = "Andernfalls ist nur markdown-Syntax erlaubt.")
             prefix_de = st.text_area('Prefix (de)', x["prefix_de"], height = 500, placeholder="Bitte eingeben", key = f"prefix_de_{x['_id']}")
             prefix_en = st.text_area('Prefix (en)', x["prefix_en"], height = 500, placeholder="Bitte eingeben", key = f"prefix_en_{x['_id']}")
-            prefix_html = st.checkbox("Prefix enthält html-Tags", x["prefix_html"], help = "Andernfalls ist nur markdown-Syntax erlaubt.")
+
+            # links here
+            st.subheader("Quicklinks")
+            qu = x["quicklinks"]
+
+            link_remove_id = -1
+            quicklinks = []
+            for i, q in enumerate(qu):
+                cols = st.columns([1,1,5,10,1])
+                with cols[0]:
+                    st.write("")
+                    st.write("")
+                    st.button('↓', key=f'down-e-{i}', on_click = tools.move_down_list, args = (collection, x["_id"], "quicklinks", q,))
+                with cols[1]:
+                    st.write("")
+                    st.write("")
+                    st.button('↑', key=f'up-e-{i}', on_click = tools.move_up_list, args = (collection, x["_id"], "quicklinks", q,))
+                with cols[2]:
+                    title_de = st.text_input("Button-Text (de)", q["title_de"], key =f"quicklinks_{i}_title_de")
+                    title_en = st.text_input("Button-Text (en)", q["title_en"], key =f"quicklinks_{i}_title_en")
+                with cols[3]:
+                    url_de = st.text_input("Url für Button (de)", q["url_de"], key =f"quicklinks_{i}_url_de")
+                    url_en = st.text_input("Url für Button (en)", q["url_en"], key =f"quicklinks_{i}_url_en")
+                with cols[4]:
+                    st.write("")
+                    st.write("")
+                    if st.button('✕', key=f'close-e-{i}'):
+                        link_remove_id = i
+                quicklinks.append({"title_de": title_de, "title_en": title_en, "url_de": url_de, "url_en": url_en})
+
+            neuer_link = st.button('Neuer Quicklink', key = "neuer_quicklink")
+            save2 = st.button("Speichern", key=f"save2-{x['_id']}", type='primary')
+
+            if neuer_link:
+                quicklinks.append({"title_de": "", "title_en": "", "url_de": "", "url_en": ""})
+                save2 = True
+
+            if link_remove_id >= 0:
+                quicklinks = [q for q in quicklinks if quicklinks.index(q) != link_remove_id]
+                save2 = True
+
+            st.subheader("Suffix")
+            suffix_html = st.checkbox("Suffix enthält html-Tags", x["suffix_html"], help = "Andernfalls ist nur markdown-Syntax erlaubt.")
             suffix_de = st.text_area('Suffix (de)', x["suffix_de"], height = 500, placeholder="Bitte eingeben", key = f"suffix_de_{x['_id']}")
             suffix_en = st.text_area('Suffix (en)', x["suffix_en"], height = 500, placeholder="Bitte eingeben", key = f"suffix_en_{x['_id']}")
-            suffix_html = st.checkbox("Suffix enthält html-Tags", x["suffix_html"], help = "Andernfalls ist nur markdown-Syntax erlaubt.")
             kommentar = st.text_input("Kommentar", x["kommentar"], key = f"kommentar_{x['_id']}")
-            save = st.button("Speichern", key=f"save-{x['_id']}")
-            if save:
-                collection.update_one({"_id": x["_id"]}, { "$set": {"kurzname" : kurzname, "sichtbar" : sichtbar, "titel_de": titel_de, "titel_en": titel_en, "titel_html" : titel_html,  "prefix_de": prefix_de, "prefix_en": prefix_en, "prefix_html" : prefix_html, "suffix_de": suffix_de, "suffix_en": suffix_en, "suffix_html" : suffix_html, "bearbeitet_de": bearbeitet_de, "bearbeitet_en" : bearbeitet_en, "kommentar": kommentar}})
+            save3 = st.button("Speichern", key=f"save3-{x['_id']}", type='primary')
+
+            if save1 or save2 or save3:
+                collection.update_one({"_id": x["_id"]}, { "$set": {"kurzname" : kurzname, "sichtbar" : sichtbar, "titel_de": titel_de, "titel_en": titel_en, "titel_html" : titel_html,  "prefix_de": prefix_de, "prefix_en": prefix_en, "prefix_html" : prefix_html, "quicklinks" : quicklinks, "suffix_de": suffix_de, "suffix_en": suffix_en, "suffix_html" : suffix_html, "bearbeitet_de": bearbeitet_de, "bearbeitet_en" : bearbeitet_en, "kommentar": kommentar}})
                 st.toast("Erfolgreich gespeichert!")
                 time.sleep(0.5)
                 st.rerun()  
