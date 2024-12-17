@@ -109,6 +109,7 @@ def setup_session_state():
                 "titel_en": "", 
                 "prefix_de": "", 
                 "prefix_en": "", 
+                "quicklinks" : [],
                 "suffix_de": "", 
                 "suffix_en": "",
                 "titel_html" : False,
