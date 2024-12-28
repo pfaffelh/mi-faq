@@ -91,7 +91,7 @@ def display_navigation():
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
     st.sidebar.page_link("pages/05_dictionary.py", label="Lexikon (d/e)")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
-    #st.sidebar.page_link("pages/10_Hilfe.py", label="Dokumentation")
+    st.sidebar.page_link("pages/10_Hilfe.py", label="Dokumentation")
 
 def new(collection, ini = {}, switch = False):
     z = list(collection.find(sort = [("rang", pymongo.ASCENDING)]))
