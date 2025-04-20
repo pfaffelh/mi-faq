@@ -1,0 +1,38 @@
+{
+  "_id": {
+    "$oid": "6728afbb35030270a3a9de32"
+  },
+  "kurzname": "faqstud",
+  "sichtbar": true,
+  "titel_html": false,
+  "prefix_html": false,
+  "suffix_html": false,
+  "titel_de": "FAQ f\u00fcr Studierende",
+  "titel_en": "FAQ for students",
+  "prefix_de": "",
+  "prefix_en": "",
+  "suffix_de": "",
+  "suffix_en": "",
+  "kinder": [
+    {
+      "$oid": "6728afbb35030270a3a9de37"
+    },
+    {
+      "$oid": "6728afbb35030270a3a9de3c"
+    },
+    {
+      "$oid": "6728afbb35030270a3a9de42"
+    },
+    {
+      "$oid": "6728afbb35030270a3a9de51"
+    },
+    {
+      "$oid": "6728afbb35030270a3a9de66"
+    }
+  ],
+  "bearbeitet_de": "Zuletzt bearbeitet von Peter Pfaffelhuber am 25.02.2025 um 12:48:35.",
+  "bearbeitet_en": "Last edited by Peter Pfaffelhuber on 25/02/2025 at 12:48:35.",
+  "kommentar": "FAQ f\u00fcr Studierende",
+  "rang": 1,
+  "quicklinks": []
+}

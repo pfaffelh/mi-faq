@@ -3,6 +3,9 @@ from streamlit_extras.switch_page_button import switch_page
 import time
 import pymongo
 from datetime import datetime
+import json
+from bson import json_util
+import io
 
 # Seiten-Layout
 st.set_page_config(page_title="FAQ", page_icon=None, layout="wide", initial_sidebar_state="auto", menu_items=None)
@@ -109,6 +112,18 @@ if st.session_state.logged_in:
             abk = f"{z['titel_de'].strip()}".strip()
             if l_id == st.session_state.edit:
                 st.write(f"### {z['titel_de']}")
+                cols = st.columns([1,3])
+                with cols[0]:
+                    res = z
+                    res["kinder"] = [collection.find_one({"_id": k}) for k in res["kinder"]]
+                    for r in res["kinder"]:
+                        r["kinder"] = [collection.find_one({"_id": k}) for k in r["kinder"]]
+                    json_bytes = io.BytesIO()
+                    json_bytes.write(json.dumps(res, default=json_util.default, indent=2).encode("utf-8"))
+                    json_bytes.seek(0)
+                    st.download_button("Download", json_bytes, file_name=f"{z["kurzname"]}.json", mime="application/json")
+    
+
                 if z["kinder"] == []:
                     with st.popover('Löschen', use_container_width=True):
                         colu1, colu2, colu3 = st.columns([1,1,1])
