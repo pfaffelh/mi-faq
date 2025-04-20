@@ -119,7 +119,7 @@ if st.session_state.logged_in:
                     for r in res["kinder"]:
                         r["kinder"] = [collection.find_one({"_id": k}) for k in r["kinder"]]
                     json_bytes = io.BytesIO()
-                    json_bytes.write(json.dumps(res, default=json_util.default, indent=2).encode("utf-8"))
+                    json_bytes.write(json.dumps(res, default=json_util.default, indent=2, ensure_ascii=False).encode("utf-8"))
                     json_bytes.seek(0)
                     st.download_button("Download", json_bytes, file_name=f"{z["kurzname"]}.json", mime="application/json")
     
