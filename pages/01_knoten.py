@@ -51,11 +51,15 @@ def knoten_ebene1():
     res = [item for x in kn_ebene0 for item in x["kinder"]]
     return res
 
+def knoten_ebene0oder1():
+    return knoten_ebene0() + knoten_ebene1()
+
+
 def knoten_kleinere_ebene(knoten_id):
     l = len(level(knoten_id))
     res = []
     if l == 2:
-        res = knoten_ebene0()
+        res = knoten_ebene0() + knoten_ebene1()
     elif l == 3:
         res = knoten_ebene0() + knoten_ebene1()
     return res
@@ -139,7 +143,8 @@ if st.session_state.logged_in:
                             st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{x['_id']}")
                 if p["kurzname"] != "wurzel":
                     with st.popover('Verschieben', use_container_width=True):
-                        k_dict = knoten_dict(knoten_kleinere_ebene(l_id))
+                        # k_dict = knoten_dict(knoten_kleinere_ebene(l_id))
+                        k_dict = knoten_dict(knoten_ebene0oder1())
                         k_mo = st.selectbox("Wohin soll das Item verschoben werden?", k_dict.keys(), None, format_func = (lambda a : k_dict[a]), placeholder = "Bitte auswählen")
                         submit = st.button(label = "Verschieben!", type = 'primary', key = f"move-{z['_id']}")
                         if submit:
