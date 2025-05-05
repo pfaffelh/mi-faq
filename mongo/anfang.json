@@ -1,0 +1,35 @@
+prozesse = [
+    {
+        "kurzname": "evaluation-2025ws",
+        "sichtbar": True,
+        "titel": "Lehrevaluation Wintersemester 2025",
+        "datum": 15.10.2025,
+        "verantwortlicher": "junker",
+        "beteiligte": "studiendekan",
+        "prefix": "",
+        "quicklinks": [],
+        "suffix": "",
+        "bearbeitet": "Initialer Eintrag",
+        "aufgaben": [],
+        "vorlagen": [],
+        "kommentar": ""
+    }
+]
+
+aufgaben = [
+    {
+        "kurzname": "frist",
+        "titel": "Fristen festlegen",
+        "erledigt": False,
+        "relativstart": -60,
+        "relativende": -60,
+        "verantwortlicher": "junker",
+        "beteiligte": [],
+        "prefix": "",
+        "quicklinks": [],
+        "suffix": "",
+        "bearbeitet": "Initialer Eintrag",
+        "vorlagen": [],
+        "kommentar": ""
+    }
+]
