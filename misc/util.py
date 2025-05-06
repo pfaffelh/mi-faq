@@ -41,6 +41,10 @@ def setup_session_state():
         st.session_state.knoten = mongo_db["knoten"]
         st.session_state.dictionary = mongo_db["dictionary"]
         st.session_state.studiendekanat = mongo_db["studiendekanat"]
+        st.session_state.kalender = mongo_db["kalender"]
+        st.session_state.prozesspaket = mongo_db["prozesspaket"]
+        st.session_state.prozess = mongo_db["prozess"]
+        st.session_state.aufgabe = mongo_db["aufgabe"]
         st.session_state.users = mongo_db_users["user"]
         st.session_state.group = mongo_db_users["group"]
         logger.debug("Connected to MongoDB")
@@ -92,13 +96,25 @@ def setup_session_state():
         st.session_state.delete = False
     if "edit" not in st.session_state:
         st.session_state.edit = ""
+    if "edit_planer" not in st.session_state:
+        st.session_state.edit_planer = ""
     if "level" not in st.session_state:
         st.session_state.level = []
+    if "level_planer" not in st.session_state:
+        st.session_state.level_planer = [[],[],[]]
+    if "faq_users" not in st.session_state:
+        gr = st.session_state.groups.find_one({"name" : "faq"})
+        faq_users = list(st.session_state.users.find({"groups" : { "$elemMatch" : gr["_id"]}})) 
+        st.session_state.faq_users = [{"rz" : r["rz"], "name" : f"{r['vorname']} {r['name']}"} for r in faq_users]
     
     st.session_state.abhaengigkeit = {
         st.session_state.knoten : [{"collection": st.session_state.knoten, "field": "kinder", "list": True}],
         st.session_state.studiendekanat : [],
-        st.session_state.dictionary    : [],
+        st.session_state.dictionary : [],
+        st.session_state.kalender : [{"collection": st.session_state.aufgabe, "field": "relativdatum", "list": False}, {"collection": st.session_state.prozesspaket, "field": "kalender", "list": True}],
+        st.session_state.prozesspaket : [{"collection": st.session_state.prozess, "field": "zeitraum", "list": False}],
+        st.session_state.prozess : [{"collection": st.session_state.aufgabe, "field": "prozess", "list": False}],
+        st.session_state.aufgabe : []
     }
 
     st.session_state.leer = {}
@@ -147,10 +163,52 @@ def setup_session_state():
             "de": "",
             "en": "",
             "kommentar": ""
+        },
+        st.session_state.datum: {
+            "datum": datetime.combine(datetime.today().date(), time.min),
+            "name": ""
+        }
+        st.session_state.zeitraum: {
+            "kurzname": "",
+            "name": "", 
+            "sichtbar", True,
+            "kalender": [], 
+            "kommentar" : ""
+        }
+        # zeitraum und rang muss noch gesetzt werden
+        st.session_state.prozess: {
+            "kurzname": "", 
+            "sichtbar": True, 
+            "name": "", 
+            "verantwortlicher": "", 
+            "beteiligte": [], 
+            "prefix": "", 
+            "quicklinks": [], 
+            "suffix": "", 
+            "bearbeitet": "", 
+            "vorlagen": [], 
+            "kommentar": ""
+        }
+        # prozess, relativdatum
+        st.session_state.aufgabe: {
+            "kurzname": "", 
+            "titel": "", 
+            "prozess", 
+            "nurtermin": True, 
+            "bestätigt": False, 
+            "erledigt": False, 
+            "relativstart": 0, 
+            "relativende": 0, 
+            "verantwortlicher": "", 
+            "beteiligte": [], 
+            "prefix": "", 
+            "quicklinks": [], 
+            "suffix": "", 
+            "bearbeitet": "", 
+            "vorlagen": [], 
+            "kommentar": ""
         }
     }
-
-
 
 # Die Authentifizierung gegen den Uni-LDAP-Server
 def authenticate(username, password):
@@ -177,3 +235,7 @@ setup_session_state()
 knoten = st.session_state.knoten
 studiendekanat = st.session_state.studiendekanat
 dictionary = st.session_state.dictionary
+kalender = st.session_state.Kalender
+prozesspaket = st.session_state.prozesspaket
+prozess = st.session_state.prozess
+aufgabe = st.session_state.aufgabe

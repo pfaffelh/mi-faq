@@ -78,7 +78,6 @@ def update_confirm(collection, x, x_updated, reset = True):
         reset_vars("")
     st.toast("🎉 Erfolgreich geändert!")
 
-
 def display_navigation():
     st.markdown("<style>.st-emotion-cache-16txtl3 { padding: 2rem 2rem; }</style>", unsafe_allow_html=True)
     with st.sidebar:
@@ -90,6 +89,8 @@ def display_navigation():
     st.sidebar.page_link("pages/04_studiendekanat.py", label="Studiendekanat")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
     st.sidebar.page_link("pages/05_dictionary.py", label="Lexikon (d/e)")
+    st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
+    st.sidebar.page_link("pages/06_Planer.py", label="Planer")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
     st.sidebar.page_link("pages/10_Hilfe.py", label="Dokumentation")
 
@@ -158,6 +159,24 @@ def repr(collection, id, show_collection = False, short = False):
         res = f"{x['name_de']} ({x['rolle_de']})"
     elif collection == util.dictionary:
         res = f"{x['de']}/{x['en']}"
+    elif collection == util.kalender:
+        res = f"{x["name"]} ({x["datum"].strftime("%-d.%-m.%Y")})"
+    elif collection == util.prozesspaket:
+        res = f"{x["name"]} ({x["datum"].strftime("%-d.%-m.%Y")})"
+        if short:
+            res = x["kurzname"]
+        else:
+            res = x["name"]
+    elif collection == util.prozess:
+        if short:
+            res = x["kurzname"]
+        else:
+            res = x["name"]       
+    elif collection == util.aufgabe:
+        if short:
+            res = x["kurzname"]
+        else:
+            res = f"{x["name"]} ({x["ende"].strftime("%-d.%-m.%Y")})"
     if show_collection:
         res = f"{st.session_state.collection_name[collection]}: {res}"
     return res

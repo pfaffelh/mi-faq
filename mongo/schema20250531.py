@@ -9,6 +9,8 @@ mongo_db = cluster["faq"]
 # knoten
 # studiendekanat 
 # dictionary
+# prozesspaket
+# kalender
 # prozess
 # aufgabe
 
@@ -227,7 +229,7 @@ dictionary_validator = {
     }
 }
 
-datum_validator = {
+kalender_validator = {
      "$jsonSchema": {
         "bsonType": "object",
         "title": "Beschreibung eines Datums mit Name.",
@@ -235,7 +237,7 @@ datum_validator = {
         "properties": {
             "datum": {
                 "bsonType": "date",
-                "description": "Ein Datum das zum Zeitraum gehört."
+                "description": "Ein Datum das zum Prozesspaket gehört."
             },
             "name": {
                 "bsonType": "string",
@@ -245,7 +247,7 @@ datum_validator = {
      }
 }
 
-zeitraum_validator = {
+prozesspaket_validator = {
      "$jsonSchema": {
         "bsonType": "object",
         "title": "Beschreibung eines wiederkehrenden Zeitraumes.",
@@ -257,11 +259,11 @@ zeitraum_validator = {
             },
             "name": {
                 "bsonType": "string",
-                "description": "Der Name des Zeitraumes."
+                "description": "Der Name des Prozesspakets."
             },
             "kommentar": {
                 "bsonType": "string",
-                "description": "Kommentar zum Zeitraumes."
+                "description": "Kommentar zum Prozesspakets."
             },
             "sichtbar": {
                 "bsonType": "bool",
@@ -283,7 +285,7 @@ prozess_validator = {
      "$jsonSchema": {
         "bsonType": "object",
         "title": "Beschreibung eines Prozesses.",
-        "required": ["kurzname", "sichtbar", "name", "zeitraum", "verantwortlicher", "beteiligte", "prefix", "quicklinks", "suffix", "bearbeitet", "vorlagen", "kommentar"],
+        "required": ["kurzname", "sichtbar", "name", "prozesspaket", "verantwortlicher", "beteiligte", "prefix", "quicklinks", "suffix", "bearbeitet", "vorlagen", "kommentar", "rang"],
         "properties": {
             "kurzname": {
                 "bsonType": "string",
@@ -297,9 +299,9 @@ prozess_validator = {
                 "bsonType": "string",
                 "description": "Name des Prozesses"
             },
-            "zeitraum": {
-                "bsonType": ["null", "objectId"]
-                "description": "Die Id eines Zeitraumes, oder null, wenn es keinem Zeitraum zugeordnet ist"
+            "prozesspaket": {
+                "bsonType": "objectId",
+                "description": "Die Id eines Prozesspakets."
             },
             "verantwortlicher": {
                 "bsonType": "string",
@@ -346,13 +348,6 @@ prozess_validator = {
                     }
                 }            
             },
-            "aufgaben": {
-                "bsonType": "array",
-                "items": {
-                    "bsonType": "objectId",
-                    "description": "eine Aufgabe innerhalb des Prozesses."
-                }
-            },            
             "suffix": {
                 "bsonType": "string",
                 "description": "Suffix des Prozesses -- required"
@@ -364,6 +359,10 @@ prozess_validator = {
             "kommentar": {
                 "bsonType": "string",
                 "description": "Kommentar zur Sammlung."
+            },
+            "rang": {
+                "bsonType": "int",
+                "description": "Für die Reihenfolge der Darstellung."
             }
         }
     }  
@@ -373,7 +372,7 @@ aufgabe_validator = {
      "$jsonSchema": {
         "bsonType": "object",
         "title": "Beschreibung einer Aufgabe.",
-        "required": ["kurzname", "nurtermin", "titel", "bestätigt", "erledigt", "relativstart", "relativende", "verantwortlicher", "beteiligte", "prefix", "quicklinks", "suffix", "bearbeitet", "aufgaben", "vorlagen", "kommentar"],
+        "required": ["kurzname", "titel", "prozess", "nurtermin", "bestätigt", "erledigt", "relativdatum", "start", "ende", "verantwortlicher", "beteiligte", "prefix", "quicklinks", "suffix", "bearbeitet", "vorlagen", "kommentar"],
         "properties": {
             "kurzname": {
                 "bsonType": "string",
@@ -381,7 +380,11 @@ aufgabe_validator = {
             },
             "titel": {
                 "bsonType": "string",
-                "description": "Name des Prozesses"
+                "description": "Name der Aufgabe"
+            },
+            "prozess": {
+                "bsonType": "objectId",
+                "description": "Id des zugehörigen Prozesses"
             },
             "nurtermin": {
                 "bsonType": "bool",
@@ -399,12 +402,12 @@ aufgabe_validator = {
                 "bsonType": "objectId",
                 "description": "Relativ zu welchem Datum wird dieses Datum festgelegt."
             },
-           "relativstart": {
-                "bsonType": "int",
+           "start": {
+                "bsonType": "date",
                 "description": "Beginn der Erledigung in Tage vor oder nach Datum des Relativdatums."
             },
-            "relativende": {
-                "bsonType": ["null", "int"],
+            "ende": {
+                "bsonType": "date",
                 "description": "Ende der Erledigung in Tage vor oder nach Datum des Relativdatums."
             },
             "verantwortlicher": {
@@ -444,7 +447,7 @@ aufgabe_validator = {
                 "properties": {
                     "titel": {
                         "bsonType": "string",
-                        "description": "Text auf dem Button (de)"
+                        "description": "Titel der Vorlage"
                     },
                     "text": {
                         "bsonType": "string",
