@@ -162,7 +162,7 @@ def repr(collection, id, show_collection = False, short = False):
     elif collection == util.kalender:
         res = f"{x["name"]} ({x["datum"].strftime("%-d.%-m.%Y")})"
     elif collection == util.prozesspaket:
-        res = f"{x["name"]} ({x["datum"].strftime("%-d.%-m.%Y")})"
+        res = f"{x["name"]} "
         if short:
             res = x["kurzname"]
         else:

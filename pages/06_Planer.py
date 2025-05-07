@@ -1,6 +1,7 @@
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page 
-from datetime import datetime, timedelta
+from datetime import datetime
+from dateutil.relativedelta import relativedelta
 import time
 import pymongo
 
@@ -33,23 +34,23 @@ def savenew(collection, ini):
 def level(id, query = {}):
     res = [[],[],[]]
     if id == "":
-        res[0] = list(prozesspaket.find(query, sort=[("rang", pymongo.ASCENDING)]))
+        res[0] = [a["_id"] for a in list(prozesspaket.find(query, sort=[("rang", pymongo.ASCENDING)]))]
     elif prozesspaket.find_one({"_id" : id}):
         pr = prozesspaket.find_one({"_id" : id})
-        query = query | {"prozesspaket" : id}
+        query = query | {"parent" : id}
         res[0] = [id]
         res[1] = [p["_id"] for p in list(prozess.find(query, sort=[("rang", pymongo.ASCENDING)]))]
     elif prozess.find_one({"_id" : id}):
         pr = prozess.find_one({"_id" : id})
-        prpa = prozesspaket.find_one({"_id" : pr["prozesspaket"]})
+        prpa = prozesspaket.find_one({"_id" : pr["parent"]})
         res[0] = [prpa["_id"]]
         res[1] = [id]
-        query = query | {"prozess" : id}
+        query = query | {"parent" : id}
         res[2] = [p["_id"] for p in list(aufgabe.find(query, sort=[("rang", pymongo.ASCENDING)]))]
     elif aufgabe.find_one({"_id" : id}):
         au = aufgabe.find_one({"_id" : id})
-        pr = prozess.find_one({"_id" : au["prozess"]})
-        prpa = prozesspaket.find_one({"_id" : pr["prozesspaket"]})
+        pr = prozess.find_one({"_id" : au["parent"]})
+        prpa = prozesspaket.find_one({"_id" : pr["parent"]})
         res[0] = [prpa["_id"]]
         res[1] = [pr["_id"]]
         res[2] = [id]
@@ -57,23 +58,36 @@ def level(id, query = {}):
         res[2] = [p["_id"] for p in list(aufgabe.find(query, sort=[("ende", pymongo.DESCENDING)]))]
     return res
 
+def find_collection(n):
+    if n == 0:
+        collection = prozesspaket
+    elif n == 1:
+        collection = prozess
+    elif n == 2:
+        collection = aufgabe
+    return collection
+
+def auswahl_dict(n, query = {}):
+    collection = find_collection(n)
+    res = collection.find(query, sort=[("rang", pymongo.ASCENDING)])
+    return {r["_id"] : tools.repr(collection, r["_id"]) for r in res}
+
 # Ab hier wird die Webseite erzeugt
 if st.session_state.logged_in:
-    st.header("Navigation")
-    col1, col2 = st.columns([1,1])
-    with col1:
-        st.write("")
-        col1, col2 = st.columns([1,1])
-        anzeige_start = col1.date_input("von", value = datetime.now() + timedelta(months = -4), format="DD.MM.YYYY")
-        anzeige_ende = col2.date_input("bis", value = datetime.now() + timedelta(months = 2), format="DD.MM.YYYY")
+    st.header("Planer")
+    st.write("Zeige nur Prozesspakete an, die Termine in folgendem Zeitraum haben:")
+    col = st.columns([1,1,1])
+    anzeige_start = col[0].date_input("von", value = datetime.now() + relativedelta(months = -4), format="DD.MM.YYYY")
+    anzeige_ende = col[1].date_input("bis", value = datetime.now() + relativedelta(months = 2), format="DD.MM.YYYY")
 
-    y = list(kalender.find({ "datum" : {"$ge" : anzeige_start, "$le" : anzeige_ende}}, sort=[("datum", pymongo.ASCENDING)]))
+    y = list(kalender.find({ "datum" : {"$gt" : datetime.combine(anzeige_start, datetime.min.time()), "$lt" : datetime.combine(anzeige_ende, datetime.max.time())}}, sort=[("datum", pymongo.ASCENDING)]))
     if st.session_state.edit_planer == "":
-        query = {"kalender" : {"$in" : y}}
+        query = {"kalender" : {"$in" : [a["_id"] for a in y]}}
     else:
         query = {}
-    le = level(st.session_state.edit_planer, query)
 
+    st.session_state.level_planer = level(st.session_state.edit_planer, query)
+    # st.write(st.session_state.level_planer, level(st.session_state.edit_planer))
     col = st.columns([1,1,1])
     with col[0]:
         submit = st.button("Alle Prozesspakete", key=f"edit-wurzel", use_container_width=True)
@@ -83,87 +97,79 @@ if st.session_state.logged_in:
 
     st.write("### Navigation:")
 
-    col = st.columns([1,1,1])
-    n = 0
-    for l_id in st.session_state.level_planer[n]:
-        with col[n]:
-
-            z = collection.find_one({"_id" : l_id})
-            p = collection.find_one({"kinder" : { "$elemMatch" : { "$eq" : z["_id"]}}})
-            abk = f"{z['titel_de'].strip()}".strip()
-
-            if l_id == st.session_state.edit:
-                st.write(f"### {z['titel_de']}")
-                if z["kinder"] == []:
-                    with st.popover('Löschen', use_container_width=True):
-                        colu1, colu2, colu3 = st.columns([1,1,1])
-                        with colu1:                  
-                            submit = st.button(label = "Wirklich löschen!", type = 'primary', key = f"delete-{z['_id']}")
+    for n in [0, 1, 2]:
+        col = st.columns([1,1,1])
+        collection = find_collection(n)
+        for l_id in st.session_state.level_planer[n]:
+            with col[n]:
+                z = collection.find_one({"_id" : l_id})
+                #st.write(l_id)
+                #st.write(st.session_state.edit_planer)
+                if (z["_id"] == st.session_state.edit_planer) or (n < 2 and st.session_state.level_planer[n+1] != []):
+                    st.write(f"### {tools.repr(collection, z["_id"])}")
+                    if n == 2 or (n < 2 and st.session_state.level_planer[n+1] == []):
+                        with st.popover('Löschen', use_container_width=True):
+                            colu1, colu2, colu3 = st.columns([1,1,1])
+                            with colu1:                  
+                                submit = st.button(label = "Wirklich löschen!", type = 'primary', key = f"delete-{z['_id']}")
+                                if submit:
+                                    collection.delete_one({"_id" : z["_id"]})
+                                    st.success("Item gelöscht!")
+                                    st.session_state.edit_planer = ""
+                                    st.rerun()
+                            with colu3: 
+                                st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{z['_id']}")
+                    if n > 0 and st.session_state.edit_planer == z["_id"]:
+                        with st.popover('Verschieben', use_container_width=True):
+                            if n == 1:
+                                query = {"kalender" : {"$in" : [a["_id"] for a in y]}}
+                            elif n == 2:
+                                query = {}                            
+                            aus_dict = auswahl_dict(n - 1, query)
+                            sel = st.selectbox("Wohin soll das Item verschoben werden?", aus_dict.keys(), None, format_func = (lambda a : aus_dict[a]), placeholder = "Bitte auswählen")
+                            submit = st.button(label = "Verschieben!", type = 'primary', key = f"move-{z['_id']}")
                             if submit:
-                                collection.update_one({"_id" : p["_id"]}, { "$pull" : { "kinder" : z["_id"]}})
-                                #collection.delete_one({"_id" : z["_id"]})
-                                st.success("Item gelöscht!")
-                                st.session_state.edit=p["_id"]
+                                collection.update_one({"_id" : z["_id"]}, { "$set" : {"parent" : sel}})
+                                st.success("Item verschoben!")
                                 st.rerun()
-                        with colu3: 
-                            st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{x['_id']}")
-                if p["kurzname"] != "wurzel":
-                    with st.popover('Verschieben', use_container_width=True):
-                        # k_dict = knoten_dict(knoten_kleinere_ebene(l_id))
-                        k_dict = knoten_dict(knoten_ebene0oder1())
-                        k_mo = st.selectbox("Wohin soll das Item verschoben werden?", k_dict.keys(), None, format_func = (lambda a : k_dict[a]), placeholder = "Bitte auswählen")
-                        submit = st.button(label = "Verschieben!", type = 'primary', key = f"move-{z['_id']}")
+
+                else:
+                    # st.write(st.session_state.level_planer)
+                    co1, co2, co3 = st.columns([1,1,10]) 
+                    if n > 0:
+                        query = {"parent" : z["parent"]}
+                    else:
+                        query = {}
+                    with co1: 
+                        if len(st.session_state.level_planer[n])>1:
+                            st.button('↓', key=f'down-{z["_id"]}', on_click = tools.move_down, args = (collection, z, query))
+                    with co2:
+                        if len(st.session_state.level_planer[n])>1:
+                            st.button('↑', key=f'up-{z["_id"]}', on_click = tools.move_up, args = (collection, z, query))
+                    with co3: 
+                        submit = st.button(tools.repr(collection, z["_id"]), key=f"edit-{z["_id"]}", use_container_width=True)
                         if submit:
-                            collection.update_one({"_id" : p["_id"]}, { "$pull" : { "kinder" : z["_id"]}})
-                            collection.update_one({"_id" : k_mo}, { "$push" : { "kinder" : z["_id"]}})
-                            #collection.delete_one({"_id" : z["_id"]})
-                            st.success("Item verschoben!")
+                            st.session_state.edit_planer = z["_id"]
                             st.rerun()
-                        
-            else:
-                submit = st.button(abk, key=f"edit-{z['_id']}", use_container_width=True)
-                if submit:
-                    st.session_state.edit = z["_id"]
-                    st.rerun()
-        n = n+1
-    col = st.columns([1,1,1])
-    if len(st.session_state.level)<3:
-        with col[n]:
-            for k in x["kinder"]:
-                co1, co2, co3 = st.columns([1,1,10]) 
-                with co1: 
-                    st.button('↓', key=f'down-{k}', on_click = tools.move_down_list, args = (collection, x["_id"], "kinder", k))
-                with co2:
-                    st.button('↑', key=f'up-{k}', on_click = tools.move_up_list, args = (collection, x["_id"], "kinder", k))
-                with co3: 
-                    submit = st.button(tools.repr(collection, k), key=f"edit-{k}", use_container_width=True)
-                    if submit:
-                        st.session_state.edit = k
-                        st.rerun()
-            co1, co2, co3 = st.columns([1,1,10]) 
-            with co3.popover(f'Neues Item anlegen'):
-                kurzname = st.text_input("Kurzname", "", key = "new_kurzname")
-                titel_de = st.text_input("Titel (de)", "", key = "new_titel_de")
-                titel_en = st.text_input("Titel (en)", "", key = "new_titel_en")        
-                kommentar = st.text_input("Kommentar", "", key = "new_kommentar")
+                    if st.session_state.level_planer[n][-1] == z["_id"]:
+                        with co3.popover(f'Neues Item anlegen', use_container_width=True):
+                            kurzname = st.text_input("Kurzname", "", key = "new_kurzname")
+                            name = st.text_input("Titel", "", key = "new_titel")
+                            kommentar = st.text_input("Kommentar", "", key = "new_kommentar")
+                            btn = st.button("Item anlegen", on_click=savenew, args = [collection, {"kurzname" : kurzname, "name": name, "kommentar": kommentar,},])
 
-                btn = st.button("Item anlegen", on_click=savenew, args = [{"kurzname" : kurzname, "titel_de": titel_de, "titel_en": titel_en, "kommentar": kommentar,},])
-
-    if len(st.session_state.level):
+    if st.session_state.edit_planer != "":
+        if prozesspaket.find_one({"_id" : st.session_state.edit_planer}):
+            n = 0
+        elif prozess.find_one({"_id" : st.session_state.edit_planer}):
+            n = 1
+        elif aufgabe.find_one({"_id" : st.session_state.edit_planer}):
+            n = 2
+        collection = find_collection(n)
+        z = collection.find_one({"_id" : st.session_state.edit_planer})
         with st.expander("Daten"):
-            save1 = st.button("Speichern", key=f"save1-{x['_id']}", type='primary')
-            st.write(x["bearbeitet_de"])
-            l = list(collection.find({"kurzname" : x["kurzname"]}))
+            save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
+            st.write(z["bearbeitet"])
+            l = list(collection.find({"kurzname" : z["kurzname"]}))
             if len(l) > 1:
                 st.warning("Warnung: Kurzname ist nicht eindeutig!")
-            kurzname = st.text_input("Kurzname", x["kurzname"], key = f"kurzname_{x['_id']}", disabled = True if x["kurzname"] == "unsichtbar" else False)
-
-            sichtbar = st.checkbox("Auf Homepage sichtbar", x["sichtbar"])
-
-            st.subheader("Titel")
-            titel_html = st.checkbox("Titel enthält html-Tags", x["titel_html"], help = "Andernfalls ist nur markdown-Syntax erlaubt.")
-
-
-
-
-

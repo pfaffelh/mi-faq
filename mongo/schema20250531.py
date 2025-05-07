@@ -251,7 +251,7 @@ prozesspaket_validator = {
      "$jsonSchema": {
         "bsonType": "object",
         "title": "Beschreibung eines wiederkehrenden Zeitraumes.",
-        "required": ["kurzname", "name", "sichtbar", "kalender", "kommentar"],
+        "required": ["kurzname", "name", "sichtbar", "kalender", "kommentar", "rang", "bearbeitet"],
         "properties": {
             "kurzname": {
                 "bsonType": "string",
@@ -265,9 +265,17 @@ prozesspaket_validator = {
                 "bsonType": "string",
                 "description": "Kommentar zum Prozesspakets."
             },
+            "bearbeitet": {
+                "bsonType": "string",
+                "description": "Text zur Bearbeitung."
+            },
             "sichtbar": {
                 "bsonType": "bool",
                 "description": "bestimmt, ob für den Zeitraum eine Webpage erstellt werden soll."
+            },
+            "rang": {
+                "bsonType": "int",
+                "description": "bestimmt die Reihenfolge."
             },
             "kalender" : {
                 "bsonType": "array",
@@ -285,7 +293,7 @@ prozess_validator = {
      "$jsonSchema": {
         "bsonType": "object",
         "title": "Beschreibung eines Prozesses.",
-        "required": ["kurzname", "sichtbar", "name", "prozesspaket", "verantwortlicher", "beteiligte", "prefix", "quicklinks", "suffix", "bearbeitet", "vorlagen", "kommentar", "rang"],
+        "required": ["kurzname", "sichtbar", "name", "parent", "verantwortlicher", "beteiligte", "text", "quicklinks", "bearbeitet", "vorlagen", "kommentar", "rang"],
         "properties": {
             "kurzname": {
                 "bsonType": "string",
@@ -299,7 +307,7 @@ prozess_validator = {
                 "bsonType": "string",
                 "description": "Name des Prozesses"
             },
-            "prozesspaket": {
+            "parent": {
                 "bsonType": "objectId",
                 "description": "Die Id eines Prozesspakets."
             },
@@ -307,7 +315,7 @@ prozess_validator = {
                 "bsonType": "string",
                 "description": "RZ-Kennung des Prozess-Verantwortlichen"
             },
-            "prefix": {
+            "text": {
                 "bsonType": "string",
                 "description": "Prefix für den Prozess-- required"
             },
@@ -348,10 +356,6 @@ prozess_validator = {
                     }
                 }            
             },
-            "suffix": {
-                "bsonType": "string",
-                "description": "Suffix des Prozesses -- required"
-            },
             "bearbeitet": {
                 "bsonType": "string",
                 "description": "Zuletzt bearbeitet von... -- deutsch"
@@ -372,17 +376,17 @@ aufgabe_validator = {
      "$jsonSchema": {
         "bsonType": "object",
         "title": "Beschreibung einer Aufgabe.",
-        "required": ["kurzname", "titel", "prozess", "nurtermin", "bestätigt", "erledigt", "relativdatum", "start", "ende", "verantwortlicher", "beteiligte", "prefix", "quicklinks", "suffix", "bearbeitet", "vorlagen", "kommentar"],
+        "required": ["kurzname", "name", "parent", "nurtermin", "bestätigt", "erledigt", "relativdatum", "start", "ende", "verantwortlicher", "beteiligte", "text", "quicklinks", "bearbeitet", "vorlagen", "kommentar"],
         "properties": {
             "kurzname": {
                 "bsonType": "string",
                 "description": "Die Abkürzung der Seite für Links -- required"
             },
-            "titel": {
+            "name": {
                 "bsonType": "string",
                 "description": "Name der Aufgabe"
             },
-            "prozess": {
+            "parent": {
                 "bsonType": "objectId",
                 "description": "Id des zugehörigen Prozesses"
             },
@@ -414,7 +418,7 @@ aufgabe_validator = {
                 "bsonType": "string",
                 "description": "RZ-Kennung des Aufgaben-Verantwortlichen"
             },
-            "prefix": {
+            "text": {
                 "bsonType": "string",
                 "description": "Prefix für die Aufgabe-- required"
             },
@@ -454,10 +458,6 @@ aufgabe_validator = {
                         "description": "Text für die Vorlage."
                     }
                 }            
-            },
-            "suffix": {
-                "bsonType": "string",
-                "description": "Suffix des Prozesses -- required"
             },
             "bearbeitet": {
                 "bsonType": "string",

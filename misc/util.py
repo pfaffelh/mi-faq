@@ -103,8 +103,8 @@ def setup_session_state():
     if "level_planer" not in st.session_state:
         st.session_state.level_planer = [[],[],[]]
     if "faq_users" not in st.session_state:
-        gr = st.session_state.groups.find_one({"name" : "faq"})
-        faq_users = list(st.session_state.users.find({"groups" : { "$elemMatch" : gr["_id"]}})) 
+        gr = st.session_state.group.find_one({"name" : "faq"})
+        faq_users = list(st.session_state.users.find({"groups" : { "$elemMatch" : { "$eq" : gr["_id"]}}})) 
         st.session_state.faq_users = [{"rz" : r["rz"], "name" : f"{r['vorname']} {r['name']}"} for r in faq_users]
     
     st.session_state.abhaengigkeit = {
@@ -120,90 +120,92 @@ def setup_session_state():
     st.session_state.leer = {}
     st.session_state.new = {
         st.session_state.knoten: {"kurzname": "", 
-                "sichtbar" : False,
-                "titel_de": "", 
-                "titel_en": "", 
-                "prefix_de": "", 
-                "prefix_en": "", 
-                "quicklinks" : [],
-                "suffix_de": "", 
-                "suffix_en": "",
-                "titel_html" : False,
-                "prefix_html" : False,
-                "suffix_html" : False,
-                "kinder" : [], 
-                "bearbeitet_de": f"Angelegt von {st.session_state.username} am {datetime.now().strftime('%d.%m.%Y um %H:%M:%S.')}",
-                "bearbeitet_en": f"Initialized by {st.session_state.username} on {datetime.now().strftime('%d/%m/%Y at %H:%M:%S.')}",
-                "kommentar": ""},
+            "sichtbar" : False,
+            "titel_de": "", 
+            "titel_en": "", 
+            "prefix_de": "", 
+            "prefix_en": "", 
+            "quicklinks" : [],
+            "suffix_de": "", 
+            "suffix_en": "",
+            "titel_html" : False,
+            "prefix_html" : False,
+            "suffix_html" : False,
+            "kinder" : [], 
+            "bearbeitet_de": f"Angelegt von {st.session_state.username} am {datetime.now().strftime('%d.%m.%Y um %H:%M:%S.')}",
+            "bearbeitet_en": f"Initialized by {st.session_state.username} on {datetime.now().strftime('%d/%m/%Y at %H:%M:%S.')}",
+            "kommentar": ""},
         st.session_state.studiendekanat:     {
-        "showstudiendekanat": False,
-        "showstudienberatung": False,
-        "showpruefungsamt": False,
-        "name_de": "",
-        "name_en": "",
-        "link": "",
-        "rolle_de": "",
-        "rolle_en": "",
-        "raum_de": "",
-        "raum_en": "",
-        "tel_de": "",
-        "tel_en": "",
-        "mail": "",
-        "sprechstunde_de": "",
-        "sprechstunde_en": "",
-        "prefix_de": "",
-        "prefix_en": "",
-        "text_de": "",
-        "text_en": "",
-        "news_ende": datetime(2025,1,1,0,0),
-        "news_de": "",
-        "news_en": ""
-        },
+            "showstudiendekanat": False,
+            "showstudienberatung": False,
+            "showpruefungsamt": False,
+            "name_de": "",
+            "name_en": "",
+            "link": "",
+            "rolle_de": "",
+            "rolle_en": "",
+            "raum_de": "",
+            "raum_en": "",
+            "tel_de": "",
+            "tel_en": "",
+            "mail": "",
+            "sprechstunde_de": "",
+            "sprechstunde_en": "",
+            "prefix_de": "",
+            "prefix_en": "",
+            "text_de": "",
+            "text_en": "",
+            "news_ende": datetime(2025,1,1,0,0),
+            "news_de": "",
+            "news_en": ""
+            },
         st.session_state.dictionary: {
             "de": "",
             "en": "",
             "kommentar": ""
         },
-        st.session_state.datum: {
-            "datum": datetime.combine(datetime.today().date(), time.min),
-            "name": ""
-        }
-        st.session_state.zeitraum: {
+        st.session_state.kalender: {
+            "datum": datetime.now(),
+            "name": "Jetzt"
+        },
+        st.session_state.prozesspaket: {
             "kurzname": "",
             "name": "", 
-            "sichtbar", True,
+            "sichtbar": True,
             "kalender": [], 
-            "kommentar" : ""
-        }
+            "kommentar" : "",
+            "rang" : 0
+        },
         # zeitraum und rang muss noch gesetzt werden
         st.session_state.prozess: {
             "kurzname": "", 
             "sichtbar": True, 
             "name": "", 
+            "parent" : "",
             "verantwortlicher": "", 
             "beteiligte": [], 
-            "prefix": "", 
+            "text": "", 
             "quicklinks": [], 
-            "suffix": "", 
             "bearbeitet": "", 
             "vorlagen": [], 
-            "kommentar": ""
-        }
+            "kommentar": "",
+            "rang": 1
+        },
         # prozess, relativdatum
         st.session_state.aufgabe: {
             "kurzname": "", 
-            "titel": "", 
-            "prozess", 
+            "name": "", 
+            "parent" : "", 
             "nurtermin": True, 
             "bestätigt": False, 
             "erledigt": False, 
-            "relativstart": 0, 
-            "relativende": 0, 
+            "relativdatum": "",
+            "start": datetime.now(), 
+            "ende": datetime.now(), 
             "verantwortlicher": "", 
             "beteiligte": [], 
-            "prefix": "", 
+            "text": "", 
             "quicklinks": [], 
-            "suffix": "", 
             "bearbeitet": "", 
             "vorlagen": [], 
             "kommentar": ""
@@ -235,7 +237,7 @@ setup_session_state()
 knoten = st.session_state.knoten
 studiendekanat = st.session_state.studiendekanat
 dictionary = st.session_state.dictionary
-kalender = st.session_state.Kalender
+kalender = st.session_state.kalender
 prozesspaket = st.session_state.prozesspaket
 prozess = st.session_state.prozess
 aufgabe = st.session_state.aufgabe
