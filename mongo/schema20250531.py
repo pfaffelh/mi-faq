@@ -239,6 +239,14 @@ kalender_validator = {
                 "bsonType": "date",
                 "description": "Ein Datum das zum Prozesspaket gehört."
             },
+            "ankerdatum" : {
+                "bsonType": "array",
+                "description": "Kein oder ein Kalender-Datum",
+                "items": {
+                    "bsonType": "objectId",
+                    "description": "Ein Kalender-Datum."
+                }
+            },
             "name": {
                 "bsonType": "string",
                 "description": "Name des Datums"

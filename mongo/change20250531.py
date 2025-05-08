@@ -26,6 +26,7 @@ aufgabe = mongo_db["aufgabe"]
 k = kalender.insert_one(
     {
             "datum": datetime.now(),
+            "ankerdatum": [],
             "name": "Jetzt"
         })
 prpa = prozesspaket.insert_one(

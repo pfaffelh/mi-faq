@@ -173,3 +173,42 @@ if st.session_state.logged_in:
             l = list(collection.find({"kurzname" : z["kurzname"]}))
             if len(l) > 1:
                 st.warning("Warnung: Kurzname ist nicht eindeutig!")
+            kurzname = st.text_input("Kurzname", z["kurzname"], key = f"kurzname_{z['_id']}", disabled = False)
+            name = st.text_input("Name", z["name"], key = f"name_{z['_id']}", disabled = False)
+            sichtbar = st.checkbox("Homepage erstellen", z["sichtbar"])
+            kommentar = st.text_input("Kommentar", z["kommentar"])
+
+            st.subheader("Daten")
+
+            kal = []
+            kal_dict = {k : tools.repr(kalender, k) for k in z["kalender"]}
+            for i, k in enumerate(z["kalender"]):
+                ka = kalender.find_one({"_id" : k})
+                cols = st.columns([1,2])
+                datum = cols[0].date_input("Start", value = ka["datum"], format = "DD.MM.YYYY", key = f"date_{i}")
+                name = cols[1].text_input("Name", ka["name"], key = f"name_{i}", disabled = False)
+                cols = st.columns([5,5])
+                ist_ankerdatum = cols[0].toggle("Relativdatum", True if len(ka["ankerdatum"]) else False, key = f"ist_ankerdatum_{i}")
+                if ist_ankerdatum:
+                    ankerdatum = cols[1].selectbox("...zu", z["kalender"], format_func = (lambda a: tools.repr(util.kalender, a)), key = f"ankerdatum_{i}")
+                kal.append({
+                    "_id" : k,
+                    "datum" : datum,
+                    "name": name,
+                    "ankerdatum" : [] if ist_ankerdatum == False else [ankerdatum]
+                })
+            neues_datum = st.button('Neues Datum', key = "neues_datum")
+            save2 = st.button("Speichern", key=f"save2-{z['_id']}", type='primary')
+
+            if neues_datum: 
+                k = kalender.insert_one({"datum": datetime.now(), "name": "", "ankerdatum": []})
+                prozesspaket.update_one({"_id" : z["_id"]}, {"$push" : {"kalender" : k.inserted_id}})
+                save2 = True
+
+            if save1 or save2:
+                for k in kal:
+                    st.write(k)
+                    kalender.update_one({"_id": k["_id"]}, { "$set": {"datum" : datetime.combine(k["datum"], datetime.min.time()), "name" : k["name"], "ankerdatum" : k["ankerdatum"]}})
+                st.toast("Erfolgreich gespeichert!")
+                time.sleep(0.5)
+                st.rerun()  
