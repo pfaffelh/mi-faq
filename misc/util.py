@@ -169,31 +169,31 @@ def setup_session_state():
             "kommentar": ""
         },
         st.session_state.kalender: {
-            "datum": datetime.now(),
-            "name": "Jetzt"
+            "datum": datetime.datetime(1970, 1, 1, 0, 0),
+            "ankerdatum" : [],
+            "name": "-"
         },
         st.session_state.prozesspaket: {
             "kurzname": "",
             "name": "", 
             "sichtbar": True,
             "kalender": [], 
+            "bearbeitet": "Initialer Eintrag", 
             "kommentar" : "",
-            "rang" : 0
         },
         # zeitraum und rang muss noch gesetzt werden
         st.session_state.prozess: {
             "kurzname": "", 
             "sichtbar": True, 
-            "name": "", 
+            "name": "Erster Prozess", 
             "parent" : "",
             "verantwortlicher": "", 
             "beteiligte": [], 
             "text": "", 
             "quicklinks": [], 
-            "bearbeitet": "", 
+            "bearbeitet": "Initialer Eintrag", 
             "vorlagen": [], 
             "kommentar": "",
-            "rang": 1
         },
         # prozess, relativdatum
         st.session_state.aufgabe: {
@@ -210,7 +210,7 @@ def setup_session_state():
             "beteiligte": [], 
             "text": "", 
             "quicklinks": [], 
-            "bearbeitet": "", 
+            "bearbeitet": "Initialer Eintrag", 
             "vorlagen": [], 
             "kommentar": ""
         }
