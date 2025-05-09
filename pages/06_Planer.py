@@ -167,6 +167,57 @@ if st.session_state.logged_in:
             n = 2
         collection = find_collection(n)
         z = collection.find_one({"_id" : st.session_state.edit_planer})
+
+        with st.expander("Kalender"):
+            st.write("Hier werden grundlegende Daten für das Prozesspaket bereitgestellt. Falls ein Datum relativ zu einem anderen festgelegt wird, wird es bei Änderung des Ankerdatums ebenfalls geändert.")
+            kal = []
+            kal_dict = {a["_id"] : tools.repr(kalender, a["_id"]) for a in y} # Für selectbox
+            for i, k in enumerate(z["kalender"]):
+                ka = kalender.find_one({"_id" : k})
+                cols = st.columns([1,4,1])
+                datum = cols[0].date_input("Datum", value = ka["datum"], format = "DD.MM.YYYY", key = f"date_{i}")
+                name = cols[1].text_input("Name des Datums", ka["name"], key = f"name_{i}", disabled = False)
+                with cols[2].popover("Löschen", use_container_width=True):
+                    dep = tools.find_dependent_items(kalender, k)
+                    if dep != []:
+                        st.write("Abhängige Items sind:  \n" + ",  \n".join(dep))
+                    else:
+                        st.write("Es gibt keine abhängigen Items")
+                    colu1, colu2, colu3 = st.columns([1,1,1])
+                    with colu1:
+                        submit = st.button(label = "Wirklich löschen!", type = 'primary', key = f"delete-datum-{i}")
+                        if submit:
+                            st.write()
+                            tools.delete_item_update_dependent_items(kalender, k)
+                            st.success("Item gelöscht!")
+                            st.rerun()
+                    with colu3: 
+                        st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{z['_id']}")
+                cols = st.columns([1,4])
+                ist_ankerdatum = cols[0].toggle("Relativdatum", True if len(ka["ankerdatum"]) else False, key = f"ist_ankerdatum_{i}")
+                if ist_ankerdatum:
+                    ankerdatum = cols[1].selectbox("...zu", z["kalender"], format_func = (lambda a: tools.repr(util.kalender, a)), key = f"ankerdatum_{i}")
+                kal.append({
+                    "_id" : k,
+                    "datum" : datum,
+                    "name": name,
+                    "ankerdatum" : [] if ist_ankerdatum == False else [ankerdatum]
+                })
+            neues_datum = st.button('Neues Datum', key = "neues_datum")
+            if neues_datum: 
+                k = kalender.insert_one({"datum": datetime.now(), "name": "", "ankerdatum": []})
+                prozesspaket.update_one({"_id" : z["_id"]}, {"$push" : {"kalender" : k.inserted_id}})
+                save2 = True
+
+            save2 = st.button("Speichern", key=f"save2-{z['_id']}", type='primary')
+            if save2:
+                for k in kal:
+                    
+                    kalender.update_one({"_id": k["_id"]}, { "$set": {"datum" : datetime.combine(k["datum"], datetime.min.time()), "name" : k["name"], "ankerdatum" : k["ankerdatum"]}})
+                st.toast("Erfolgreich gespeichert!")
+                time.sleep(0.5)
+                st.rerun()  
+
         with st.expander("Daten"):
             save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
             st.write(z["bearbeitet"])
@@ -178,37 +229,3 @@ if st.session_state.logged_in:
             sichtbar = st.checkbox("Homepage erstellen", z["sichtbar"])
             kommentar = st.text_input("Kommentar", z["kommentar"])
 
-            st.subheader("Daten")
-
-            kal = []
-            kal_dict = {k : tools.repr(kalender, k) for k in z["kalender"]}
-            for i, k in enumerate(z["kalender"]):
-                ka = kalender.find_one({"_id" : k})
-                cols = st.columns([1,2])
-                datum = cols[0].date_input("Start", value = ka["datum"], format = "DD.MM.YYYY", key = f"date_{i}")
-                name = cols[1].text_input("Name", ka["name"], key = f"name_{i}", disabled = False)
-                cols = st.columns([5,5])
-                ist_ankerdatum = cols[0].toggle("Relativdatum", True if len(ka["ankerdatum"]) else False, key = f"ist_ankerdatum_{i}")
-                if ist_ankerdatum:
-                    ankerdatum = cols[1].selectbox("...zu", z["kalender"], format_func = (lambda a: tools.repr(util.kalender, a)), key = f"ankerdatum_{i}")
-                kal.append({
-                    "_id" : k,
-                    "datum" : datum,
-                    "name": name,
-                    "ankerdatum" : [] if ist_ankerdatum == False else [ankerdatum]
-                })
-            neues_datum = st.button('Neues Datum', key = "neues_datum")
-            save2 = st.button("Speichern", key=f"save2-{z['_id']}", type='primary')
-
-            if neues_datum: 
-                k = kalender.insert_one({"datum": datetime.now(), "name": "", "ankerdatum": []})
-                prozesspaket.update_one({"_id" : z["_id"]}, {"$push" : {"kalender" : k.inserted_id}})
-                save2 = True
-
-            if save1 or save2:
-                for k in kal:
-                    st.write(k)
-                    kalender.update_one({"_id": k["_id"]}, { "$set": {"datum" : datetime.combine(k["datum"], datetime.min.time()), "name" : k["name"], "ankerdatum" : k["ankerdatum"]}})
-                st.toast("Erfolgreich gespeichert!")
-                time.sleep(0.5)
-                st.rerun()  

@@ -134,8 +134,9 @@ def delete_item_update_dependent_items(collection, id, switch = False):
             if x["list"]:
                 x["collection"].update_many({x["field"].replace(".$",""): { "$elemMatch": { "$eq": id }}}, {"$pull": { x["field"] : id}})
             else:
-                st.write(st.session_state.collection_name[x["collection"]])
-                x["collection"].update_many({x["field"]: id}, { "$set": { x["field"].replace(".", ".$."): st.session_state.leer[collection]}})
+                st.write(f"Löschen nicht möglich: {st.session_state.collection_name[x['collection']]} hängt davon ab")
+                #st.write(st.session_state.collection_name[x["collection"]])
+                #x["collection"].update_many({x["field"]: id}, { "$set": { x["field"].replace(".", ".$."): st.session_state.leer[collection]}})
         s = ("  \n".join(find_dependent_items(collection, id)))
         if s:
             s = f"\n{s}  \ngeändert."     

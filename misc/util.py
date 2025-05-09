@@ -57,7 +57,11 @@ def setup_session_state():
     st.session_state.collection_name = {
         st.session_state.knoten: "Knoten",
         st.session_state.studiendekanat: "Studiendekanat",
-        st.session_state.dictionary: "Lexikon"    
+        st.session_state.dictionary: "Lexikon",
+        st.session_state.kalender: "Kalender",
+        st.session_state.prozesspaket: "Prozesspaket",
+        st.session_state.prozess: "Prozess",
+        st.session_state.aufgabe: "Aufgabe"
     }
     if "new_kurzname" not in st.session_state:
         st.session_state.new_kurzname = "" 
@@ -111,7 +115,7 @@ def setup_session_state():
         st.session_state.knoten : [{"collection": st.session_state.knoten, "field": "kinder", "list": True}],
         st.session_state.studiendekanat : [],
         st.session_state.dictionary : [],
-        st.session_state.kalender : [{"collection": st.session_state.aufgabe, "field": "relativdatum", "list": False}, {"collection": st.session_state.prozesspaket, "field": "kalender", "list": True}],
+        st.session_state.kalender : [{"collection": st.session_state.aufgabe, "field": "relativdatum", "list": False}, {"collection": st.session_state.prozesspaket, "field": "kalender", "list": True}, {"collection": st.session_state.kalender, "field": "ankerdatum", "list": True}],
         st.session_state.prozesspaket : [{"collection": st.session_state.prozess, "field": "zeitraum", "list": False}],
         st.session_state.prozess : [{"collection": st.session_state.aufgabe, "field": "prozess", "list": False}],
         st.session_state.aufgabe : []
