@@ -1,6 +1,6 @@
 import streamlit as st
 from streamlit_extras.switch_page_button import switch_page 
-from datetime import datetime
+from datetime import datetime, time
 from dateutil.relativedelta import relativedelta
 import time
 import pymongo
@@ -200,7 +200,7 @@ if st.session_state.logged_in:
                         st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{i}")
                 kal.append({
                     "_id" : k,
-                    "datum" : datum,
+                    "datum" : datetime.combine(datum, datetime.min.time()),
                     "name": name,
                     "ankerdatum" : ankerdatum
                 })
@@ -219,10 +219,14 @@ if st.session_state.logged_in:
                 for k in kal:
                     st.write(kal)
                     if k["ankerdatum"] != st.session_state.leer[kalender]:
-                        a = next((l for l in kal if l["_id"] == k["ankerdatum"]), None)
-                        if a["ankerdatum"] != st.session_state.leer[kalender]:
+                        # k ist relativ zu k["ankerdatum"]
+                        # a_kal ist das Ankerdatum in kal
+                        a_kal = next((l for l in kal if l["_id"] == k["ankerdatum"]), None)
+                        # a_kalender ist das Ankerdatum in kalender
+                        a_kalender = kalender.find_one({"_id" : k["ankerdatum"]})
+                        k["datum"] = k["datum"] + (a_kal["datum"] - a_kalender["datum"])
+                        if a_kal["ankerdatum"] != st.session_state.leer[kalender]:
                             ankerdaten_korrekt = False
-                st.write(ankerdaten_korrekt)
                 if ankerdaten_korrekt:
                     for k in kal:  
                         kalender.update_one({"_id": k["_id"]}, { "$set": {"datum" : datetime.combine(k["datum"], datetime.min.time()), "name" : k["name"], "ankerdatum" : k["ankerdatum"]}})
