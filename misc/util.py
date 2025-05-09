@@ -115,13 +115,15 @@ def setup_session_state():
         st.session_state.knoten : [{"collection": st.session_state.knoten, "field": "kinder", "list": True}],
         st.session_state.studiendekanat : [],
         st.session_state.dictionary : [],
-        st.session_state.kalender : [{"collection": st.session_state.aufgabe, "field": "relativdatum", "list": False}, {"collection": st.session_state.prozesspaket, "field": "kalender", "list": True}, {"collection": st.session_state.kalender, "field": "ankerdatum", "list": True}],
+        st.session_state.kalender : [{"collection": st.session_state.aufgabe, "field": "relativdatum", "list": False}, {"collection": st.session_state.prozesspaket, "field": "kalender", "list": True}, {"collection": st.session_state.kalender, "field": "ankerdatum", "list": False}],
         st.session_state.prozesspaket : [{"collection": st.session_state.prozess, "field": "zeitraum", "list": False}],
         st.session_state.prozess : [{"collection": st.session_state.aufgabe, "field": "prozess", "list": False}],
         st.session_state.aufgabe : []
     }
 
-    st.session_state.leer = {}
+    st.session_state.leer = {
+        st.session_state.kalender: st.session_state.kalender.find_one({"datum": datetime(1970,1,1,0,0)})["_id"],
+    }
     st.session_state.new = {
         st.session_state.knoten: {"kurzname": "", 
             "sichtbar" : False,
@@ -169,8 +171,8 @@ def setup_session_state():
             "kommentar": ""
         },
         st.session_state.kalender: {
-            "datum": datetime.datetime(1970, 1, 1, 0, 0),
-            "ankerdatum" : [],
+            "datum": datetime.now,
+            "ankerdatum" : st.session_state.leer,
             "name": "-"
         },
         st.session_state.prozesspaket: {

@@ -189,3 +189,12 @@ def reset_and_confirm(text=None):
     if text is not None:
         st.success(text)
 
+def sort_kalender(id_list):
+    daten = list(st.session_state.kalender.find({"_id" : {"$in" : id_list}}))
+    daten_sortiert = sorted(daten, key = lambda x: x["datum"])
+    return [x["_id"] for x in daten_sortiert]
+
+def find_ankerdaten(id_list):
+    daten = list(st.session_state.kalender.find({"_id" : {"$in" : id_list}}))
+    daten_gefiltert = [x for x in daten if x["ankerdatum"] == st.session_state.leer[st.session_state.kalender]]
+    return [x["_id"] for x in daten_gefiltert]

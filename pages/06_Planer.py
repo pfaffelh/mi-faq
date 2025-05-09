@@ -111,10 +111,10 @@ if st.session_state.logged_in:
                         with st.popover('Löschen', use_container_width=True):
                             colu1, colu2, colu3 = st.columns([1,1,1])
                             with colu1:                  
-                                submit = st.button(label = "Wirklich löschen!", type = 'primary', key = f"delete-{z['_id']}")
+                                submit = st.button(label = "Löschen!", type = 'primary', key = f"delete-{z['_id']}")
                                 if submit:
                                     collection.delete_one({"_id" : z["_id"]})
-                                    st.success("Item gelöscht!")
+                                    st.success("Gelöscht!")
                                     st.session_state.edit_planer = ""
                                     st.rerun()
                             with colu3: 
@@ -171,13 +171,18 @@ if st.session_state.logged_in:
         with st.expander("Kalender"):
             st.write("Hier werden grundlegende Daten für das Prozesspaket bereitgestellt. Falls ein Datum relativ zu einem anderen festgelegt wird, wird es bei Änderung des Ankerdatums ebenfalls geändert.")
             kal = []
-            kal_dict = {a["_id"] : tools.repr(kalender, a["_id"]) for a in y} # Für selectbox
             for i, k in enumerate(z["kalender"]):
                 ka = kalender.find_one({"_id" : k})
-                cols = st.columns([1,4,1])
+                cols = st.columns([1,2,1,2,1])
                 datum = cols[0].date_input("Datum", value = ka["datum"], format = "DD.MM.YYYY", key = f"date_{i}")
                 name = cols[1].text_input("Name des Datums", ka["name"], key = f"name_{i}", disabled = False)
-                with cols[2].popover("Löschen", use_container_width=True):
+                ist_relativdatum = cols[2].toggle("Relativdatum", ka["ankerdatum"] != st.session_state.leer[kalender], key = f"ist_relativdatum_{i}")
+                if ist_relativdatum:
+                    ankerdatum = cols[3].selectbox("...zu", tools.find_ankerdaten(z["kalender"]), format_func = lambda a: tools.repr(kalender, a), key = f"ankerdatum_{i}")
+                else:
+                    ankerdatum = st.session_state.leer[kalender]
+
+                with cols[4].popover("Löschen", use_container_width=True):
                     dep = tools.find_dependent_items(kalender, k)
                     if dep != []:
                         st.write("Abhängige Items sind:  \n" + ",  \n".join(dep))
@@ -185,38 +190,51 @@ if st.session_state.logged_in:
                         st.write("Es gibt keine abhängigen Items")
                     colu1, colu2, colu3 = st.columns([1,1,1])
                     with colu1:
-                        submit = st.button(label = "Wirklich löschen!", type = 'primary', key = f"delete-datum-{i}")
+                        submit = st.button(label = "Löschen!", type = 'primary', key = f"delete-datum-{i}")
                         if submit:
                             st.write()
                             tools.delete_item_update_dependent_items(kalender, k)
-                            st.success("Item gelöscht!")
+                            st.success("Gelöscht!")
                             st.rerun()
                     with colu3: 
-                        st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{z['_id']}")
-                cols = st.columns([1,4])
-                ist_ankerdatum = cols[0].toggle("Relativdatum", True if len(ka["ankerdatum"]) else False, key = f"ist_ankerdatum_{i}")
-                if ist_ankerdatum:
-                    ankerdatum = cols[1].selectbox("...zu", z["kalender"], format_func = (lambda a: tools.repr(util.kalender, a)), key = f"ankerdatum_{i}")
+                        st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{i}")
                 kal.append({
                     "_id" : k,
                     "datum" : datum,
                     "name": name,
-                    "ankerdatum" : [] if ist_ankerdatum == False else [ankerdatum]
+                    "ankerdatum" : ankerdatum
                 })
+                st.divider()
             neues_datum = st.button('Neues Datum', key = "neues_datum")
             if neues_datum: 
-                k = kalender.insert_one({"datum": datetime.now(), "name": "", "ankerdatum": []})
+                k = kalender.insert_one({"datum": datetime.now(), "name": "", "ankerdatum": st.session_state.leer[kalender]})
                 prozesspaket.update_one({"_id" : z["_id"]}, {"$push" : {"kalender" : k.inserted_id}})
-                save2 = True
-
-            save2 = st.button("Speichern", key=f"save2-{z['_id']}", type='primary')
-            if save2:
-                for k in kal:
-                    
-                    kalender.update_one({"_id": k["_id"]}, { "$set": {"datum" : datetime.combine(k["datum"], datetime.min.time()), "name" : k["name"], "ankerdatum" : k["ankerdatum"]}})
                 st.toast("Erfolgreich gespeichert!")
                 time.sleep(0.5)
                 st.rerun()  
+
+            save2 = st.button("Speichern", key=f"save2-{z['_id']}", type='primary')
+            if save2:
+                ankerdaten_korrekt = True
+                for k in kal:
+                    st.write(kal)
+                    if k["ankerdatum"] != st.session_state.leer[kalender]:
+                        a = next((l for l in kal if l["_id"] == k["ankerdatum"]), None)
+                        if a["ankerdatum"] != st.session_state.leer[kalender]:
+                            ankerdaten_korrekt = False
+                st.write(ankerdaten_korrekt)
+                if ankerdaten_korrekt:
+                    for k in kal:  
+                        kalender.update_one({"_id": k["_id"]}, { "$set": {"datum" : datetime.combine(k["datum"], datetime.min.time()), "name" : k["name"], "ankerdatum" : k["ankerdatum"]}})
+                    prozesspaket.update_one({"_id" : z["_id"]}, {"$set" : {"kalender" : tools.sort_kalender(z["kalender"])}})
+
+                    y = list(kalender.find({ "datum" : {"$gt" : datetime.combine(anzeige_start, datetime.min.time()), "$lt" : datetime.combine(anzeige_ende, datetime.max.time())}}, sort=[("datum", pymongo.ASCENDING)]))
+
+                    st.toast("Erfolgreich gespeichert!")
+                    time.sleep(.5)
+                    st.rerun()
+                else:
+                    st.toast("Speichern nicht möglich. Ankerdaten dürfen keine Relativdaten sein!")
 
         with st.expander("Daten"):
             save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
