@@ -6,6 +6,7 @@ import ldap
 import misc.util as util
 from bson import ObjectId
 from misc.config import *
+from dateutil.relativedelta import relativedelta
 
 # Die Authentifizierung gegen den Uni-LDAP-Server
 def authenticate(username, password):
@@ -177,7 +178,9 @@ def repr(collection, id, show_collection = False, short = False):
         if short:
             res = x["kurzname"]
         else:
-            res = f"{x["name"]} ({x["ende"].strftime("%-d.%-m.%Y")})"
+            a = st.session_state.kalender.find_one({"_id" : x["ankerdatum"]})
+            x["endedatum"] = a["datum"] + relativedelta(days = x["ende"])
+            res = f"{x["name"]} ({x["endedatum"].strftime("%-d.%-m.%Y")})"
     if show_collection:
         res = f"{st.session_state.collection_name[collection]}: {res}"
     return res

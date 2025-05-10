@@ -217,18 +217,15 @@ if st.session_state.logged_in:
                     ankerdaten_korrekt = True
                     for k in kal:
                         st.write(kal)
-                        # a_kal ist das Ankerdatum in kal
-                        a_kal = next((l for l in kal if l["_id"] == k["ankerdatum"]), None)
-                        # a_kalender ist das Ankerdatum in kalender
-                        a_kalender = kalender.find_one({"_id" : k["ankerdatum"]})
                         if k["ankerdatum"] != st.session_state.leer[kalender]:
                             # k ist relativ zu k["ankerdatum"]
+                            # a_kal ist das Ankerdatum in kal
+                            a_kal = next((l for l in kal if l["_id"] == k["ankerdatum"]), None)
+                            # a_kalender ist das Ankerdatum in kalender
+                            a_kalender = kalender.find_one({"_id" : k["ankerdatum"]})
                             k["datum"] = k["datum"] + (a_kal["datum"] - a_kalender["datum"])
                             if a_kal["ankerdatum"] != st.session_state.leer[kalender]:
                                 ankerdaten_korrekt = False
-                        for a in list(aufgabe.find({"ankerdatum" : k["_id"]})):
-                            a["start"] = a["start"] + (a_kal["datum"] - a_kalender["datum"])
-                            
                     if ankerdaten_korrekt:
                         for k in kal:  
                             kalender.update_one({"_id": k["_id"]}, { "$set": {"datum" : datetime.combine(k["datum"], datetime.min.time()), "name" : k["name"], "ankerdatum" : k["ankerdatum"]}})
@@ -298,9 +295,13 @@ if st.session_state.logged_in:
                 prpa = prozesspaket.find_one({"_id" : pr["parent"]})            
                 cols = st.columns([5,5,5])
 
-                ankerdatum = cols[0].selectbox("Ankerdatum", prpa["kalender"], index = prpa["kalender"].index(z["ankerdatum"]), format_func = lambda a: tools.repr(kalender, a), key = f"ankerdatum-{z["_id"]}")
-                start = cols[1].date_input("Start", z["start"], key = f"start-{z["_id"]}")
-                ende = cols[2].date_input("Ende", z["ende"], key = f"ende-{z["_id"]}")
+                anker = cols[0].selectbox("Ankerdatum", prpa["kalender"], index = prpa["kalender"].index(z["ankerdatum"]), format_func = lambda a: tools.repr(kalender, a), key = f"ankerdatum-{z["_id"]}")
+                ankerdatum = kalender.find_one({"_id" : anker})["datum"]
+                startdatum = cols[1].date_input("Start", ankerdatum + relativedelta(days = z["start"]), key = f"start-{z["_id"]}")
+                start = startdatum - ankerdatum.date()
+                endedatum = cols[2].date_input("Ende", ankerdatum + relativedelta(days = z["ende"]), key = f"ende-{z["_id"]}")
+                ende = endedatum - ankerdatum.date()
+                                               
                 users = st.session_state.faq_users
                 if z["verantwortlicher"] not in users.keys():
                     users[z["verantwortlicher"]] = z["verantwortlicher"]
@@ -316,7 +317,7 @@ if st.session_state.logged_in:
             save3 = st.button("Speichern", key=f"save3-{z['_id']}", type='primary')
 
             if save3:
-                collection.update_one({"_id": z["_id"]}, { "$set": {"kurzname" : kurzname, "name" : name, "nurtermin": nurtermin, "bestätigt": bestätigt, "angefangen" : angefangen,  "erledigt": erledigt, "ankerdatum": ankerdatum, "start" : datetime.combine(start, datetime.min.time()), "ende" :datetime.combine(ende, datetime.min.time()), "verantwortlicher" : verantwortlicher, "beteiligte" : beteiligte, "text" : text, "quicklinks" : quicklinks, "bearbeitet" : bearbeitet, "vorlagen" : vorlagen, "kommentar": kommentar}})
+                collection.update_one({"_id": z["_id"]}, { "$set": {"kurzname" : kurzname, "name" : name, "nurtermin": nurtermin, "bestätigt": bestätigt, "angefangen" : angefangen,  "erledigt": erledigt, "ankerdatum": ankerdatum, "start" : start, "ende" : ende, "verantwortlicher" : verantwortlicher, "beteiligte" : beteiligte, "text" : text, "quicklinks" : quicklinks, "bearbeitet" : bearbeitet, "vorlagen" : vorlagen, "kommentar": kommentar}})
                 st.toast("Erfolgreich gespeichert!")
                 time.sleep(0.5)
                 st.rerun()  

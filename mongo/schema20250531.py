@@ -415,11 +415,11 @@ aufgabe_validator = {
                 "description": "Relativ zu welchem Datum wird dieses Datum festgelegt."
             },
            "start": {
-                "bsonType": "date",
+                "bsonType": "int",
                 "description": "Beginn der Erledigung in Tage vor oder nach Datum des Relativdatums."
             },
             "ende": {
-                "bsonType": "date",
+                "bsonType": "int",
                 "description": "Ende der Erledigung in Tage vor oder nach Datum des Relativdatums."
             },
             "verantwortlicher": {
