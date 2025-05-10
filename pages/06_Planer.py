@@ -30,8 +30,6 @@ bearbeitet = f"Zuletzt bearbeitet von {st.session_state.username} am {datetime.n
 
 def savenew(collection, ini):
     tools.new(collection, ini = ini, switch = False)
-    st.session_state.new_name_de = ""
-    st.session_state.new_rolle_de = ""
 
 # level enthält die ids von Prozesspaket, Prozess, Aufgabe, soweit vorhanden
 def level(id, query = {}):
@@ -109,16 +107,23 @@ if st.session_state.logged_in:
                 #st.write(l_id)
                 #st.write(st.session_state.edit_planer)
                 if (z["_id"] == st.session_state.edit_planer) or (n < 2 and st.session_state.level_planer[n+1] != []):
-                    st.write(f"### {tools.repr(collection, z["_id"])}")
+                    goup = st.button(f"### {tools.repr(collection, z["_id"])}", key = f"goup_{n}", use_container_width=True)
+                    if goup:
+                        st.session_state.edit_planer = z["_id"]
+                        st.rerun()
+                    # st.write(f"### {tools.repr(collection, z["_id"])}")
                     if n == 2 or (n < 2 and st.session_state.level_planer[n+1] == []):
                         with st.popover('Löschen', use_container_width=True):
                             colu1, colu2, colu3 = st.columns([1,1,1])
                             with colu1:                  
                                 submit = st.button(label = "Löschen!", type = 'primary', key = f"delete-{z['_id']}")
                                 if submit:
+                                    if n > 0:
+                                        st.session_state.edit_planer = z["parent"]
+                                    else:
+                                        st.session_state.edit_planer = ""
                                     collection.delete_one({"_id" : z["_id"]})
                                     st.success("Gelöscht!")
-                                    st.session_state.edit_planer = ""
                                     st.rerun()
                             with colu3: 
                                 st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{z['_id']}")
@@ -154,12 +159,29 @@ if st.session_state.logged_in:
                         if submit:
                             st.session_state.edit_planer = z["_id"]
                             st.rerun()
-                    if st.session_state.level_planer[n][-1] == z["_id"]:
-                        with co3.popover(f'Neues Item anlegen', use_container_width=True):
-                            kurzname = st.text_input("Kurzname", "", key = "new_kurzname")
-                            name = st.text_input("Titel", "", key = "new_titel")
-                            kommentar = st.text_input("Kommentar", "", key = "new_kommentar")
-                            btn = st.button("Item anlegen", on_click=savenew, args = [collection, {"kurzname" : kurzname, "name": name, "kommentar": kommentar,},])
+        #st.write(st.session_state.level_planer)
+        #st.write(st.session_state.edit_planer)
+        if (n == 0 and st.session_state.edit_planer == "") or (n > 0 and st.session_state.edit_planer in st.session_state.level_planer[n-1]):
+            with col[n].popover(f'Neues Item anlegen', use_container_width=True):
+                kurzname = st.text_input("Kurzname", "", key = f"new_kurzname_{n}")
+                name = st.text_input("Titel", "", key = f"new_titel_{n}")
+                kommentar = st.text_input("Kommentar", "", key = f"new_kommentar_{n}")
+                ini = {"kurzname" : kurzname, "name": name, "kommentar": kommentar}
+                if n == 0:
+                    k = kalender.insert_one({
+                        "datum": datetime.combine(anzeige_start, datetime.max.time()),
+                        "ankerdatum": st.session_state.leer[st.session_state.kalender],
+                        "name": f"Datum für Prozesspaket {name}"
+                    })
+                    ini["kalender"] = [k.inserted_id]
+                if n > 0:
+                   ini["parent"] = st.session_state.level_planer[n-1][0]
+                if n == 2:
+                    prpa = prozesspaket.find_one({"_id" : st.session_state.level_planer[0][0]})            
+                    anker = st.selectbox("Ankerdatum", prpa["kalender"], format_func = lambda a: tools.repr(kalender, a), key = f"ankerdatum-{z["_id"]}")
+                    ini["ankerdatum"] = anker
+
+                btn = st.button("Item anlegen", on_click=savenew, args = [collection, ini,], key = f"savenew_{n}")
 
     if st.session_state.edit_planer != "":
         if prozesspaket.find_one({"_id" : st.session_state.edit_planer}):
@@ -298,9 +320,9 @@ if st.session_state.logged_in:
                 anker = cols[0].selectbox("Ankerdatum", prpa["kalender"], index = prpa["kalender"].index(z["ankerdatum"]), format_func = lambda a: tools.repr(kalender, a), key = f"ankerdatum-{z["_id"]}")
                 ankerdatum = kalender.find_one({"_id" : anker})["datum"]
                 startdatum = cols[1].date_input("Start", ankerdatum + relativedelta(days = z["start"]), key = f"start-{z["_id"]}")
-                start = startdatum - ankerdatum.date()
+                start = (startdatum - ankerdatum.date()).days
                 endedatum = cols[2].date_input("Ende", ankerdatum + relativedelta(days = z["ende"]), key = f"ende-{z["_id"]}")
-                ende = endedatum - ankerdatum.date()
+                ende = (endedatum - ankerdatum.date()).days
                                                
                 users = st.session_state.faq_users
                 if z["verantwortlicher"] not in users.keys():
