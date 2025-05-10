@@ -25,6 +25,9 @@ prozesspaket = st.session_state.prozesspaket
 prozess = st.session_state.prozess
 aufgabe = st.session_state.aufgabe
 
+date_format = '%d.%m.%Y um %H:%M:%S.'
+bearbeitet = f"Zuletzt bearbeitet von {st.session_state.username} am {datetime.now().strftime(date_format)}"
+
 def savenew(collection, ini):
     tools.new(collection, ini = ini, switch = False)
     st.session_state.new_name_de = ""
@@ -160,94 +163,160 @@ if st.session_state.logged_in:
 
     if st.session_state.edit_planer != "":
         if prozesspaket.find_one({"_id" : st.session_state.edit_planer}):
-            n = 0
-        elif prozess.find_one({"_id" : st.session_state.edit_planer}):
-            n = 1
-        elif aufgabe.find_one({"_id" : st.session_state.edit_planer}):
-            n = 2
-        collection = find_collection(n)
-        z = collection.find_one({"_id" : st.session_state.edit_planer})
+            z = st.session_state.prozesspaket.find_one({"_id" : st.session_state.edit_planer})
 
-        with st.expander("Kalender"):
-            st.write("Hier werden grundlegende Daten für das Prozesspaket bereitgestellt. Falls ein Datum relativ zu einem anderen festgelegt wird, wird es bei Änderung des Ankerdatums ebenfalls geändert.")
-            kal = []
-            for i, k in enumerate(z["kalender"]):
-                ka = kalender.find_one({"_id" : k})
-                cols = st.columns([1,2,1,2,1])
-                datum = cols[0].date_input("Datum", value = ka["datum"], format = "DD.MM.YYYY", key = f"date_{i}")
-                name = cols[1].text_input("Name des Datums", ka["name"], key = f"name_{i}", disabled = False)
-                ist_relativdatum = cols[2].toggle("Relativdatum", ka["ankerdatum"] != st.session_state.leer[kalender], key = f"ist_relativdatum_{i}")
-                if ist_relativdatum:
-                    ankerdatum = cols[3].selectbox("...zu", tools.find_ankerdaten(z["kalender"]), format_func = lambda a: tools.repr(kalender, a), key = f"ankerdatum_{i}")
-                else:
-                    ankerdatum = st.session_state.leer[kalender]
-
-                with cols[4].popover("Löschen", use_container_width=True):
-                    dep = tools.find_dependent_items(kalender, k)
-                    if dep != []:
-                        st.write("Abhängige Items sind:  \n" + ",  \n".join(dep))
+            with st.expander("Kalender"):
+                st.write("Hier werden grundlegende Daten für das Prozesspaket bereitgestellt. Falls ein Datum relativ zu einem anderen festgelegt wird, wird es bei Änderung des Ankerdatums ebenfalls geändert.")
+                kal = []
+                for i, k in enumerate(z["kalender"]):
+                    ka = kalender.find_one({"_id" : k})
+                    cols = st.columns([1,2,1,2,1])
+                    datum = cols[0].date_input("Datum", value = ka["datum"], format = "DD.MM.YYYY", key = f"date_{i}")
+                    name = cols[1].text_input("Name des Datums", ka["name"], key = f"name_{i}", disabled = False)
+                    ist_relativdatum = cols[2].toggle("Relativdatum", ka["ankerdatum"] != st.session_state.leer[kalender], key = f"ist_relativdatum_{i}")
+                    if ist_relativdatum:
+                        se = [a for a in tools.find_ankerdaten(z["kalender"]) if a != k]
+                        ind = se.index(ka["ankerdatum"]) if ka["ankerdatum"] in se else 0
+                        ankerdatum = cols[3].selectbox("...zu", se, index = ind, format_func = lambda a: tools.repr(kalender, a), key = f"ankerdatum_{i}")
                     else:
-                        st.write("Es gibt keine abhängigen Items")
-                    colu1, colu2, colu3 = st.columns([1,1,1])
-                    with colu1:
-                        submit = st.button(label = "Löschen!", type = 'primary', key = f"delete-datum-{i}")
-                        if submit:
-                            st.write()
-                            tools.delete_item_update_dependent_items(kalender, k)
-                            st.success("Gelöscht!")
-                            st.rerun()
-                    with colu3: 
-                        st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{i}")
-                kal.append({
-                    "_id" : k,
-                    "datum" : datetime.combine(datum, datetime.min.time()),
-                    "name": name,
-                    "ankerdatum" : ankerdatum
-                })
-                st.divider()
-            neues_datum = st.button('Neues Datum', key = "neues_datum")
-            if neues_datum: 
-                k = kalender.insert_one({"datum": datetime.now(), "name": "", "ankerdatum": st.session_state.leer[kalender]})
-                prozesspaket.update_one({"_id" : z["_id"]}, {"$push" : {"kalender" : k.inserted_id}})
-                st.toast("Erfolgreich gespeichert!")
-                time.sleep(0.5)
-                st.rerun()  
+                        ankerdatum = st.session_state.leer[kalender]
 
-            save2 = st.button("Speichern", key=f"save2-{z['_id']}", type='primary')
-            if save2:
-                ankerdaten_korrekt = True
-                for k in kal:
-                    st.write(kal)
-                    if k["ankerdatum"] != st.session_state.leer[kalender]:
-                        # k ist relativ zu k["ankerdatum"]
+                    with cols[4].popover("Löschen", use_container_width=True):
+                        dep = tools.find_dependent_items(kalender, k)
+                        if dep != []:
+                            st.write("Abhängige Items sind:  \n" + ",  \n".join(dep))
+                        else:
+                            st.write("Es gibt keine abhängigen Items")
+                        colu1, colu2, colu3 = st.columns([1,1,1])
+                        with colu1:
+                            submit = st.button(label = "Löschen!", type = 'primary', key = f"delete-datum-{i}")
+                            if submit:
+                                st.write()
+                                tools.delete_item_update_dependent_items(kalender, k)
+                                st.success("Gelöscht!")
+                                st.rerun()
+                        with colu3: 
+                            st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{i}")
+                    kal.append({
+                        "_id" : k,
+                        "datum" : datetime.combine(datum, datetime.min.time()),
+                        "name": name,
+                        "ankerdatum" : ankerdatum
+                    })
+                    st.divider()
+                neues_datum = st.button('Neues Datum', key = "neues_datum")
+                if neues_datum: 
+                    k = kalender.insert_one({"datum": datetime.now(), "name": "", "ankerdatum": st.session_state.leer[kalender]})
+                    prozesspaket.update_one({"_id" : z["_id"]}, {"$push" : {"kalender" : k.inserted_id}})
+                    st.toast("Erfolgreich gespeichert!")
+                    time.sleep(0.5)
+                    st.rerun()  
+
+                save2 = st.button("Speichern", key=f"save2-{z['_id']}", type='primary')
+                if save2:
+                    ankerdaten_korrekt = True
+                    for k in kal:
+                        st.write(kal)
                         # a_kal ist das Ankerdatum in kal
                         a_kal = next((l for l in kal if l["_id"] == k["ankerdatum"]), None)
                         # a_kalender ist das Ankerdatum in kalender
                         a_kalender = kalender.find_one({"_id" : k["ankerdatum"]})
-                        k["datum"] = k["datum"] + (a_kal["datum"] - a_kalender["datum"])
-                        if a_kal["ankerdatum"] != st.session_state.leer[kalender]:
-                            ankerdaten_korrekt = False
-                if ankerdaten_korrekt:
-                    for k in kal:  
-                        kalender.update_one({"_id": k["_id"]}, { "$set": {"datum" : datetime.combine(k["datum"], datetime.min.time()), "name" : k["name"], "ankerdatum" : k["ankerdatum"]}})
-                    prozesspaket.update_one({"_id" : z["_id"]}, {"$set" : {"kalender" : tools.sort_kalender(z["kalender"])}})
+                        if k["ankerdatum"] != st.session_state.leer[kalender]:
+                            # k ist relativ zu k["ankerdatum"]
+                            k["datum"] = k["datum"] + (a_kal["datum"] - a_kalender["datum"])
+                            if a_kal["ankerdatum"] != st.session_state.leer[kalender]:
+                                ankerdaten_korrekt = False
+                        for a in list(aufgabe.find({"ankerdatum" : k["_id"]})):
+                            a["start"] = a["start"] + (a_kal["datum"] - a_kalender["datum"])
+                            
+                    if ankerdaten_korrekt:
+                        for k in kal:  
+                            kalender.update_one({"_id": k["_id"]}, { "$set": {"datum" : datetime.combine(k["datum"], datetime.min.time()), "name" : k["name"], "ankerdatum" : k["ankerdatum"]}})
+                        prozesspaket.update_one({"_id" : z["_id"]}, {"$set" : {"kalender" : tools.sort_kalender(z["kalender"])}})
 
-                    y = list(kalender.find({ "datum" : {"$gt" : datetime.combine(anzeige_start, datetime.min.time()), "$lt" : datetime.combine(anzeige_ende, datetime.max.time())}}, sort=[("datum", pymongo.ASCENDING)]))
+                        y = list(kalender.find({ "datum" : {"$gt" : datetime.combine(anzeige_start, datetime.min.time()), "$lt" : datetime.combine(anzeige_ende, datetime.max.time())}}, sort=[("datum", pymongo.ASCENDING)]))
 
-                    st.toast("Erfolgreich gespeichert!")
-                    time.sleep(.5)
-                    st.rerun()
+                        st.toast("Erfolgreich gespeichert!")
+                        time.sleep(.5)
+                        st.rerun()
+                    else:
+                        st.toast("Speichern nicht möglich. Ankerdaten dürfen keine Relativdaten sein!")
+
+            # Daten für Prozesspaket
+            with st.expander("Daten"):
+                save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
+                st.write(z["bearbeitet"])
+                l = list(collection.find({"kurzname" : z["kurzname"]}))
+                if len(l) > 1:
+                    st.warning("Warnung: Kurzname ist nicht eindeutig!")
+                kurzname = st.text_input("Kurzname", z["kurzname"], key = f"kurzname_{z['_id']}", disabled = False)
+                name = st.text_input("Name", z["name"], key = f"name_{z['_id']}", disabled = False)
+                sichtbar = st.checkbox("Homepage erstellen", z["sichtbar"])
+                kommentar = st.text_input("Kommentar", z["kommentar"])
+
+
+        elif prozess.find_one({"_id" : st.session_state.edit_planer}):
+            z = st.session_state.prozess.find_one({"_id" : st.session_state.edit_planer})
+            # Daten für Prozess
+            with st.expander("Daten"):
+                save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
+                st.write(z["bearbeitet"])
+                l = list(collection.find({"kurzname" : z["kurzname"]}))
+                if len(l) > 1:
+                    st.warning("Warnung: Kurzname ist nicht eindeutig!")
+                kurzname = st.text_input("Kurzname", z["kurzname"], key = f"kurzname_{z['_id']}", disabled = False)
+                name = st.text_input("Name", z["name"], key = f"name_{z['_id']}", disabled = False)
+                sichtbar = st.checkbox("Homepage erstellen", z["sichtbar"])
+                kommentar = st.text_input("Kommentar", z["kommentar"])
+        elif aufgabe.find_one({"_id" : st.session_state.edit_planer}):
+            # Daten für Aufgabe
+            collection = st.session_state.aufgabe
+            z = collection.find_one({"_id" : st.session_state.edit_planer})
+            st.write(z)
+            with st.expander("Daten"):
+                save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
+                st.write(z["bearbeitet"])
+                l = list(collection.find({"kurzname" : z["kurzname"]}))
+                if len(l) > 1:
+                    st.warning("Warnung: Kurzname ist nicht eindeutig!")
+                kurzname = st.text_input("Kurzname", z["kurzname"], key = f"kurzname_{z['_id']}", disabled = False)
+                name = st.text_input("Name", z["name"], key = f"name_{z['_id']}", disabled = False)
+                kommentar = st.text_input("Kommentar", z["kommentar"])
+
+                cols = st.columns([5,5,5,5])
+                nurtermin = cols[0].toggle("Nur Termin", z["nurtermin"], help = "Wenn True wird 'angefangen', 'erledigt' nicht angelegt.", key = f"nurtermin-{z["_id"]}")
+                bestätigt = cols[1].toggle(f"{"Termin" if nurtermin else "Aufgabe"} bestätigt", z["bestätigt"], key = f"bestätigt-{z["_id"]}")
+                if not nurtermin:
+                    angefangen = cols[2].toggle("Aufgabe begonnen", z["angefangen"], key = f"angefangen-{z["_id"]}")
+                    erledigt = cols[3].toggle("Aufgabe erledigt", z["erledigt"], key = f"erledigt-{z["_id"]}")                        
                 else:
-                    st.toast("Speichern nicht möglich. Ankerdaten dürfen keine Relativdaten sein!")
+                    angefangen = False
+                    erledigt = False
+                # TODO: Beim Verschieben einer Aufgabe in einen Prozess eines anderen Prozesspakets müssen Ankerdaten neu gesetzt werden!
+                # Finde Prozesspaket
+                pr = prozess.find_one({"_id" : z["parent"]})
+                prpa = prozesspaket.find_one({"_id" : pr["parent"]})            
+                cols = st.columns([5,5,5])
 
-        with st.expander("Daten"):
-            save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
-            st.write(z["bearbeitet"])
-            l = list(collection.find({"kurzname" : z["kurzname"]}))
-            if len(l) > 1:
-                st.warning("Warnung: Kurzname ist nicht eindeutig!")
-            kurzname = st.text_input("Kurzname", z["kurzname"], key = f"kurzname_{z['_id']}", disabled = False)
-            name = st.text_input("Name", z["name"], key = f"name_{z['_id']}", disabled = False)
-            sichtbar = st.checkbox("Homepage erstellen", z["sichtbar"])
-            kommentar = st.text_input("Kommentar", z["kommentar"])
+                ankerdatum = cols[0].selectbox("Ankerdatum", prpa["kalender"], index = prpa["kalender"].index(z["ankerdatum"]), format_func = lambda a: tools.repr(kalender, a), key = f"ankerdatum-{z["_id"]}")
+                start = cols[1].date_input("Start", z["start"], key = f"start-{z["_id"]}")
+                ende = cols[2].date_input("Ende", z["ende"], key = f"ende-{z["_id"]}")
+                users = st.session_state.faq_users
+                if z["verantwortlicher"] not in users.keys():
+                    users[z["verantwortlicher"]] = z["verantwortlicher"]
+                for i in z["beteiligte"]:
+                    if i not in users.keys():
+                        users[i] = i
+                verantwortlicher = st.selectbox("Verantwortlicher", list(users.keys()), list(users.keys()).index(z["verantwortlicher"]), format_func = lambda a: users[a], key = f"verantwortlicher-{z["_id"]}")
+                beteiligte = st.multiselect("Weitere Beteiligte", users.keys(), z["beteiligte"], format_func = lambda a: users[a], key = f"beteiligte-{z["_id"]}")
+                text = "" # st.text_area
+                quicklinks = []
+                vorlagen = []
+                kommentar = ""
+            save3 = st.button("Speichern", key=f"save3-{z['_id']}", type='primary')
 
+            if save3:
+                collection.update_one({"_id": z["_id"]}, { "$set": {"kurzname" : kurzname, "name" : name, "nurtermin": nurtermin, "bestätigt": bestätigt, "angefangen" : angefangen,  "erledigt": erledigt, "ankerdatum": ankerdatum, "start" : datetime.combine(start, datetime.min.time()), "ende" :datetime.combine(ende, datetime.min.time()), "verantwortlicher" : verantwortlicher, "beteiligte" : beteiligte, "text" : text, "quicklinks" : quicklinks, "bearbeitet" : bearbeitet, "vorlagen" : vorlagen, "kommentar": kommentar}})
+                st.toast("Erfolgreich gespeichert!")
+                time.sleep(0.5)
+                st.rerun()  

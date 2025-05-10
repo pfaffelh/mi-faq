@@ -402,11 +402,15 @@ aufgabe_validator = {
                 "bsonType": "bool",
                 "description": "Gibt an, ob die Aufgabe bereits bestätigt ist"
             },
+             "angefangen": {
+                "bsonType": "bool",
+                "description": "Gibt an, ob die Aufgabe bereits angefangen worden ist."
+            },
              "erledigt": {
                 "bsonType": "bool",
                 "description": "Gibt an, ob die Aufgabe bereits erledigt ist."
             },
-           "relativdatum": {
+           "ankerdatum": {
                 "bsonType": "objectId",
                 "description": "Relativ zu welchem Datum wird dieses Datum festgelegt."
             },

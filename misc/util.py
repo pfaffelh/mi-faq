@@ -109,7 +109,7 @@ def setup_session_state():
     if "faq_users" not in st.session_state:
         gr = st.session_state.group.find_one({"name" : "faq"})
         faq_users = list(st.session_state.users.find({"groups" : { "$elemMatch" : { "$eq" : gr["_id"]}}})) 
-        st.session_state.faq_users = [{"rz" : r["rz"], "name" : f"{r['vorname']} {r['name']}"} for r in faq_users]
+        st.session_state.faq_users = {r["rz"] : f"{r['vorname']} {r['name']}" for r in faq_users}
     
     st.session_state.abhaengigkeit = {
         st.session_state.knoten : [{"collection": st.session_state.knoten, "field": "kinder", "list": True}],
