@@ -73,6 +73,42 @@ def auswahl_dict(n, query = {}):
     res = collection.find(query, sort=[("rang", pymongo.ASCENDING)])
     return {r["_id"] : tools.repr(collection, r["_id"]) for r in res}
 
+def prozesspaket_kopieren(id, ini = {}):
+    z = st.session_state.prozesspaket.find_one({"_id" : id})
+    # kopie ist ein dict mit alten und neuen Ids.
+    kopie = {}
+    # Kopiere Kalender:
+    kal = list(st.session_state.kalender.find({"_id" : {"$in" : z["kalender"]}}))
+    for k in kal:
+        k_loc = k["_id"]
+        del k["_id"]
+        k_new = st.session_state.kalender.insert_one(k)            
+        kopie[k_loc] = k_new.inserted_id
+    # Kopiere Prozesspaket
+    del z["_id"]
+    z["kalender"] = [kopie[a] for a in z["kalender"]]
+    z = z | ini
+    z_kopie = st.session_state.prozesspaket.insert_one(z)
+    kopie[id] = z_kopie.inserted_id
+    #st.session_state.kalender.update_one({"_id" : z_kopie.inserted_id}, {"$set" : {"kalender" : [kopie[x] for x in z["kalender"]]}})
+    # Kopiere Prozesse
+    pr = list(st.session_state.prozess.find({"parent" : id}))
+    pr_ids = [p["_id"] for p in pr]
+    for p in pr:
+        p_loc = p["_id"]
+        del p["_id"]
+        p["parent"] = kopie[id]
+        p_new = st.session_state.prozess.insert_one(p)  
+        kopie[p_loc] = p_new.inserted_id
+    # Kopiere Aufgaben
+    au = list(st.session_state.aufgabe.find({"parent" : {"$in" : pr_ids}}))
+    for a in au:
+        del a["_id"]
+        a["parent"] = kopie[a["parent"]]
+        a["ankerdatum"] = kopie[a["ankerdatum"]]
+        st.session_state.aufgabe.insert_one(a)  
+    return kopie[id]
+
 # Ab hier wird die Webseite erzeugt
 if st.session_state.logged_in:
     st.header("Planer")
@@ -127,6 +163,20 @@ if st.session_state.logged_in:
                                     st.rerun()
                             with colu3: 
                                 st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{z['_id']}")
+                    if st.session_state.edit_planer == z["_id"]:
+                        with st.popover('Kopieren', use_container_width=True):
+                            if n == 0:
+                                kurzname = st.text_input("Kurzname", "", key = f"kopie_kurzname_{n}")
+                                name = st.text_input("Titel", "", key = f"kopie_titel_{n}")
+                                kommentar = st.text_input("Kommentar", "", key = f"kopie_kommentar_{n}")
+                                ini = {"kurzname" : kurzname, "name": name, "kommentar": kommentar}
+                                submit = st.button(label = "Kopieren!", type = 'primary', key = f"copy-{z['_id']}")
+                                if submit:
+                                    kopie = prozesspaket_kopieren(st.session_state.edit_planer, ini)
+                                    st.success("Item kopiert!")
+                                    st.session_state.edit_planer = kopie
+                                    st.rerun()
+                                                               
                     if n > 0 and st.session_state.edit_planer == z["_id"]:
                         with st.popover('Verschieben', use_container_width=True):
                             if n == 1:
@@ -319,27 +369,31 @@ if st.session_state.logged_in:
 
                 anker = cols[0].selectbox("Ankerdatum", prpa["kalender"], index = prpa["kalender"].index(z["ankerdatum"]), format_func = lambda a: tools.repr(kalender, a), key = f"ankerdatum-{z["_id"]}")
                 ankerdatum = kalender.find_one({"_id" : anker})["datum"]
-                startdatum = cols[1].date_input("Start", ankerdatum + relativedelta(days = z["start"]), key = f"start-{z["_id"]}")
+                startdatum = cols[1].date_input("Start", ankerdatum + relativedelta(days = z["start"]),  format="DD.MM.YYYY", key = f"start-{z["_id"]}")
                 start = (startdatum - ankerdatum.date()).days
-                endedatum = cols[2].date_input("Ende", ankerdatum + relativedelta(days = z["ende"]), key = f"ende-{z["_id"]}")
+                endedatum = cols[2].date_input("Ende", ankerdatum + relativedelta(days = z["ende"]), format="DD.MM.YYYY", key = f"ende-{z["_id"]}")
                 ende = (endedatum - ankerdatum.date()).days
-                                               
+          
                 users = st.session_state.faq_users
-                if z["verantwortlicher"] not in users.keys():
-                    users[z["verantwortlicher"]] = z["verantwortlicher"]
+                rz_users = [u["rz"] for u in users]
+                if z["verantwortlicher"] not in rz_users:
+                    users.append({"rz" : z["verantwortlicher"], "vorname" : "", "name": z["verantwortlicher"]})
                 for i in z["beteiligte"]:
-                    if i not in users.keys():
-                        users[i] = i
-                verantwortlicher = st.selectbox("Verantwortlicher", list(users.keys()), list(users.keys()).index(z["verantwortlicher"]), format_func = lambda a: users[a], key = f"verantwortlicher-{z["_id"]}")
-                beteiligte = st.multiselect("Weitere Beteiligte", users.keys(), z["beteiligte"], format_func = lambda a: users[a], key = f"beteiligte-{z["_id"]}")
+                    if i not in rz_users:
+                        users.append({"rz" : i, "vorname" : "", "name": i})
+                rz_users = [u["rz"] for u in users]
+                col = st.columns([1,3])
+                verantwortlicher = col[0].selectbox("Verantwortlicher", rz_users, rz_users.index(z["verantwortlicher"]), format_func = lambda a: "".join([f"{r['vorname']} {r['name']}" for r in users if r["rz"] == a]), key = f"verantwortlicher-{z["_id"]}")
+                beteiligte = col[1].multiselect("Weitere Beteiligte", rz_users, z["beteiligte"], format_func = lambda a: "".join([f"{r['vorname']} {r['name']}" for r in users if r["rz"] == a]), placeholder = "Bitte auswählen", key = f"beteiligte-{z["_id"]}")
+                beteiligte = sorted(beteiligte, key = lambda a: [f"{r['name']} {r['vorname']}" for r in users if r["rz"] == a])
                 text = "" # st.text_area
                 quicklinks = []
                 vorlagen = []
                 kommentar = ""
-            save3 = st.button("Speichern", key=f"save3-{z['_id']}", type='primary')
+                save3 = st.button("Speichern", key=f"save3-{z['_id']}", type='primary')
 
-            if save3:
-                collection.update_one({"_id": z["_id"]}, { "$set": {"kurzname" : kurzname, "name" : name, "nurtermin": nurtermin, "bestätigt": bestätigt, "angefangen" : angefangen,  "erledigt": erledigt, "ankerdatum": ankerdatum, "start" : start, "ende" : ende, "verantwortlicher" : verantwortlicher, "beteiligte" : beteiligte, "text" : text, "quicklinks" : quicklinks, "bearbeitet" : bearbeitet, "vorlagen" : vorlagen, "kommentar": kommentar}})
-                st.toast("Erfolgreich gespeichert!")
-                time.sleep(0.5)
-                st.rerun()  
+                if save3:
+                    collection.update_one({"_id": z["_id"]}, { "$set": {"kurzname" : kurzname, "name" : name, "nurtermin": nurtermin, "bestätigt": bestätigt, "angefangen" : angefangen,  "erledigt": erledigt, "ankerdatum": anker, "start" : start, "ende" : ende, "verantwortlicher" : verantwortlicher, "beteiligte" : beteiligte, "text" : text, "quicklinks" : quicklinks, "bearbeitet" : bearbeitet, "vorlagen" : vorlagen, "kommentar": kommentar}})
+                    st.toast("Erfolgreich gespeichert!")
+                    time.sleep(0.5)
+                    st.rerun()  

@@ -48,8 +48,3 @@ print("Check schema")
 import schema20241216
 
 mongo_db.command('collMod','knoten', validator=schema20241216.knoten_validator, validationLevel='moderate')
-
-
-
-
-
