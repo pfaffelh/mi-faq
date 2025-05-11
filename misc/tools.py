@@ -92,6 +92,7 @@ def display_navigation():
     st.sidebar.page_link("pages/05_dictionary.py", label="Lexikon (d/e)")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
     st.sidebar.page_link("pages/06_Planer.py", label="Planer")
+    st.sidebar.page_link("pages/07_Kalender.py", label="Kalender")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
     st.sidebar.page_link("pages/10_Hilfe.py", label="Dokumentation")
 
@@ -202,37 +203,3 @@ def find_ankerdaten(id_list):
     daten_gefiltert = [x for x in daten if x["ankerdatum"] == st.session_state.leer[st.session_state.kalender]]
     return [x["_id"] for x in daten_gefiltert]
 
-def prozesspaket_kopieren(id, ini = {}):
-    z = st.session_state.prozesspaket.find_one({"_id" : id})
-    # kopie ist ein dict mit alten und neuen Ids.
-    kopie = {}
-    # Kopiere Kalender:
-    kal = list(st.session_state.kalender.find({"_id" : {"$in" : z["kalender"]}}))
-    for k in kal:
-        k_loc = k["_id"]
-        del k["_id"]
-        k_new = st.session_state.kalender.insert_one(k)            
-        kopie[k_loc] = k_new.inserted_id
-    # Kopiere Prozesspaket
-    del z["_id"]
-    z = z | ini
-    z_kopie = st.session_state.prozesspaket.insert_one(z)
-    kopie[id] = z_kopie.inserted_id
-    st.session_state.kalender.update_one({"_id" : z_kopie.inserted_id}, {"$set" : {"kalender" : [kopie[x] for x in z["kalender"]]}})
-    # Kopiere Prozesse
-    pr = list(st.session_state.prozess.find({"parent" : z["_id"]}))
-    pr_ids = [p["_id"] for p in pr]
-    for p in pr:
-        p_loc = p["_id"]
-        del p["_id"]
-        p["parent"] = kopie[id]
-        p_new = st.session_state.prozess.insert_one(p)  
-        kopie[p_loc] = p_new.inserted_id
-    # Kopiere Aufgaben
-    au = list(st.session_state.aufgabe.find({"parent" : {"$in" : pr_ids}}))
-    for a in au:
-        del a["_id"]
-        a["parent"] = kopie[a["parent"]]
-        a["ankerdatum"] = kopie[a["ankerdatum"]]
-        st.session_state.aufgabe.insert_one(p)  
-    return kopie[id]

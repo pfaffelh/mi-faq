@@ -297,7 +297,7 @@ prozess_validator = {
      "$jsonSchema": {
         "bsonType": "object",
         "title": "Beschreibung eines Prozesses.",
-        "required": ["kurzname", "sichtbar", "name", "parent", "verantwortlicher", "beteiligte", "text", "quicklinks", "bearbeitet", "vorlagen", "kommentar", "rang"],
+        "required": ["kurzname", "sichtbar", "name", "parent", "verantwortlicher", "beteiligte", "text", "quicklinks", "bearbeitet", "vorlagen", "kommentar", "rang", "color"],
         "properties": {
             "kurzname": {
                 "bsonType": "string",
@@ -359,6 +359,10 @@ prozess_validator = {
                         "description": "Text für die Vorlage."
                     }
                 }            
+            },
+            "color": {
+                "bsonType": "string",
+                "description": "Hex-Code der Farbe zur Anzeige im Kalender"
             },
             "bearbeitet": {
                 "bsonType": "string",

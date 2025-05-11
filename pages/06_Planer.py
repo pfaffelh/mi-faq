@@ -148,7 +148,7 @@ if st.session_state.logged_in:
                         st.session_state.edit_planer = z["_id"]
                         st.rerun()
                     # st.write(f"### {tools.repr(collection, z["_id"])}")
-                    if n == 2 or (n < 2 and st.session_state.level_planer[n+1] == []):
+                    if st.session_state.level_planer[n] == [z["_id"]] :
                         with st.popover('Löschen', use_container_width=True):
                             colu1, colu2, colu3 = st.columns([1,1,1])
                             with colu1:                  
@@ -383,6 +383,7 @@ if st.session_state.logged_in:
                         users.append({"rz" : i, "vorname" : "", "name": i})
                 rz_users = [u["rz"] for u in users]
                 col = st.columns([1,3])
+                st.write(users)
                 verantwortlicher = col[0].selectbox("Verantwortlicher", rz_users, rz_users.index(z["verantwortlicher"]), format_func = lambda a: "".join([f"{r['vorname']} {r['name']}" for r in users if r["rz"] == a]), key = f"verantwortlicher-{z["_id"]}")
                 beteiligte = col[1].multiselect("Weitere Beteiligte", rz_users, z["beteiligte"], format_func = lambda a: "".join([f"{r['vorname']} {r['name']}" for r in users if r["rz"] == a]), placeholder = "Bitte auswählen", key = f"beteiligte-{z["_id"]}")
                 beteiligte = sorted(beteiligte, key = lambda a: [f"{r['name']} {r['vorname']}" for r in users if r["rz"] == a])
