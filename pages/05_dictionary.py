@@ -1,5 +1,4 @@
 import streamlit as st
-from streamlit_extras.switch_page_button import switch_page 
 import time
 import pymongo
 from pymongo.collation import Collation
@@ -9,7 +8,7 @@ st.set_page_config(page_title="FAQ", page_icon=None, layout="wide", initial_side
 
 # check if session_state is initialized if not change to main page
 if 'logged_in' not in st.session_state:
-    switch_page("FAQ")
+    st.switch_page("FAQ.py")
 
 from misc.config import *
 import misc.util as util
@@ -94,6 +93,6 @@ if st.session_state.logged_in:
 
             
 else: 
-    switch_page("FAQ")
+    st.switch_page("FAQ.py")
 
 st.sidebar.button("logout", on_click = tools.logout)

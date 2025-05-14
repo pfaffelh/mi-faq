@@ -278,14 +278,19 @@ au_i += 1
 del au_eval1["_id"]
 aufgabe.insert_one(au_eval1)
 
-
-
 # Aufgabe
 #kurzname
 #name 
 #ankerdatum
 #start 
 #ende 
+
+mongo_db_users = cluster["user"]
+group = mongo_db_users["group"]
+users = mongo_db_users["user"]
+gr = group.find_one({"name" : "faq"})
+faq_users = list(users.find({"groups" : { "$elemMatch" : { "$eq" : gr["_id"]}}})) 
+
 
 # Diesem Schema soll die Datenbank am Ende der Änderung folgen
 print("Check schema")

@@ -82,7 +82,7 @@ def update_confirm(collection, x, x_updated, reset = True):
 def display_navigation():
     st.markdown("<style>.st-emotion-cache-16txtl3 { padding: 2rem 2rem; }</style>", unsafe_allow_html=True)
     with st.sidebar:
-        st.image("static/ufr.png", use_column_width=True)
+        st.image("static/ufr.png", use_container_width=True)
 
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
     st.sidebar.page_link("pages/01_knoten.py", label="Accordion-Seiten")
@@ -92,7 +92,8 @@ def display_navigation():
     st.sidebar.page_link("pages/05_dictionary.py", label="Lexikon (d/e)")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
     st.sidebar.page_link("pages/06_Planer.py", label="Planer")
-    st.sidebar.page_link("pages/07_Kalender.py", label="Kalender")
+    st.sidebar.page_link("pages/07_Personen.py", label="Planer")
+    st.sidebar.page_link("pages/08_Kalender.py", label="Kalender")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
     st.sidebar.page_link("pages/10_Hilfe.py", label="Dokumentation")
 

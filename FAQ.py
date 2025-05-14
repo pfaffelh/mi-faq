@@ -1,9 +1,8 @@
 import streamlit as st
 import time
-from streamlit_extras.switch_page_button import switch_page 
 
 # Seiten-Layout
-st.set_page_config(page_title="QA-Paare", page_icon=None, initial_sidebar_state="auto", menu_items=None)
+st.set_page_config(page_title="FAQ-App", page_icon=None, initial_sidebar_state="auto", menu_items=None)
 
 from misc.config import *
 import misc.util as util
@@ -39,7 +38,7 @@ if submit:
             u = st.session_state.users.find_one({"rz": st.session_state.user})
             st.session_state.username = " ".join([u["vorname"], u["name"]])
             # make all neccesary variables available to session_state
-            switch_page("knoten")
+            st.switch_page("pages/01_knoten.py")
         else:
             st.error("Nicht genügend Rechte, um FAQ zu editieren.")
             util.logger.info(f"User {kennung} hatte nicht gebügend Rechte, um sich einzuloggen.")
