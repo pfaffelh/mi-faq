@@ -12,11 +12,13 @@ mongo_db["kalender"].drop()
 mongo_db["prozesspaket"].drop()
 mongo_db["prozess"].drop()
 mongo_db["aufgabe"].drop()
+mongo_db["person"].drop()
 
 kalender = mongo_db["kalender"]
 prozesspaket = mongo_db["prozesspaket"]
 prozess = mongo_db["prozess"]
 aufgabe = mongo_db["aufgabe"]
+person = mongo_db["person"]
 
 k_1970 = kalender.insert_one(
     {
@@ -66,6 +68,14 @@ prpa = prozesspaket.insert_one(
             "rang" : 0
         }
 )
+
+person_leer = {
+    "vorname" : "",
+    "name" : "-",
+    "kommentar" : "",
+    "rz" : "",
+    "rgb" : "#000000"
+}
 
 prozess_leer =     {
             "kurzname": "", 
@@ -278,14 +288,36 @@ au_i += 1
 del au_eval1["_id"]
 aufgabe.insert_one(au_eval1)
 
-
-
 # Aufgabe
 #kurzname
 #name 
 #ankerdatum
 #start 
 #ende 
+
+mongo_db_users = cluster["user"]
+group = mongo_db_users["group"]
+users = mongo_db_users["user"]
+gr = group.find_one({"name" : "faq"})
+faq_users = list(users.find({"groups" : { "$elemMatch" : { "$eq" : gr["_id"]}}})) 
+
+import matplotlib.cm as cm
+import matplotlib.colors as mcolors
+
+# Wähle eine Farbkarte
+cmap = cm.get_cmap('viridis', 3 + len(faq_users))  # 5 Farben aus 'viridis'
+
+# Konvertiere zu Hex-Codes
+hex_colors = [mcolors.to_hex(cmap(i)) for i in range(cmap.N)]
+
+person.insert_one({"rz" : "", "vorname" : "", "name" : "-", "kommentar" : "", "color" : hex_colors[0]})
+person.insert_one({"rz" : "", "vorname" : "", "name" : "Dekan:in", "kommentar" : "", "color" : hex_colors[1]})
+person.insert_one({"rz" : "", "vorname" : "", "name" : "Studiendekan:in", "kommentar" : "", "color" : hex_colors[2]})
+
+for u in faq_users:
+    i = 3
+    person.insert_one({"rz" : u["rz"], "vorname" : u["vorname"], "name" : u["name"], "kommentar" : "", "color" : hex_colors[i]})
+    i += 1
 
 # Diesem Schema soll die Datenbank am Ende der Änderung folgen
 print("Check schema")
@@ -295,5 +327,6 @@ mongo_db.command('collMod','kalender', validator=schema20250531.kalender_validat
 mongo_db.command('collMod','prozesspaket', validator=schema20250531.prozesspaket_validator, validationLevel='moderate')
 mongo_db.command('collMod','prozess', validator=schema20250531.prozess_validator, validationLevel='moderate')
 mongo_db.command('collMod','aufgabe', validator=schema20250531.aufgabe_validator, validationLevel='moderate')
+mongo_db.command('collMod','person', validator=schema20250531.person_validator, validationLevel='moderate')
 
 
