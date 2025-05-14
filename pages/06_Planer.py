@@ -288,7 +288,6 @@ if st.session_state.logged_in:
                 if save2:
                     ankerdaten_korrekt = True
                     for k in kal:
-                        st.write(kal)
                         if k["ankerdatum"] != st.session_state.leer[kalender]:
                             # k ist relativ zu k["ankerdatum"]
                             # a_kal ist das Ankerdatum in kal
@@ -341,7 +340,6 @@ if st.session_state.logged_in:
             # Daten für Aufgabe
             collection = st.session_state.aufgabe
             z = collection.find_one({"_id" : st.session_state.edit_planer})
-            st.write(z)
             with st.expander("Daten"):
                 save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
                 st.write(z["bearbeitet"])
@@ -383,7 +381,6 @@ if st.session_state.logged_in:
                         users.append({"rz" : i, "vorname" : "", "name": i})
                 rz_users = [u["rz"] for u in users]
                 col = st.columns([1,3])
-                st.write(users)
                 verantwortlicher = col[0].selectbox("Verantwortlicher", rz_users, rz_users.index(z["verantwortlicher"]), format_func = lambda a: "".join([f"{r['vorname']} {r['name']}" for r in users if r["rz"] == a]), key = f"verantwortlicher-{z["_id"]}")
                 beteiligte = col[1].multiselect("Weitere Beteiligte", rz_users, z["beteiligte"], format_func = lambda a: "".join([f"{r['vorname']} {r['name']}" for r in users if r["rz"] == a]), placeholder = "Bitte auswählen", key = f"beteiligte-{z["_id"]}")
                 beteiligte = sorted(beteiligte, key = lambda a: [f"{r['name']} {r['vorname']}" for r in users if r["rz"] == a])

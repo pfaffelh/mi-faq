@@ -36,3 +36,12 @@ Ereigniss wie login, update, delete, werden mitgeloggt. Die Log-Datei ist in _co
 TODO:
 * Sichern der Datenbank!
 * 
+
+### Update Mai 2025
+
+Die App wird um die Funktionalität 'Planer' erweitert. Dies ist ein (kopierbarer) Semesterplaner für rekurrierende und nicht-rekurrierende Aufgaben, etwa im Studiendekanat.
+
+Hier gibt es noch zu tun:
+* Möglichkeit, Personen anzulegen
+* Darstellung auf Homepage als Kalender
+* 
