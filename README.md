@@ -42,6 +42,6 @@ TODO:
 Die App wird um die Funktionalität 'Planer' erweitert. Dies ist ein (kopierbarer) Semesterplaner für rekurrierende und nicht-rekurrierende Aufgaben, etwa im Studiendekanat.
 
 Hier gibt es noch zu tun:
-* Möglichkeit, Personen anzulegen
+* Kopierfunktion Semester
 * Darstellung auf Homepage als Kalender
-* 
+ 
