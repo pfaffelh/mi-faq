@@ -9,12 +9,12 @@ mongo_db = cluster["faq"]
 import schema20250531
 
 mongo_db["kalender"].drop()
-mongo_db["prozesspaket"].drop()
+mongo_db["semester"].drop()
 mongo_db["prozess"].drop()
 mongo_db["aufgabe"].drop()
 
 kalender = mongo_db["kalender"]
-prozesspaket = mongo_db["prozesspaket"]
+semester = mongo_db["semester"]
 prozess = mongo_db["prozess"]
 aufgabe = mongo_db["aufgabe"]
 
@@ -55,15 +55,14 @@ k_SS2025_planung = kalender.insert_one(
             "name": "Treffen Lehrveranstaltungsplanung"
         })
 
-prpa = prozesspaket.insert_one(
+prpa = semester.insert_one(
     {
-            "kurzname": "StD 2025SS",
-            "name": "Studiendekanat Sommersemester 2025", 
+            "kurzname": "2025SS",
+            "name": "Sommersemester 2025", 
             "sichtbar": True,
             "kalender": [k_SS2025.inserted_id, k_SS2025_semstart.inserted_id, k_SS2025_stuko.inserted_id, k_SS2025_planung.inserted_id],
             "bearbeitet": "Initialer Eintrag", 
-            "kommentar" : "",
-            "rang" : 0
+            "kommentar" : ""
         }
 )
 
@@ -297,7 +296,7 @@ print("Check schema")
 import schema20250531
 
 mongo_db.command('collMod','kalender', validator=schema20250531.kalender_validator, validationLevel='moderate')
-mongo_db.command('collMod','prozesspaket', validator=schema20250531.prozesspaket_validator, validationLevel='moderate')
+mongo_db.command('collMod','semester', validator=schema20250531.semester_validator, validationLevel='moderate')
 mongo_db.command('collMod','prozess', validator=schema20250531.prozess_validator, validationLevel='moderate')
 mongo_db.command('collMod','aufgabe', validator=schema20250531.aufgabe_validator, validationLevel='moderate')
 

@@ -164,7 +164,7 @@ def repr(collection, id, show_collection = False, short = False):
         res = f"{x['de']}/{x['en']}"
     elif collection == util.kalender:
         res = f"{x["name"]} ({x["datum"].strftime("%-d.%-m.%Y")})"
-    elif collection == util.prozesspaket:
+    elif collection == util.semester:
         res = f"{x["name"]} "
         if short:
             res = x["kurzname"]

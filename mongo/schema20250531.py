@@ -9,7 +9,7 @@ mongo_db = cluster["faq"]
 # knoten
 # studiendekanat 
 # dictionary
-# prozesspaket
+# semester
 # kalender
 # prozess
 # aufgabe
@@ -237,7 +237,7 @@ kalender_validator = {
         "properties": {
             "datum": {
                 "bsonType": "date",
-                "description": "Ein Datum das zum Prozesspaket gehört."
+                "description": "Ein Datum das zum Semester gehört."
             },
             "ankerdatum" : {
                 "bsonType": "objectId",
@@ -251,23 +251,23 @@ kalender_validator = {
      }
 }
 
-prozesspaket_validator = {
+semester_validator = {
      "$jsonSchema": {
         "bsonType": "object",
-        "title": "Beschreibung eines wiederkehrenden Zeitraumes.",
+        "title": "Beschreibung eines wiederkehrenden Semesters.",
         "required": ["kurzname", "name", "sichtbar", "kalender", "kommentar", "rang", "bearbeitet"],
         "properties": {
             "kurzname": {
                 "bsonType": "string",
-                "description": "Die Abkürzung der Seite für Links."
+                "description": "Die Abkürzung des Semesters."
             },
             "name": {
                 "bsonType": "string",
-                "description": "Der Name des Prozesspakets."
+                "description": "Der Name des Semesters."
             },
             "kommentar": {
                 "bsonType": "string",
-                "description": "Kommentar zum Prozesspakets."
+                "description": "Kommentar zum Semester."
             },
             "bearbeitet": {
                 "bsonType": "string",
@@ -276,10 +276,6 @@ prozesspaket_validator = {
             "sichtbar": {
                 "bsonType": "bool",
                 "description": "bestimmt, ob für den Zeitraum eine Webpage erstellt werden soll."
-            },
-            "rang": {
-                "bsonType": "int",
-                "description": "bestimmt die Reihenfolge."
             },
             "kalender" : {
                 "bsonType": "array",
@@ -313,7 +309,7 @@ prozess_validator = {
             },
             "parent": {
                 "bsonType": "objectId",
-                "description": "Die Id eines Prozesspakets."
+                "description": "Die Id eines Semesters."
             },
             "verantwortlicher": {
                 "bsonType": "string",

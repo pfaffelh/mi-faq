@@ -20,7 +20,7 @@ tools.display_navigation()
 
 # Es geht hier vor allem um diese Collection:
 kalender = st.session_state.kalender
-prozesspaket = st.session_state.prozesspaket
+semester = st.session_state.semester
 prozess = st.session_state.prozess
 aufgabe = st.session_state.aufgabe
 
@@ -30,19 +30,19 @@ bearbeitet = f"Zuletzt bearbeitet von {st.session_state.username} am {datetime.n
 def savenew(collection, ini):
     tools.new(collection, ini = ini, switch = False)
 
-# level enthält die ids von Prozesspaket, Prozess, Aufgabe, soweit vorhanden
+# level enthält die ids von semester, Prozess, Aufgabe, soweit vorhanden
 def level(id, query = {}):
     res = [[],[],[]]
     if id == "":
-        res[0] = [a["_id"] for a in list(prozesspaket.find(query, sort=[("rang", pymongo.ASCENDING)]))]
-    elif prozesspaket.find_one({"_id" : id}):
-        pr = prozesspaket.find_one({"_id" : id})
+        res[0] = [a["_id"] for a in list(semester.find(query, sort=[("rang", pymongo.ASCENDING)]))]
+    elif semester.find_one({"_id" : id}):
+        pr = semester.find_one({"_id" : id})
         query = query | {"parent" : id}
         res[0] = [id]
         res[1] = [p["_id"] for p in list(prozess.find(query, sort=[("rang", pymongo.ASCENDING)]))]
     elif prozess.find_one({"_id" : id}):
         pr = prozess.find_one({"_id" : id})
-        prpa = prozesspaket.find_one({"_id" : pr["parent"]})
+        prpa = semester.find_one({"_id" : pr["parent"]})
         res[0] = [prpa["_id"]]
         res[1] = [id]
         query = query | {"parent" : id}
@@ -50,7 +50,7 @@ def level(id, query = {}):
     elif aufgabe.find_one({"_id" : id}):
         au = aufgabe.find_one({"_id" : id})
         pr = prozess.find_one({"_id" : au["parent"]})
-        prpa = prozesspaket.find_one({"_id" : pr["parent"]})
+        prpa = semester.find_one({"_id" : pr["parent"]})
         res[0] = [prpa["_id"]]
         res[1] = [pr["_id"]]
         res[2] = [id]
@@ -60,7 +60,7 @@ def level(id, query = {}):
 
 def find_collection(n):
     if n == 0:
-        collection = prozesspaket
+        collection = semester
     elif n == 1:
         collection = prozess
     elif n == 2:
@@ -72,8 +72,8 @@ def auswahl_dict(n, query = {}):
     res = collection.find(query, sort=[("rang", pymongo.ASCENDING)])
     return {r["_id"] : tools.repr(collection, r["_id"]) for r in res}
 
-def prozesspaket_kopieren(id, ini = {}):
-    z = st.session_state.prozesspaket.find_one({"_id" : id})
+def semester_kopieren(id, ini = {}):
+    z = st.session_state.semester.find_one({"_id" : id})
     # kopie ist ein dict mit alten und neuen Ids.
     kopie = {}
     # Kopiere Kalender:
@@ -83,11 +83,11 @@ def prozesspaket_kopieren(id, ini = {}):
         del k["_id"]
         k_new = st.session_state.kalender.insert_one(k)            
         kopie[k_loc] = k_new.inserted_id
-    # Kopiere Prozesspaket
+    # Kopiere semester
     del z["_id"]
     z["kalender"] = [kopie[a] for a in z["kalender"]]
     z = z | ini
-    z_kopie = st.session_state.prozesspaket.insert_one(z)
+    z_kopie = st.session_state.semester.insert_one(z)
     kopie[id] = z_kopie.inserted_id
     #st.session_state.kalender.update_one({"_id" : z_kopie.inserted_id}, {"$set" : {"kalender" : [kopie[x] for x in z["kalender"]]}})
     # Kopiere Prozesse
@@ -111,7 +111,13 @@ def prozesspaket_kopieren(id, ini = {}):
 # Ab hier wird die Webseite erzeugt
 if st.session_state.logged_in:
     st.header("Planer")
-    st.write("Zeige nur Prozesspakete an, die Termine in folgendem Zeitraum haben:")
+    st.write("Auswahl des Semesters:")
+    st.session_state.semester = st.selectbox()
+
+    semesters = list(util.semester.find(sort=[("kurzname", pymongo.DESCENDING)]))
+    st.session_state.semester_id = st.selectbox(label="Semester", options = [x["_id"] for x in semesters], index = [s["_id"] for s in semesters].index(st.session_state.semester_id), format_func = (lambda a: f"{util.semester.find_one({'_id': a})['name_de']} {'😎' if util.semester.find_one({'_id': a})['hp_sichtbar'] else ''}"), placeholder = "Wähle ein Semester", label_visibility = "collapsed", key = "master_semester_choice")
+
+
     col = st.columns([1,1,1])
     anzeige_start = col[0].date_input("von", value = datetime.now() + relativedelta(months = -4), format="DD.MM.YYYY")
     anzeige_ende = col[1].date_input("bis", value = datetime.now() + relativedelta(months = 2), format="DD.MM.YYYY")
@@ -126,7 +132,7 @@ if st.session_state.logged_in:
     # st.write(st.session_state.level_planer, level(st.session_state.edit_planer))
     col = st.columns([1,1,1])
     with col[0]:
-        submit = st.button("Alle Prozesspakete", key=f"edit-wurzel", use_container_width=True)
+        submit = st.button("Alle semestere", key=f"edit-wurzel", use_container_width=True)
         if submit:
             st.session_state.edit_planer = ""
             st.rerun()
@@ -171,7 +177,7 @@ if st.session_state.logged_in:
                                 ini = {"kurzname" : kurzname, "name": name, "kommentar": kommentar}
                                 submit = st.button(label = "Kopieren!", type = 'primary', key = f"copy-{z['_id']}")
                                 if submit:
-                                    kopie = prozesspaket_kopieren(st.session_state.edit_planer, ini)
+                                    kopie = semester_kopieren(st.session_state.edit_planer, ini)
                                     st.success("Item kopiert!")
                                     st.session_state.edit_planer = kopie
                                     st.rerun()
@@ -220,24 +226,24 @@ if st.session_state.logged_in:
                     k = kalender.insert_one({
                         "datum": datetime.combine(anzeige_start, datetime.max.time()),
                         "ankerdatum": st.session_state.leer[st.session_state.kalender],
-                        "name": f"Datum für Prozesspaket {name}"
+                        "name": f"Datum für semester {name}"
                     })
                     ini["kalender"] = [k.inserted_id]
                 if n > 0:
                    ini["parent"] = st.session_state.level_planer[n-1][0]
                 if n == 2:
-                    prpa = prozesspaket.find_one({"_id" : st.session_state.level_planer[0][0]})            
+                    prpa = semester.find_one({"_id" : st.session_state.level_planer[0][0]})            
                     anker = st.selectbox("Ankerdatum", prpa["kalender"], format_func = lambda a: tools.repr(kalender, a), key = f"ankerdatum-{z["_id"]}")
                     ini["ankerdatum"] = anker
 
                 btn = st.button("Item anlegen", on_click=savenew, args = [collection, ini,], key = f"savenew_{n}")
 
     if st.session_state.edit_planer != "":
-        if prozesspaket.find_one({"_id" : st.session_state.edit_planer}):
-            z = st.session_state.prozesspaket.find_one({"_id" : st.session_state.edit_planer})
+        if semester.find_one({"_id" : st.session_state.edit_planer}):
+            z = st.session_state.semester.find_one({"_id" : st.session_state.edit_planer})
 
             with st.expander("Kalender"):
-                st.write("Hier werden grundlegende Daten für das Prozesspaket bereitgestellt. Falls ein Datum relativ zu einem anderen festgelegt wird, wird es bei Änderung des Ankerdatums ebenfalls geändert.")
+                st.write("Hier werden grundlegende Daten für das semester bereitgestellt. Falls ein Datum relativ zu einem anderen festgelegt wird, wird es bei Änderung des Ankerdatums ebenfalls geändert.")
                 kal = []
                 for i, k in enumerate(z["kalender"]):
                     ka = kalender.find_one({"_id" : k})
@@ -278,7 +284,7 @@ if st.session_state.logged_in:
                 neues_datum = st.button('Neues Datum', key = "neues_datum")
                 if neues_datum: 
                     k = kalender.insert_one({"datum": datetime.now(), "name": "", "ankerdatum": st.session_state.leer[kalender]})
-                    prozesspaket.update_one({"_id" : z["_id"]}, {"$push" : {"kalender" : k.inserted_id}})
+                    semester.update_one({"_id" : z["_id"]}, {"$push" : {"kalender" : k.inserted_id}})
                     st.toast("Erfolgreich gespeichert!")
                     time.sleep(0.5)
                     st.rerun()  
@@ -299,7 +305,7 @@ if st.session_state.logged_in:
                     if ankerdaten_korrekt:
                         for k in kal:  
                             kalender.update_one({"_id": k["_id"]}, { "$set": {"datum" : datetime.combine(k["datum"], datetime.min.time()), "name" : k["name"], "ankerdatum" : k["ankerdatum"]}})
-                        prozesspaket.update_one({"_id" : z["_id"]}, {"$set" : {"kalender" : tools.sort_kalender(z["kalender"])}})
+                        semester.update_one({"_id" : z["_id"]}, {"$set" : {"kalender" : tools.sort_kalender(z["kalender"])}})
 
                         y = list(kalender.find({ "datum" : {"$gt" : datetime.combine(anzeige_start, datetime.min.time()), "$lt" : datetime.combine(anzeige_ende, datetime.max.time())}}, sort=[("datum", pymongo.ASCENDING)]))
 
@@ -309,7 +315,7 @@ if st.session_state.logged_in:
                     else:
                         st.toast("Speichern nicht möglich. Ankerdaten dürfen keine Relativdaten sein!")
 
-            # Daten für Prozesspaket
+            # Daten für semester
             with st.expander("Daten"):
                 save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
                 st.write(z["bearbeitet"])
@@ -358,10 +364,10 @@ if st.session_state.logged_in:
                 else:
                     angefangen = False
                     erledigt = False
-                # TODO: Beim Verschieben einer Aufgabe in einen Prozess eines anderen Prozesspakets müssen Ankerdaten neu gesetzt werden!
-                # Finde Prozesspaket
+                # TODO: Beim Verschieben einer Aufgabe in einen Prozess eines anderen semesters müssen Ankerdaten neu gesetzt werden!
+                # Finde semester
                 pr = prozess.find_one({"_id" : z["parent"]})
-                prpa = prozesspaket.find_one({"_id" : pr["parent"]})            
+                prpa = semester.find_one({"_id" : pr["parent"]})            
                 cols = st.columns([5,5,5])
 
                 anker = cols[0].selectbox("Ankerdatum", prpa["kalender"], index = prpa["kalender"].index(z["ankerdatum"]), format_func = lambda a: tools.repr(kalender, a), key = f"ankerdatum-{z["_id"]}")

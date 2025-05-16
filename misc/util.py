@@ -30,6 +30,26 @@ def logout():
     st.session_state.logged_in = False
     logger.info(f"User {st.session_state.user} hat sich ausgeloggt.")
 
+def next_semester_kurzname(kurzname):
+    a = int(kurzname[:4])
+    b = kurzname[4:]
+    return f"{a+1}SS" if b == "WS" else f"{a}WS"
+
+def semester_name_de(kurzname):
+    a = int(kurzname[:4])
+    b = kurzname[4:]
+    c = f"/{a+1}" if b == "WS" else ""
+    return f"{'Wintersemester' if b == 'WS' else 'Sommersemester'} {a}{c}"
+
+def get_current_semester_kurzname():
+    if datetime.now().month < 4:
+        res = f"{datetime.now().year-1}WS"
+    elif 3 < datetime.now().month and datetime.now().month < 10:
+        res = f"{datetime.now().year}SS"
+    else:
+        res = f"{datetime.now().year}WS"
+    return res
+
 def setup_session_state():
     # Das ist die mongodb; 
     # knoten enthält alle Daten für die Akkordion-Seiten
@@ -42,7 +62,7 @@ def setup_session_state():
         st.session_state.dictionary = mongo_db["dictionary"]
         st.session_state.studiendekanat = mongo_db["studiendekanat"]
         st.session_state.kalender = mongo_db["kalender"]
-        st.session_state.prozesspaket = mongo_db["prozesspaket"]
+        st.session_state.semester = mongo_db["semester"]
         st.session_state.prozess = mongo_db["prozess"]
         st.session_state.aufgabe = mongo_db["aufgabe"]
         st.session_state.users = mongo_db_users["user"]
@@ -59,7 +79,7 @@ def setup_session_state():
         st.session_state.studiendekanat: "Studiendekanat",
         st.session_state.dictionary: "Lexikon",
         st.session_state.kalender: "Kalender",
-        st.session_state.prozesspaket: "Prozesspaket",
+        st.session_state.semester: "Semester",
         st.session_state.prozess: "Prozess",
         st.session_state.aufgabe: "Aufgabe"
     }
@@ -110,13 +130,23 @@ def setup_session_state():
         gr = st.session_state.group.find_one({"name" : "faq"})
         faq_users = list(st.session_state.users.find({"groups" : { "$elemMatch" : { "$eq" : gr["_id"]}}})) 
         st.session_state.faq_users = [{"rz" : "", "vorname" : "", "name" : "", "color" : "#FFFFFF"}] + sorted([{"rz" : r["rz"], "vorname" : r["vorname"], "name" : r["name"], "color" : r["color"]} for r in faq_users], key = lambda x: (x["name"], x["vorname"]))
+
+
+    if "semester_id" not in st.session_state:
+        try:
+            st.session_state.semester_id = semester.find_one({"kurzname" : get_current_semester_kurzname()})["_id"]
+        except: 
+            semesters = list(semester.find({}, sort=[("kurzname", pymongo.DESCENDING)]))
+            st.session_state.semester_id = semesters[0]["_id"]
+
+
     st.session_state.abhaengigkeit = {
         st.session_state.knoten : [{"collection": st.session_state.knoten, "field": "kinder", "list": True}],
         st.session_state.studiendekanat : [],
         st.session_state.dictionary : [],
-        st.session_state.kalender : [{"collection": st.session_state.aufgabe, "field": "relativdatum", "list": False}, {"collection": st.session_state.prozesspaket, "field": "kalender", "list": True}, {"collection": st.session_state.kalender, "field": "ankerdatum", "list": False}],
-        st.session_state.prozesspaket : [{"collection": st.session_state.prozess, "field": "zeitraum", "list": False}],
-        st.session_state.prozess : [{"collection": st.session_state.aufgabe, "field": "prozess", "list": False}],
+        st.session_state.kalender : [{"collection": st.session_state.aufgabe, "field": "relativdatum", "list": False}, {"collection": st.session_state.semester, "field": "kalender", "list": True}, {"collection": st.session_state.kalender, "field": "ankerdatum", "list": False}],
+        st.session_state.semester : [{"collection": st.session_state.prozess, "field": "parent", "list": False}],
+        st.session_state.prozess : [{"collection": st.session_state.aufgabe, "field": "parent", "list": False}],
         st.session_state.aufgabe : []
     }
 
@@ -174,7 +204,7 @@ def setup_session_state():
             "ankerdatum" : st.session_state.leer,
             "name": "-"
         },
-        st.session_state.prozesspaket: {
+        st.session_state.semester: {
             "kurzname": "",
             "name": "", 
             "sichtbar": True,
@@ -244,6 +274,6 @@ knoten = st.session_state.knoten
 studiendekanat = st.session_state.studiendekanat
 dictionary = st.session_state.dictionary
 kalender = st.session_state.kalender
-prozesspaket = st.session_state.prozesspaket
+semester = st.session_state.semester
 prozess = st.session_state.prozess
 aufgabe = st.session_state.aufgabe
