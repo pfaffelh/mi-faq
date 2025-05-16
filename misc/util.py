@@ -134,9 +134,9 @@ def setup_session_state():
 
     if "semester_id" not in st.session_state:
         try:
-            st.session_state.semester_id = semester.find_one({"kurzname" : get_current_semester_kurzname()})["_id"]
+            st.session_state.semester_id = st.session_state.semester.find_one({"kurzname" : get_current_semester_kurzname()})["_id"]
         except: 
-            semesters = list(semester.find({}, sort=[("kurzname", pymongo.DESCENDING)]))
+            semesters = list(st.session_state.semester.find({}, sort=[("kurzname", pymongo.DESCENDING)]))
             st.session_state.semester_id = semesters[0]["_id"]
 
 

@@ -32,7 +32,7 @@ if st.session_state.logged_in:
     y = list(util.person.find(sort=[("name", pymongo.ASCENDING)]))
     if st.button('Neuen User hinzufügen'):
         x = util.person.insert_one({"rz": "", "vorname": "", "name": "", "kommentar": "", "color" : "#000000"})
-        st.session_state.expanded=x.inserted_id
+        st.session_state.edit=x.inserted_id
         st.rerun()
 
     for x in y:

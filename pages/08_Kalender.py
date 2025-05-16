@@ -22,23 +22,22 @@ tools.display_navigation()
 
 # Es geht hier vor allem um diese Collection:
 kalender = st.session_state.kalender
-prozesspaket = st.session_state.prozesspaket
+semester = st.session_state.semester
 prozess = st.session_state.prozess
 aufgabe = st.session_state.aufgabe
 
-
 if st.session_state.logged_in:
     st.header("Kalender")
-
-    st.write("Zeige nur Aufgaben in Prozesspakete an, die Termine in folgendem Zeitraum haben:")
-    col = st.columns([1,1,1])
-    anzeige_start = col[0].date_input("von", value = datetime.now() + relativedelta(months = -4), format="DD.MM.YYYY")
-    anzeige_ende = col[1].date_input("bis", value = datetime.now() + relativedelta(months = 2), format="DD.MM.YYYY")
-
-    y = list(kalender.find({ "datum" : {"$gt" : datetime.combine(anzeige_start, datetime.min.time()), "$lt" : datetime.combine(anzeige_ende, datetime.max.time())}}, sort=[("datum", pymongo.ASCENDING)]))
-    pakete = list(prozesspaket.find({"kalender" : {"$in" : [a["_id"] for a in y]}}, sort=[("rang", pymongo.ASCENDING)]))
+    
+    col = st.columns([1,4])
+    mode_dict = {"daygrid" : "Kalender", "list" : "Liste"}
+    mode = col[0].selectbox("Ansicht:", mode_dict.keys(), format_func=lambda a: mode_dict[a])
+    semesters = list(util.semester.find(sort=[("kurzname", pymongo.DESCENDING)]))
+    
+    pakete = col[1].multiselect("Semester", options = [x["_id"] for x in semesters], default = st.session_state.semester_id, format_func = (lambda a: f"{util.semester.find_one({'_id': a})['kurzname']}"), label_visibility = "visible", key = "master_semester_choice")
+    pakete = list(semester.find({"_id" : {"$in" : pakete}}))
     prozesse = list(prozess.find({"parent" : {"$in" : [p["_id"] for p in pakete]}}, sort=[("rang", pymongo.ASCENDING)]))
-    aufgaben = list(aufgabe.find({"parent" : {"$in" : [p["_id"] for p in prozesse]}}, sort=[("rang", pymongo.ASCENDING)]))
+    st.session_state.aufgaben = list(aufgabe.find({"parent" : {"$in" : [p["_id"] for p in prozesse]}}, sort=[("rang", pymongo.ASCENDING)]))
     #select_personen = st.toggle("Personanauswahl", key = "personenauswahl")
     #if select_personen:
     #    st.write("Welche Personen sollen in die anzuzeigenden Aufgaben involviert sein?")
@@ -47,17 +46,14 @@ if st.session_state.logged_in:
     # daygrid: normale Monatsansicht
     # list: Liste
     # resource-timeline
-    mode_dict = {"daygrid" : "Kalender", "list" : "Liste"}
-    mode = col[2].selectbox("Ansicht:", mode_dict.keys(), format_func=lambda a: mode_dict[a])
 
     events = [{ "title": r["name"],
                 "color": prozess.find_one({"_id" : r["parent"]})["color"],
                 "start": (kalender.find_one({"_id" : r["ankerdatum"]})["datum"] + relativedelta(days = r["start"])).strftime("%Y-%m-%d"),
                 "end": (kalender.find_one({"_id" : r["ankerdatum"]})["datum"] + relativedelta(days = r["ende"])).strftime("%Y-%m-%d"),
-                "resourceId": str(r["_id"]),} for r in aufgaben]
-
-    calendar_resources = [{"id" : str(r["_id"]), "Aufgabe" : r["name"]} for r in aufgaben]
-
+                "resourceId": str(r["_id"]),} for r in st.session_state.aufgaben]
+    calendar_resources = [{"id" : str(r["_id"]), "Aufgabe" : r["name"]} for r in st.session_state.aufgaben]
+    
     calendar_options = {
         "firstDay": 1, 
         "locale": 'de',
@@ -104,5 +100,3 @@ if st.session_state.logged_in:
     if state.get("callback") == "eventClick":
         st.session_state.edit_planer = ObjectId(state["eventClick"]["event"]["resourceId"])
         st.switch_page("pages/06_Planer.py")
-
-

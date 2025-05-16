@@ -30,16 +30,17 @@ bearbeitet = f"Zuletzt bearbeitet von {st.session_state.username} am {datetime.n
 def savenew(collection, ini):
     tools.new(collection, ini = ini, switch = False)
 
-# level enthält die ids von semester, Prozess, Aufgabe, soweit vorhanden
+# level enthält die ids von Semester, Prozess, Aufgabe, soweit vorhanden
 def level(id, query = {}):
     res = [[],[],[]]
     if id == "":
-        res[0] = [a["_id"] for a in list(semester.find(query, sort=[("rang", pymongo.ASCENDING)]))]
+        res[0] = [a["_id"] for a in list(semester.find(query, sort=[("kurzname", pymongo.DESCENDING)]))]
     elif semester.find_one({"_id" : id}):
         pr = semester.find_one({"_id" : id})
         query = query | {"parent" : id}
         res[0] = [id]
         res[1] = [p["_id"] for p in list(prozess.find(query, sort=[("rang", pymongo.ASCENDING)]))]
+        res[2] = []
     elif prozess.find_one({"_id" : id}):
         pr = prozess.find_one({"_id" : id})
         prpa = semester.find_one({"_id" : pr["parent"]})
@@ -108,68 +109,63 @@ def semester_kopieren(id, ini = {}):
         st.session_state.aufgabe.insert_one(a)  
     return kopie[id]
 
+def switch_edit():
+    st.session_state.level_planer = level(st.session_state.semester_id)
+    
 # Ab hier wird die Webseite erzeugt
 if st.session_state.logged_in:
     st.header("Planer")
+    with st.expander("Neues Semester anlegen"):
+        st.write("Hier neues Semester anlegen")
     st.write("Auswahl des Semesters:")
-    st.session_state.semester = st.selectbox()
-
     semesters = list(util.semester.find(sort=[("kurzname", pymongo.DESCENDING)]))
-    st.session_state.semester_id = st.selectbox(label="Semester", options = [x["_id"] for x in semesters], index = [s["_id"] for s in semesters].index(st.session_state.semester_id), format_func = (lambda a: f"{util.semester.find_one({'_id': a})['name_de']} {'😎' if util.semester.find_one({'_id': a})['hp_sichtbar'] else ''}"), placeholder = "Wähle ein Semester", label_visibility = "collapsed", key = "master_semester_choice")
+    
+    col = st.columns([1,20])
+    back = col[0].button("🔄")
+    sem = col[1].selectbox(label="Semester", options = [x["_id"] for x in semesters], index = [x["_id"] for x in semesters].index(st.session_state.semester_id), format_func = (lambda a: f"{util.semester.find_one({'_id': a})['name']}"), label_visibility = "collapsed", key = "master_semester_choice")
+    # st.session_state.semester_id = st.pills(label="Semester", options = [x["_id"] for x in semesters], selection_mode = "single", default = st.session_state.semester_id, format_func = (lambda a: f"{util.semester.find_one({'_id': a})['kurzname']}"), label_visibility = "collapsed", on_change = switch_edit, key = "master_semester_choice")
+    if back or [sem] != st.session_state.level_planer[0]:
+        st.session_state.edit_planer = sem
+    st.session_state.level_planer = level(st.session_state.edit_planer)
 
+    if st.session_state.level_planer[1] != []:
+        col = st.columns([1,1])
+        col[0].write("## Prozess")
+        col[1].write("## Aufgabe")
+        col = st.columns([1,1])
 
-    col = st.columns([1,1,1])
-    anzeige_start = col[0].date_input("von", value = datetime.now() + relativedelta(months = -4), format="DD.MM.YYYY")
-    anzeige_ende = col[1].date_input("bis", value = datetime.now() + relativedelta(months = 2), format="DD.MM.YYYY")
-
-    y = list(kalender.find({ "datum" : {"$gt" : datetime.combine(anzeige_start, datetime.min.time()), "$lt" : datetime.combine(anzeige_ende, datetime.max.time())}}, sort=[("datum", pymongo.ASCENDING)]))
-    if st.session_state.edit_planer == "":
-        query = {"kalender" : {"$in" : [a["_id"] for a in y]}}
-    else:
-        query = {}
-
-    st.session_state.level_planer = level(st.session_state.edit_planer, query)
-    # st.write(st.session_state.level_planer, level(st.session_state.edit_planer))
-    col = st.columns([1,1,1])
-    with col[0]:
-        submit = st.button("Alle semestere", key=f"edit-wurzel", use_container_width=True)
-        if submit:
-            st.session_state.edit_planer = ""
-            st.rerun()
-
-    st.write("### Navigation:")
-
-    for n in [0, 1, 2]:
-        col = st.columns([1,1,1])
+    for n in [1, 2]:
+        col = st.columns([1,1])
         collection = find_collection(n)
         for l_id in st.session_state.level_planer[n]:
-            with col[n]:
+            with col[n-1]:
                 z = collection.find_one({"_id" : l_id})
-                #st.write(l_id)
-                #st.write(st.session_state.edit_planer)
-                if (z["_id"] == st.session_state.edit_planer) or (n < 2 and st.session_state.level_planer[n+1] != []):
+                # st.write(l_id)
+                # st.write(st.session_state.edit_planer)
+                if (z["_id"] == st.session_state.edit_planer) or (n == 1 and st.session_state.level_planer[2] != []):
                     goup = st.button(f"### {tools.repr(collection, z["_id"])}", key = f"goup_{n}", use_container_width=True)
                     if goup:
                         st.session_state.edit_planer = z["_id"]
+                        st.write(st.session_state.edit_planer)
+                
                         st.rerun()
                     # st.write(f"### {tools.repr(collection, z["_id"])}")
                     if st.session_state.level_planer[n] == [z["_id"]] :
-                        with st.popover('Löschen', use_container_width=True):
-                            colu1, colu2, colu3 = st.columns([1,1,1])
-                            with colu1:                  
-                                submit = st.button(label = "Löschen!", type = 'primary', key = f"delete-{z['_id']}")
-                                if submit:
-                                    if n > 0:
-                                        st.session_state.edit_planer = z["parent"]
-                                    else:
-                                        st.session_state.edit_planer = ""
-                                    collection.delete_one({"_id" : z["_id"]})
-                                    st.success("Gelöscht!")
-                                    st.rerun()
-                            with colu3: 
-                                st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{z['_id']}")
+                        co = st.columns([1,1,1])
+                        with co[0].popover('Löschen', use_container_width=True):
+                            submit = st.button(label = "Löschen!", type = 'primary', key = f"delete-{z['_id']}")
+                            if submit:
+                                if n > 0:
+                                    st.session_state.edit_planer = z["parent"]
+                                else:
+                                    st.session_state.edit_planer = ""
+                                collection.delete_one({"_id" : z["_id"]})
+                                st.success("Gelöscht!")
+                                st.rerun()
+                            st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{z['_id']}")
                     if st.session_state.edit_planer == z["_id"]:
-                        with st.popover('Kopieren', use_container_width=True):
+                        co = st.columns([1,1,1])
+                        with co[1].popover('Kopieren', use_container_width=True):
                             if n == 0:
                                 kurzname = st.text_input("Kurzname", "", key = f"kopie_kurzname_{n}")
                                 name = st.text_input("Titel", "", key = f"kopie_titel_{n}")
@@ -182,12 +178,9 @@ if st.session_state.logged_in:
                                     st.session_state.edit_planer = kopie
                                     st.rerun()
                                                                
-                    if n > 0 and st.session_state.edit_planer == z["_id"]:
-                        with st.popover('Verschieben', use_container_width=True):
-                            if n == 1:
-                                query = {"kalender" : {"$in" : [a["_id"] for a in y]}}
-                            elif n == 2:
-                                query = {}                            
+                    if st.session_state.edit_planer == z["_id"]:
+                        with co[2].popover('Verschieben', use_container_width=True):
+                            query = {}                            
                             aus_dict = auswahl_dict(n - 1, query)
                             sel = st.selectbox("Wohin soll das Item verschoben werden?", aus_dict.keys(), None, format_func = (lambda a : aus_dict[a]), placeholder = "Bitte auswählen")
                             submit = st.button(label = "Verschieben!", type = 'primary', key = f"move-{z['_id']}")
@@ -199,10 +192,7 @@ if st.session_state.logged_in:
                 else:
                     # st.write(st.session_state.level_planer)
                     co1, co2, co3 = st.columns([1,1,10]) 
-                    if n > 0:
-                        query = {"parent" : z["parent"]}
-                    else:
-                        query = {}
+                    query = {}
                     with co1: 
                         if len(st.session_state.level_planer[n])>1:
                             st.button('↓', key=f'down-{z["_id"]}', on_click = tools.move_down, args = (collection, z, query))
@@ -217,7 +207,7 @@ if st.session_state.logged_in:
         #st.write(st.session_state.level_planer)
         #st.write(st.session_state.edit_planer)
         if (n == 0 and st.session_state.edit_planer == "") or (n > 0 and st.session_state.edit_planer in st.session_state.level_planer[n-1]):
-            with col[n].popover(f'Neues Item anlegen', use_container_width=True):
+            with col[n-1].popover(f'Neues Item anlegen', use_container_width=True):
                 kurzname = st.text_input("Kurzname", "", key = f"new_kurzname_{n}")
                 name = st.text_input("Titel", "", key = f"new_titel_{n}")
                 kommentar = st.text_input("Kommentar", "", key = f"new_kommentar_{n}")
@@ -306,8 +296,6 @@ if st.session_state.logged_in:
                         for k in kal:  
                             kalender.update_one({"_id": k["_id"]}, { "$set": {"datum" : datetime.combine(k["datum"], datetime.min.time()), "name" : k["name"], "ankerdatum" : k["ankerdatum"]}})
                         semester.update_one({"_id" : z["_id"]}, {"$set" : {"kalender" : tools.sort_kalender(z["kalender"])}})
-
-                        y = list(kalender.find({ "datum" : {"$gt" : datetime.combine(anzeige_start, datetime.min.time()), "$lt" : datetime.combine(anzeige_ende, datetime.max.time())}}, sort=[("datum", pymongo.ASCENDING)]))
 
                         st.toast("Erfolgreich gespeichert!")
                         time.sleep(.5)
