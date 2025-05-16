@@ -109,8 +109,7 @@ def setup_session_state():
     if "faq_users" not in st.session_state:
         gr = st.session_state.group.find_one({"name" : "faq"})
         faq_users = list(st.session_state.users.find({"groups" : { "$elemMatch" : { "$eq" : gr["_id"]}}})) 
-        st.session_state.faq_users = sorted([{"rz" : r["rz"], "vorname" : r["vorname"], "name" : r["name"]} for r in faq_users], key = lambda x: (x["name"], x["vorname"]))
-    
+        st.session_state.faq_users = [{"rz" : "", "vorname" : "", "name" : "", "color" : "#FFFFFF"}] + sorted([{"rz" : r["rz"], "vorname" : r["vorname"], "name" : r["name"], "color" : r["color"]} for r in faq_users], key = lambda x: (x["name"], x["vorname"]))
     st.session_state.abhaengigkeit = {
         st.session_state.knoten : [{"collection": st.session_state.knoten, "field": "kinder", "list": True}],
         st.session_state.studiendekanat : [],
@@ -118,13 +117,11 @@ def setup_session_state():
         st.session_state.kalender : [{"collection": st.session_state.aufgabe, "field": "relativdatum", "list": False}, {"collection": st.session_state.prozesspaket, "field": "kalender", "list": True}, {"collection": st.session_state.kalender, "field": "ankerdatum", "list": False}],
         st.session_state.prozesspaket : [{"collection": st.session_state.prozess, "field": "zeitraum", "list": False}],
         st.session_state.prozess : [{"collection": st.session_state.aufgabe, "field": "prozess", "list": False}],
-        st.session_state.person : [{"collection": st.session_state.prozess, "field": "verantwortlicher", "list": False}, {"collection": st.session_state.prozess, "field": "beteiligte", "list": True}, {"collection": st.session_state.aufgabe, "field": "verantwortlicher", "list": False}, {"collection": st.session_state.aufgabe, "field": "beteiligte", "list": True}, ],
         st.session_state.aufgabe : []
     }
 
     st.session_state.leer = {
         st.session_state.kalender: st.session_state.kalender.find_one({"datum": datetime(1970,1,1,0,0)})["_id"],
-        st.session_state.person: st.session_state.person.find_one({"name" : "-"})["_id"],
     }
     st.session_state.new = {
         st.session_state.knoten: {"kurzname": "", 

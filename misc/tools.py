@@ -92,7 +92,6 @@ def display_navigation():
     st.sidebar.page_link("pages/05_dictionary.py", label="Lexikon (d/e)")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
     st.sidebar.page_link("pages/06_Planer.py", label="Planer")
-    st.sidebar.page_link("pages/07_Personen.py", label="Planer")
     st.sidebar.page_link("pages/08_Kalender.py", label="Kalender")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
     st.sidebar.page_link("pages/10_Hilfe.py", label="Dokumentation")
