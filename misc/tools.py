@@ -6,7 +6,10 @@ import ldap
 import misc.util as util
 from bson import ObjectId
 from misc.config import *
+from datetime import datetime
 from dateutil.relativedelta import relativedelta
+
+date_format = '%d.%m.%Y um %H:%M:%S.'
 
 # Die Authentifizierung gegen den Uni-LDAP-Server
 def authenticate(username, password):
@@ -227,28 +230,28 @@ def get_anker(kurzname):
     s = kurzname[4:6]
     y = int(kurzname[0:4])
     a = datetime(y, 4 if s == "SS" else 10, 1, 0, 0)
-    d = kalender.find_one({"datum" : a})
+    d = util.kalender.find_one({"datum" : a})
     return d["_id"]
 
 # Wenn sich der Anker verschiebt, und das Datum gleich bleiben soll
 def get_newint(anker_alt, anker_neu, int_alt):
-    alt = kalender.find_one({"_id" : anker_alt})
-    neu = kalender.find_one({"_id" : anker_neu})
-    return int_alt + (alt["datum"].date() - neu["datum"].date()).days()  
+    alt = util.kalender.find_one({"_id" : anker_alt})
+    neu = util.kalender.find_one({"_id" : anker_neu})
+    return int_alt + (alt["datum"] - neu["datum"]).days
 
 def get_next_rang(collection):
     return collection.find_one({}, sort = [("rang",pymongo.DESCENDING)])["rang"] + 1
     
 def kopiere_aufgabe(id, prozess_id):
     auf = util.aufgabe.find_one({"_id" : id})
-    pro_alt = util.prozess.find_one({"_id" : a["parent"]})
+    pro_alt = util.prozess.find_one({"_id" : auf["parent"]})
     pro_neu = util.prozess.find_one({"_id" : prozess_id})
     # Falls die Prozesse im Semester sind, sind auch die Kalender gleich
-    sem_alt = semester.find_one({"_id" : pro_alt["parent"]})
-    sem_neu = semester.find_one({"_id" : pro_neu["parent"]})
-    ank_alt = kalender.find_one({"_id" : auf["ankerdatum"]})
+    sem_alt = util.semester.find_one({"_id" : pro_alt["parent"]})
+    sem_neu = util.semester.find_one({"_id" : pro_neu["parent"]})
+    ank_alt = util.kalender.find_one({"_id" : auf["ankerdatum"]})
     try:
-        ank_neu = kalender.find_one({"_id" : {"$in" : sem_neu["kalender"]}, "name" : ank_alt["name"]})
+        ank_neu = util.kalender.find_one({"_id" : {"$in" : sem_neu["kalender"]}, "name" : ank_alt["name"]})
         auf["ankerdatum"] = ank_neu["_id"]
     except:
         # Setze start und ende relativ zum Semesterstart.
@@ -269,10 +272,9 @@ def kopiere_aufgabe(id, prozess_id):
 def kopiere_prozess(id, sem_id, aufgaben_ids = []):
     if aufgaben_ids == []:
         aufgaben_ids = [a["_id"] for a in list(util.aufgabe.find({"parent" : id}))]
-    pro = util.prozess.find_one({"_id", id})
-    sem_alt = semester.find_one({"_id" : pro_alt["parent"]})
-    sem_neu = semester.find_one({"_id" : sem_id})
+    pro = util.prozess.find_one({"_id" : id})
     del pro["_id"]
+    pro["parent"] = sem_id
     pro["bearbeitet"] = f"Kopiert von {st.session_state.username} am {datetime.now().strftime(date_format)}"
     pro["rang"] = get_next_rang(util.prozess)
     pro_neu = util.prozess.insert_one(pro)
@@ -291,41 +293,51 @@ def semester_name(kurzname):
     c = f"/{a+1}" if b == "WS" else ""
     return f"{'Wintersemester' if b == 'WS' else 'Sommersemester'} {a}{c}"
 
-def string_to_next_semester(string, kurzname):
+def string_to_next_semester(string, kurzname):    
     res = string.replace(kurzname, next_semester_kurzname(kurzname))
     res = res.replace(semester_name(kurzname), semester_name(next_semester_kurzname(kurzname)))
     return res
 
 def semester_anlegen(prozesse_ids = []):
     # Finde das letzte Semester
-    id = util.semester.find_one({}, sort = [("rang",pymongo.DESCENDING)])["_id"]
+#    sem = util.semester.find_one({}, sort = [("kurzname",pymongo.DESCENDING)])
+        
+    sem = list(util.semester.find({}, sort=[("kurzname", pymongo.DESCENDING)]))[0]
+    st.write(f"prozesse: {prozesse_ids}")
+    st.write(sem["kurzname"])
     if prozesse_ids == []:
-        prozesse_ids = [p["_id"] for p in list(util.prozess.find({"parent" : id}))]
-    sem = util.semester.find_one({"_id", id})
+        prozesse_ids = [p["_id"] for p in list(util.prozess.find({"parent" : sem["_id"]}))]
     del sem["_id"]
     sem["bearbeitet"] = f"Kopiert von {st.session_state.username} am {datetime.now().strftime(date_format)}"
-    sem["rang"] = get_next_rang(util.semester)
     # Setze neuen Kurznamen und Namen
-    kn = next_semester_kurzname(sem["kurzname"])
-    sem["kurzname"] = kn
-    sem["name"] = semester_name(kn)
+    kn = sem["kurzname"]
+    sem["kurzname"] = next_semester_kurzname(kn)
+    sem["name"] = semester_name(next_semester_kurzname(kn))
     # Update Kalender: alle Daten werden um 6 Monate verschoben. Ankerdaten behalten ihr Ankerdatum
     # kopie wird ein Dict aus alten und neuen Daten im Kalender, zum Update der Aufgaben
     kalender_neu = []
-    kopie = dict{}
-    for k in sem["kalender"]:
-        ka = util.kalender.find_one(["_id" : k])
+    kopie = {}    
+    # Die Ankerdaten müssen zuerst kommen, sonst stimmt kopie nicht!
+    for k in [s for s in sem["kalender"] if util.kalender.find_one({"_id" : s})["ankerdatum"] == st.session_state.leer[st.session_state.kalender]]:
+        ka = util.kalender.find_one({"_id" : k})
         ka_neu = util.kalender.insert_one({
-            "datum" : ka["datum"] + relativedelta(months = 6)
-            "ankerdatum" : ka["ankerdatum"] if ka["ankerdatum"] == st.session_state.leer(st.session_state.kalender)else ka["ankerdatum"] + relativedelta(months = 6),
-            "name" : string_to_next_semester(ka["name"], kurzname)                
+            "datum" : ka["datum"] + relativedelta(months = 6),
+            "ankerdatum" : ka["ankerdatum"],
+            "name" : string_to_next_semester(ka["name"], kn) 
         })
-        kalender_neu.append(ka_neu["_id"])
+        kalender_neu.append(ka_neu.inserted_id)
+        kopie[ka["_id"]] = ka_neu.inserted_id
+    for k in [s for s in sem["kalender"] if util.kalender.find_one({"_id" : s})["ankerdatum"] != st.session_state.leer[st.session_state.kalender]]:
+        ka = util.kalender.find_one({"_id" : k})
+        ka_neu = util.kalender.insert_one({
+            "datum" : ka["datum"] + relativedelta(months = 6),
+            "ankerdatum" : kopie[ka["ankerdatum"]],
+            "name" : string_to_next_semester(ka["name"], kn) 
+        })
+        kalender_neu.append(ka_neu.inserted_id)
         kopie[ka["_id"]] = ka_neu.inserted_id
     sem["kalender"] = kalender_neu
     sem_neu = util.semester.insert_one(sem)
     for pro_id in prozesse_ids:
         pro_neu = kopiere_prozess(pro_id, sem_neu.inserted_id)
-        for auf in list(util.aufgabe.find({"parent" : pro_neu})):
-            util.aufgabe.update_one({"_id" : auf["_id"]}, {"ankerdatum" : {"$set" : kopie[auf["ankerdatum"]]}})
     return sem_neu.inserted_id

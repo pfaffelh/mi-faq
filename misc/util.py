@@ -220,6 +220,7 @@ def setup_session_state():
             "parent" : "",
             "verantwortlicher": "", 
             "beteiligte": [], 
+            "color": "#000000",
             "text": "", 
             "quicklinks": [], 
             "bearbeitet": "Initialer Eintrag", 

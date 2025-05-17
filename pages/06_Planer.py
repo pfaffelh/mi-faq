@@ -115,19 +115,28 @@ def switch_edit():
 # Ab hier wird die Webseite erzeugt
 if st.session_state.logged_in:
     st.header("Planer")
-    with st.expander("Neues Semester anlegen"):
-        st.write("Hier neues Semester anlegen")
-    st.write("Auswahl des Semesters:")
     semesters = list(util.semester.find(sort=[("kurzname", pymongo.DESCENDING)]))
-    
-    col = st.columns([1,20])
+    col = st.columns([1,10,10])
     back = col[0].button("🔄")
+    if st.session_state.level_planer[0] != []:
+        st.session_state.semester_id = st.session_state.level_planer[0][0]
     sem = col[1].selectbox(label="Semester", options = [x["_id"] for x in semesters], index = [x["_id"] for x in semesters].index(st.session_state.semester_id), format_func = (lambda a: f"{util.semester.find_one({'_id': a})['name']}"), label_visibility = "collapsed", key = "master_semester_choice")
     # st.session_state.semester_id = st.pills(label="Semester", options = [x["_id"] for x in semesters], selection_mode = "single", default = st.session_state.semester_id, format_func = (lambda a: f"{util.semester.find_one({'_id': a})['kurzname']}"), label_visibility = "collapsed", on_change = switch_edit, key = "master_semester_choice")
     if back or [sem] != st.session_state.level_planer[0]:
         st.session_state.edit_planer = sem
     st.session_state.level_planer = level(st.session_state.edit_planer)
+    with col[2].expander("Neues Semester anlegen"):
+        sem_alt = util.semester.find_one({}, sort = [("kurzname",pymongo.DESCENDING)])
+        st.write(f"{tools.semester_name(tools.next_semester_kurzname(sem_alt['kurzname']))} wirklich anlegen?")
+        submit = st.button(label = "Anlegen!", type = 'primary', key = f"new_semester")
+        if submit:
+            kopie = tools.semester_anlegen()
+            st.success("Semester angelegt!")
+            st.session_state.semester_id = kopie
+            st.session_state.edit_planer = kopie            
+            st.rerun()
 
+    
     if st.session_state.level_planer[1] != []:
         col = st.columns([1,1])
         col[0].write("## Prozess")
@@ -143,7 +152,7 @@ if st.session_state.logged_in:
                 # st.write(l_id)
                 # st.write(st.session_state.edit_planer)
                 if (z["_id"] == st.session_state.edit_planer) or (n == 1 and st.session_state.level_planer[2] != []):
-                    goup = st.button(f"### {tools.repr(collection, z['_id'], False, True)}", key = f"goup_{n}", use_container_width=True)
+                    goup = st.button(f"### {tools.repr(collection, z['_id'], False, False)}", key = f"goup_{n}", use_container_width=True)
                     if goup:
                         st.session_state.edit_planer = z["_id"]
                         st.write(st.session_state.edit_planer)
@@ -165,41 +174,28 @@ if st.session_state.logged_in:
                             st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{z['_id']}")
                     if st.session_state.edit_planer == z["_id"]:
                         with co[1].popover('Kopieren', use_container_width=True):
-                            if n == 0:
-                                kurzname = st.text_input("Kurzname", "", key = f"kopie_kurzname_{n}")
-                                name = st.text_input("Titel", "", key = f"kopie_titel_{n}")
-                                kommentar = st.text_input("Kommentar", "", key = f"kopie_kommentar_{n}")
-                                ini = {"kurzname" : kurzname, "name": name, "kommentar": kommentar}
-                                submit = st.button(label = "Kopieren!", type = 'primary', key = f"copy-{z['_id']}")
-                                if submit:
-                                    kopie = semester_kopieren(st.session_state.edit_planer, ini)
-                                    st.success("Item kopiert!")
-                                    st.session_state.edit_planer = kopie
-                                    st.rerun()
                             if n == 1:
-                                kurzname = st.text_input("Kurzname", "", key = f"kopie_kurzname_{n}")
-                                name = st.text_input("Titel", "", key = f"kopie_titel_{n}")
-                                kommentar = st.text_input("Kommentar", "", key = f"kopie_kommentar_{n}")
-                                ini = {"kurzname" : kurzname, "name": name, "kommentar": kommentar}
+                                sem = list(st.session_state.semester.find({}))
+                                sem_dict = { s["_id"] : tools.repr(st.session_state.semester, s["_id"], False, False) for s in sem }
+                                sortiert = sorted(sem_dict.items(), key=lambda item: item[1])
+                                sem_dict = dict(sortiert)
+                                se = st.selectbox("Wohin?", sem_dict.keys(), format_func=lambda a: sem_dict[a], key = f"select_copy_{z["_id"]}")
                                 submit = st.button(label = "Kopieren!", type = 'primary', key = f"copy-{z['_id']}")
                                 if submit:
-                                    kopie = semester_kopieren(st.session_state.edit_planer, ini)
+                                    kopie = tools.kopiere_prozess(z["_id"], se)
                                     st.success("Item kopiert!")
                                     st.session_state.edit_planer = kopie
+                                    st.session_state.level_planer = level(st.session_state.edit_planer)
                                     st.rerun()
                             if n == 2:
                                 pr = list(st.session_state.prozess.find({}))
                                 pr_dict = { p["_id"] : tools.repr(st.session_state.prozess, p["_id"], False, False) for p in pr }
                                 sortiert = sorted(pr_dict.items(), key=lambda item: item[1])
                                 pr_dict = dict(sortiert)
-                                pr = st.selectbox("Wohin?", pr_dict.keys(), )
-                                kurzname = st.text_input("Kurzname", "", key = f"kopie_kurzname_{n}")
-                                name = st.text_input("Titel", "", key = f"kopie_titel_{n}")
-                                kommentar = st.text_input("Kommentar", "", key = f"kopie_kommentar_{n}")
-                                ini = {"kurzname" : kurzname, "name": name, "kommentar": kommentar}
+                                pr = st.selectbox("Wohin?", pr_dict.keys(), format_func=lambda a: pr_dict[a], key = f"select_copy_{z["_id"]}")
                                 submit = st.button(label = "Kopieren!", type = 'primary', key = f"copy-{z['_id']}")
                                 if submit:
-                                    kopie = semester_kopieren(st.session_state.edit_planer, ini)
+                                    kopie = tools.kopiere_aufgabe(z["_id"], pr)
                                     st.success("Item kopiert!")
                                     st.session_state.edit_planer = kopie
                                     st.rerun()
@@ -234,19 +230,15 @@ if st.session_state.logged_in:
         #st.write(st.session_state.edit_planer)
         if (n == 0 and st.session_state.edit_planer == "") or (n > 0 and st.session_state.edit_planer in st.session_state.level_planer[n-1]):
             with col[n-1].popover(f'Neues Item anlegen', use_container_width=True):
-                kurzname = st.text_input("Kurzname", "", key = f"new_kurzname_{n}")
+                ini = {}
+                if n == 1:
+                        kurzname = st.text_input("Kurzname", "", key = f"new_kurzname_{n}")
+                        ini["kurzname"] = kurzname
                 name = st.text_input("Titel", "", key = f"new_titel_{n}")
+                ini["name"] = name
                 kommentar = st.text_input("Kommentar", "", key = f"new_kommentar_{n}")
-                ini = {"kurzname" : kurzname, "name": name, "kommentar": kommentar}
-                if n == 0:
-                    k = kalender.insert_one({
-                        "datum": datetime.combine(anzeige_start, datetime.max.time()),
-                        "ankerdatum": st.session_state.leer[st.session_state.kalender],
-                        "name": f"Datum für semester {name}"
-                    })
-                    ini["kalender"] = [k.inserted_id]
-                if n > 0:
-                   ini["parent"] = st.session_state.level_planer[n-1][0]
+                ini["kommentar"] = kommentar
+                ini["parent"] = st.session_state.level_planer[n-1][0]
                 if n == 2:
                     prpa = semester.find_one({"_id" : st.session_state.level_planer[0][0]})            
                     anker = st.selectbox("Ankerdatum", prpa["kalender"], format_func = lambda a: tools.repr(kalender, a), key = f"ankerdatum-{z["_id"]}")
@@ -407,7 +399,7 @@ if st.session_state.logged_in:
                 save3 = st.button("Speichern", key=f"save3-{z['_id']}", type='primary')
 
                 if save3:
-                    collection.update_one({"_id": z["_id"]}, { "$set": {"kurzname" : kurzname, "name" : name, "nurtermin": nurtermin, "bestätigt": bestätigt, "angefangen" : angefangen,  "erledigt": erledigt, "ankerdatum": anker, "start" : start, "ende" : ende, "verantwortlicher" : verantwortlicher, "beteiligte" : beteiligte, "text" : text, "quicklinks" : quicklinks, "bearbeitet" : bearbeitet, "vorlagen" : vorlagen, "kommentar": kommentar}})
+                    collection.update_one({"_id": z["_id"]}, { "$set": {"name" : name, "nurtermin": nurtermin, "bestätigt": bestätigt, "angefangen" : angefangen,  "erledigt": erledigt, "ankerdatum": anker, "start" : start, "ende" : ende, "verantwortlicher" : verantwortlicher, "beteiligte" : beteiligte, "text" : text, "quicklinks" : quicklinks, "bearbeitet" : bearbeitet, "vorlagen" : vorlagen, "kommentar": kommentar}})
                     st.toast("Erfolgreich gespeichert!")
                     time.sleep(0.5)
                     st.rerun()  

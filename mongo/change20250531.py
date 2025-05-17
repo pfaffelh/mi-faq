@@ -66,17 +66,6 @@ prpa = semester.insert_one(
         }
 )
 
-prpa2 = semester.insert_one(
-    {
-            "kurzname": "2025WS",
-            "name": "Wintersemester 2025", 
-            "sichtbar": True,
-            "kalender": [k_SS2025.inserted_id, k_SS2025_semstart.inserted_id, k_SS2025_stuko.inserted_id, k_SS2025_planung.inserted_id],
-            "bearbeitet": "Initialer Eintrag", 
-            "kommentar" : ""
-        }
-)
-
 prozess_leer =     {
             "kurzname": "", 
             "sichtbar": True, 

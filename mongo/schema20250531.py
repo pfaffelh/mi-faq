@@ -255,7 +255,7 @@ semester_validator = {
      "$jsonSchema": {
         "bsonType": "object",
         "title": "Beschreibung eines wiederkehrenden Semesters.",
-        "required": ["kurzname", "name", "sichtbar", "kalender", "kommentar", "rang", "bearbeitet"],
+        "required": ["kurzname", "name", "sichtbar", "kalender", "kommentar", "bearbeitet"],
         "properties": {
             "kurzname": {
                 "bsonType": "string",
