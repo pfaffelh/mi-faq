@@ -165,23 +165,22 @@ def repr(collection, id, show_collection = False, short = False):
     elif collection == util.kalender:
         res = f"{x["name"]} ({x["datum"].strftime("%-d.%-m.%Y")})"
     elif collection == util.semester:
-        res = f"{x["name"]} "
         if short:
             res = x["kurzname"]
         else:
             res = x["name"]
     elif collection == util.prozess:
         if short:
-            res = x["kurzname"]
+            res = x["name"]
         else:
-            res = x["name"]       
+            res = f"{repr(util.semester, x["parent"], False, True)}: {x['name']}"
     elif collection == util.aufgabe:
         if short:
-            res = x["kurzname"]
-        else:
             a = st.session_state.kalender.find_one({"_id" : x["ankerdatum"]})
             x["endedatum"] = a["datum"] + relativedelta(days = x["ende"])
             res = f"{x["name"]} ({x["endedatum"].strftime("%-d.%-m.%Y")})"
+        else:
+            res = f"{repr(st.session_state.prozess, x["parent"], False, False)}: {repr(st.session_state.aufgabe, x["_id"], False, True)}"
     if show_collection:
         res = f"{st.session_state.collection_name[collection]}: {res}"
     return res
@@ -203,3 +202,130 @@ def find_ankerdaten(id_list):
     daten_gefiltert = [x for x in daten if x["ankerdatum"] == st.session_state.leer[st.session_state.kalender]]
     return [x["_id"] for x in daten_gefiltert]
 
+def get_current_semester_kurzname():
+    if datetime.now().month < 4:
+        res = f"{datetime.now().year-1}WS"
+    elif 3 < datetime.now().month and datetime.now().month < 10:
+        res = f"{datetime.now().year}SS"
+    else:
+        res = f"{datetime.now().year}WS"
+    return res
+
+def next_semester_kurzname(kurzname):
+    a = int(kurzname[:4])
+    b = kurzname[4:]
+    return f"{a+1}SS" if b == "WS" else f"{a}WS"
+
+def semester_name_de(kurzname):
+    a = int(kurzname[:4])
+    b = kurzname[4:]
+    c = f"/{a+1}" if b == "WS" else ""
+    return f"{'Wintersemester' if b == 'WS' else 'Sommersemester'} {a}{c}"
+
+# kurzname eines Semester, ergibt Semesterstartdatumsid
+def get_anker(kurzname):
+    s = kurzname[4:6]
+    y = int(kurzname[0:4])
+    a = datetime(y, 4 if s == "SS" else 10, 1, 0, 0)
+    d = kalender.find_one({"datum" : a})
+    return d["_id"]
+
+# Wenn sich der Anker verschiebt, und das Datum gleich bleiben soll
+def get_newint(anker_alt, anker_neu, int_alt):
+    alt = kalender.find_one({"_id" : anker_alt})
+    neu = kalender.find_one({"_id" : anker_neu})
+    return int_alt + (alt["datum"].date() - neu["datum"].date()).days()  
+
+def get_next_rang(collection):
+    return collection.find_one({}, sort = [("rang",pymongo.DESCENDING)])["rang"] + 1
+    
+def kopiere_aufgabe(id, prozess_id):
+    auf = util.aufgabe.find_one({"_id" : id})
+    pro_alt = util.prozess.find_one({"_id" : a["parent"]})
+    pro_neu = util.prozess.find_one({"_id" : prozess_id})
+    # Falls die Prozesse im Semester sind, sind auch die Kalender gleich
+    sem_alt = semester.find_one({"_id" : pro_alt["parent"]})
+    sem_neu = semester.find_one({"_id" : pro_neu["parent"]})
+    ank_alt = kalender.find_one({"_id" : auf["ankerdatum"]})
+    try:
+        ank_neu = kalender.find_one({"_id" : {"$in" : sem_neu["kalender"]}, "name" : ank_alt["name"]})
+        auf["ankerdatum"] = ank_neu["_id"]
+    except:
+        # Setze start und ende relativ zum Semesterstart.
+        auf["start"] = get_newint(ank_alt["_id"], get_anker(sem_alt["kurzname"]), auf["start"])
+        auf["ende"] = get_newint(ank_alt["_id"], get_anker(sem_alt["kurzname"]), auf["ende"])
+        # Der Semesterstart wird dann umgesetzt.
+        auf["ankerdatum"] = get_anker(sem_neu["kurzname"])
+    del auf["_id"]
+    auf["parent"] = prozess_id
+    auf["bestätigt"] = False
+    auf["angefangen"] = False
+    auf["erledigt"] = False
+    auf["rang"] = get_next_rang(util.aufgabe)
+    auf["bearbeitet"] = f"Kopiert von {st.session_state.username} am {datetime.now().strftime(date_format)}"
+    auf_neu = util.aufgabe.insert_one(auf)
+    return auf_neu.inserted_id
+
+def kopiere_prozess(id, sem_id, aufgaben_ids = []):
+    if aufgaben_ids == []:
+        aufgaben_ids = [a["_id"] for a in list(util.aufgabe.find({"parent" : id}))]
+    pro = util.prozess.find_one({"_id", id})
+    sem_alt = semester.find_one({"_id" : pro_alt["parent"]})
+    sem_neu = semester.find_one({"_id" : sem_id})
+    del pro["_id"]
+    pro["bearbeitet"] = f"Kopiert von {st.session_state.username} am {datetime.now().strftime(date_format)}"
+    pro["rang"] = get_next_rang(util.prozess)
+    pro_neu = util.prozess.insert_one(pro)
+    for auf_id in aufgaben_ids:
+        kopiere_aufgabe(auf_id, pro_neu.inserted_id)
+    return pro_neu.inserted_id
+
+def next_semester_kurzname(kurzname):
+    a = int(kurzname[:4])
+    b = kurzname[4:]
+    return f"{a+1}SS" if b == "WS" else f"{a}WS"
+
+def semester_name(kurzname):
+    a = int(kurzname[:4])
+    b = kurzname[4:]
+    c = f"/{a+1}" if b == "WS" else ""
+    return f"{'Wintersemester' if b == 'WS' else 'Sommersemester'} {a}{c}"
+
+def string_to_next_semester(string, kurzname):
+    res = string.replace(kurzname, next_semester_kurzname(kurzname))
+    res = res.replace(semester_name(kurzname), semester_name(next_semester_kurzname(kurzname)))
+    return res
+
+def semester_anlegen(prozesse_ids = []):
+    # Finde das letzte Semester
+    id = util.semester.find_one({}, sort = [("rang",pymongo.DESCENDING)])["_id"]
+    if prozesse_ids == []:
+        prozesse_ids = [p["_id"] for p in list(util.prozess.find({"parent" : id}))]
+    sem = util.semester.find_one({"_id", id})
+    del sem["_id"]
+    sem["bearbeitet"] = f"Kopiert von {st.session_state.username} am {datetime.now().strftime(date_format)}"
+    sem["rang"] = get_next_rang(util.semester)
+    # Setze neuen Kurznamen und Namen
+    kn = next_semester_kurzname(sem["kurzname"])
+    sem["kurzname"] = kn
+    sem["name"] = semester_name(kn)
+    # Update Kalender: alle Daten werden um 6 Monate verschoben. Ankerdaten behalten ihr Ankerdatum
+    # kopie wird ein Dict aus alten und neuen Daten im Kalender, zum Update der Aufgaben
+    kalender_neu = []
+    kopie = dict{}
+    for k in sem["kalender"]:
+        ka = util.kalender.find_one(["_id" : k])
+        ka_neu = util.kalender.insert_one({
+            "datum" : ka["datum"] + relativedelta(months = 6)
+            "ankerdatum" : ka["ankerdatum"] if ka["ankerdatum"] == st.session_state.leer(st.session_state.kalender)else ka["ankerdatum"] + relativedelta(months = 6),
+            "name" : string_to_next_semester(ka["name"], kurzname)                
+        })
+        kalender_neu.append(ka_neu["_id"])
+        kopie[ka["_id"]] = ka_neu.inserted_id
+    sem["kalender"] = kalender_neu
+    sem_neu = util.semester.insert_one(sem)
+    for pro_id in prozesse_ids:
+        pro_neu = kopiere_prozess(pro_id, sem_neu.inserted_id)
+        for auf in list(util.aufgabe.find({"parent" : pro_neu})):
+            util.aufgabe.update_one({"_id" : auf["_id"]}, {"ankerdatum" : {"$set" : kopie[auf["ankerdatum"]]}})
+    return sem_neu.inserted_id

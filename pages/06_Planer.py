@@ -143,15 +143,15 @@ if st.session_state.logged_in:
                 # st.write(l_id)
                 # st.write(st.session_state.edit_planer)
                 if (z["_id"] == st.session_state.edit_planer) or (n == 1 and st.session_state.level_planer[2] != []):
-                    goup = st.button(f"### {tools.repr(collection, z["_id"])}", key = f"goup_{n}", use_container_width=True)
+                    goup = st.button(f"### {tools.repr(collection, z['_id'], False, True)}", key = f"goup_{n}", use_container_width=True)
                     if goup:
                         st.session_state.edit_planer = z["_id"]
                         st.write(st.session_state.edit_planer)
                 
                         st.rerun()
                     # st.write(f"### {tools.repr(collection, z["_id"])}")
+                    co = st.columns([1,1,1])
                     if st.session_state.level_planer[n] == [z["_id"]] :
-                        co = st.columns([1,1,1])
                         with co[0].popover('Löschen', use_container_width=True):
                             submit = st.button(label = "Löschen!", type = 'primary', key = f"delete-{z['_id']}")
                             if submit:
@@ -164,7 +164,6 @@ if st.session_state.logged_in:
                                 st.rerun()
                             st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{z['_id']}")
                     if st.session_state.edit_planer == z["_id"]:
-                        co = st.columns([1,1,1])
                         with co[1].popover('Kopieren', use_container_width=True):
                             if n == 0:
                                 kurzname = st.text_input("Kurzname", "", key = f"kopie_kurzname_{n}")
@@ -177,7 +176,34 @@ if st.session_state.logged_in:
                                     st.success("Item kopiert!")
                                     st.session_state.edit_planer = kopie
                                     st.rerun()
-                                                               
+                            if n == 1:
+                                kurzname = st.text_input("Kurzname", "", key = f"kopie_kurzname_{n}")
+                                name = st.text_input("Titel", "", key = f"kopie_titel_{n}")
+                                kommentar = st.text_input("Kommentar", "", key = f"kopie_kommentar_{n}")
+                                ini = {"kurzname" : kurzname, "name": name, "kommentar": kommentar}
+                                submit = st.button(label = "Kopieren!", type = 'primary', key = f"copy-{z['_id']}")
+                                if submit:
+                                    kopie = semester_kopieren(st.session_state.edit_planer, ini)
+                                    st.success("Item kopiert!")
+                                    st.session_state.edit_planer = kopie
+                                    st.rerun()
+                            if n == 2:
+                                pr = list(st.session_state.prozess.find({}))
+                                pr_dict = { p["_id"] : tools.repr(st.session_state.prozess, p["_id"], False, False) for p in pr }
+                                sortiert = sorted(pr_dict.items(), key=lambda item: item[1])
+                                pr_dict = dict(sortiert)
+                                pr = st.selectbox("Wohin?", pr_dict.keys(), )
+                                kurzname = st.text_input("Kurzname", "", key = f"kopie_kurzname_{n}")
+                                name = st.text_input("Titel", "", key = f"kopie_titel_{n}")
+                                kommentar = st.text_input("Kommentar", "", key = f"kopie_kommentar_{n}")
+                                ini = {"kurzname" : kurzname, "name": name, "kommentar": kommentar}
+                                submit = st.button(label = "Kopieren!", type = 'primary', key = f"copy-{z['_id']}")
+                                if submit:
+                                    kopie = semester_kopieren(st.session_state.edit_planer, ini)
+                                    st.success("Item kopiert!")
+                                    st.session_state.edit_planer = kopie
+                                    st.rerun()
+
                     if st.session_state.edit_planer == z["_id"]:
                         with co[2].popover('Verschieben', use_container_width=True):
                             query = {}                            
@@ -200,7 +226,7 @@ if st.session_state.logged_in:
                         if len(st.session_state.level_planer[n])>1:
                             st.button('↑', key=f'up-{z["_id"]}', on_click = tools.move_up, args = (collection, z, query))
                     with co3: 
-                        submit = st.button(tools.repr(collection, z["_id"]), key=f"edit-{z["_id"]}", use_container_width=True)
+                        submit = st.button(tools.repr(collection, z["_id"], False, True), key=f"edit-{z["_id"]}", use_container_width=True)
                         if submit:
                             st.session_state.edit_planer = z["_id"]
                             st.rerun()
@@ -240,6 +266,9 @@ if st.session_state.logged_in:
                     cols = st.columns([1,2,1,2,1])
                     datum = cols[0].date_input("Datum", value = ka["datum"], format = "DD.MM.YYYY", key = f"date_{i}")
                     name = cols[1].text_input("Name des Datums", ka["name"], key = f"name_{i}", disabled = False)
+                    if len(list(kalender.find({"_id" : { "$in" : z["kalender"]}, "name" : ka["name"]}))) > 1:
+                        st.warning("Name des Datums sollte eindeutig sein. Andernfalls kann es zu Problemen beim Kopieren von Aufgaben und Prozessen, und beim Neu-Anlegen von Semestern kommen.")
+                    
                     ist_relativdatum = cols[2].toggle("Relativdatum", ka["ankerdatum"] != st.session_state.leer[kalender], key = f"ist_relativdatum_{i}")
                     if ist_relativdatum:
                         se = [a for a in tools.find_ankerdaten(z["kalender"]) if a != k]
@@ -304,7 +333,7 @@ if st.session_state.logged_in:
                         st.toast("Speichern nicht möglich. Ankerdaten dürfen keine Relativdaten sein!")
 
             # Daten für semester
-            with st.expander("Daten"):
+            with st.expander(f"Daten für {tools.repr(st.session_state.semester, z["_id"], False, False)}"):
                 save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
                 st.write(z["bearbeitet"])
                 l = list(collection.find({"kurzname" : z["kurzname"]}))
@@ -319,7 +348,7 @@ if st.session_state.logged_in:
         elif prozess.find_one({"_id" : st.session_state.edit_planer}):
             z = st.session_state.prozess.find_one({"_id" : st.session_state.edit_planer})
             # Daten für Prozess
-            with st.expander("Daten"):
+            with st.expander(f"Daten für {tools.repr(st.session_state.prozess, z["_id"], False, False)}"):
                 save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
                 st.write(z["bearbeitet"])
                 l = list(collection.find({"kurzname" : z["kurzname"]}))
@@ -331,18 +360,12 @@ if st.session_state.logged_in:
                 kommentar = st.text_input("Kommentar", z["kommentar"])
         elif aufgabe.find_one({"_id" : st.session_state.edit_planer}):
             # Daten für Aufgabe
-            collection = st.session_state.aufgabe
-            z = collection.find_one({"_id" : st.session_state.edit_planer})
-            with st.expander("Daten"):
+            z = st.session_state.aufgabe.find_one({"_id" : st.session_state.edit_planer})
+            with st.expander(f"Daten für {tools.repr(st.session_state.aufgabe, z["_id"], False, False)}"):
                 save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
                 st.write(z["bearbeitet"])
-                l = list(collection.find({"kurzname" : z["kurzname"]}))
-                if len(l) > 1:
-                    st.warning("Warnung: Kurzname ist nicht eindeutig!")
-                kurzname = st.text_input("Kurzname", z["kurzname"], key = f"kurzname_{z['_id']}", disabled = False)
                 name = st.text_input("Name", z["name"], key = f"name_{z['_id']}", disabled = False)
                 kommentar = st.text_input("Kommentar", z["kommentar"])
-
                 cols = st.columns([5,5,5,5])
                 nurtermin = cols[0].toggle("Nur Termin", z["nurtermin"], help = "Wenn True wird 'angefangen', 'erledigt' nicht angelegt.", key = f"nurtermin-{z["_id"]}")
                 bestätigt = cols[1].toggle(f"{"Termin" if nurtermin else "Aufgabe"} bestätigt", z["bestätigt"], key = f"bestätigt-{z["_id"]}")

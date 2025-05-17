@@ -94,7 +94,6 @@ prozess_leer =     {
         }
 
 aufgabe_leer = {
-            "kurzname": "", 
             "name": "", 
             "parent" : "", 
             "nurtermin": False,

@@ -380,12 +380,8 @@ aufgabe_validator = {
      "$jsonSchema": {
         "bsonType": "object",
         "title": "Beschreibung einer Aufgabe.",
-        "required": ["kurzname", "name", "parent", "nurtermin", "bestätigt", "angefangen", "erledigt", "ankerdatum", "start", "ende", "verantwortlicher", "beteiligte", "text", "quicklinks", "bearbeitet", "vorlagen", "kommentar"],
+        "required": ["name", "parent", "nurtermin", "bestätigt", "angefangen", "erledigt", "ankerdatum", "start", "ende", "verantwortlicher", "beteiligte", "text", "quicklinks", "bearbeitet", "vorlagen", "kommentar"],
         "properties": {
-            "kurzname": {
-                "bsonType": "string",
-                "description": "Die Abkürzung der Seite für Links -- required"
-            },
             "name": {
                 "bsonType": "string",
                 "description": "Name der Aufgabe"
