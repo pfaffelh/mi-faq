@@ -366,7 +366,6 @@ if st.session_state.logged_in:
             z = st.session_state.prozess.find_one({"_id" : st.session_state.edit_planer})
             # Grunddaten für Prozess
             with st.expander(f"Grunddaten für {tools.repr(st.session_state.prozess, z["_id"], False, False)}"):
-                save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
                 st.write(z["bearbeitet"])
                 l = list(collection.find({"kurzname" : z["kurzname"]}))
                 if len(l) > 1:
@@ -384,11 +383,13 @@ if st.session_state.logged_in:
                 verantwortlicher = col[0].selectbox("Verantwortlicher", rz_users, rz_users.index(z["verantwortlicher"]), format_func = lambda a: "".join([f"{r['vorname']} {r['name']}" for r in users if r["rz"] == a]), key = f"verantwortlicher-{z["_id"]}")
                 beteiligte = col[1].multiselect("Weitere Beteiligte", rz_users, z["beteiligte"], format_func = lambda a: "".join([f"{r['vorname']} {r['name']}" for r in users if r["rz"] == a]), placeholder = "Bitte auswählen", key = f"beteiligte-{z["_id"]}")
                 beteiligte = sorted(beteiligte, key = lambda a: [f"{r['name']} {r['vorname']}" for r in users if r["rz"] == a])
+                save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
+                
 
             with st.expander("Prozessbeschreibung und Links"):
                 # Beschreibung
-                save2 = st.button("Speichern", key=f"save2-{z['_id']}", type='primary')
                 text = st.text_area('Beschreibung', z["text"], height = 500, placeholder="Bitte eingeben", key = f"text_{z['_id']}")
+                st.divider()
                 # Quicklinks
                 qu = z["quicklinks"]
                 link_remove_id = -1
@@ -416,12 +417,13 @@ if st.session_state.logged_in:
                 neuer_link = st.button('Neuer Quicklink', key = "neuer_quicklink")
 
                 if neuer_link:
-                    quicklinks.append({"title": "", "url": ""})
+                    quicklinks.append({"titel": "", "url": ""})
                     save2 = True
 
                 if link_remove_id >= 0:
                     quicklinks = [q for q in quicklinks if quicklinks.index(q) != link_remove_id]
                     save2 = True
+                save2 = st.button("Speichern", key=f"save2-{z['_id']}", type='primary')
 
             if save1: 
                 util.prozess.update_one({"_id" : z["_id"]}, {"$set" : { "kurzname" : kurzname, "name" : name, "sichtbar" : sichtbar, "color" : color, "kommentar" : kommentar, "bearbeitet" : bearbeitet, "verantwortlicher" : verantwortlicher, "beteiligte" : beteiligte}})
@@ -438,7 +440,6 @@ if st.session_state.logged_in:
             # Daten für Aufgabe
             z = st.session_state.aufgabe.find_one({"_id" : st.session_state.edit_planer})
             with st.expander(f"Grunddaten für {tools.repr(st.session_state.aufgabe, z["_id"], False, False)}"):
-                save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
                 st.write(z["bearbeitet"])
                 name = st.text_input("Name", z["name"], key = f"name_{z['_id']}", disabled = False)
                 kommentar = st.text_input("Kommentar", z["kommentar"])
@@ -468,10 +469,11 @@ if st.session_state.logged_in:
                 verantwortlicher = col[0].selectbox("Verantwortlicher", rz_users, rz_users.index(z["verantwortlicher"]), format_func = lambda a: "".join([f"{r['vorname']} {r['name']}" for r in users if r["rz"] == a]), key = f"verantwortlicher-{z["_id"]}")
                 beteiligte = col[1].multiselect("Weitere Beteiligte", rz_users, z["beteiligte"], format_func = lambda a: "".join([f"{r['vorname']} {r['name']}" for r in users if r["rz"] == a]), placeholder = "Bitte auswählen", key = f"beteiligte-{z["_id"]}")
                 beteiligte = sorted(beteiligte, key = lambda a: [f"{r['name']} {r['vorname']}" for r in users if r["rz"] == a])
-
-            with st.expander(f"Vorlagen für {tools.repr(st.session_state.aufgabe, z["_id"], False, False)}"):
-                save2 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
+                save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
+                
+            with st.expander(f"Beschreibung ung Vorlagen für {tools.repr(st.session_state.aufgabe, z["_id"], False, False)}"):
                 text = st.text_area('Beschreibung', z["text"], height = 500, placeholder="Bitte eingeben", key = f"text_{z['_id']}")
+                st.divider()
                 # Vorlagen
                 vor = z["vorlagen"]
                 vor_remove_id = -1
@@ -489,21 +491,22 @@ if st.session_state.logged_in:
                     with cols[2]:
                         titel = st.text_input(f"Titel Vorlage {i}", v["titel"], key =f"vorlage_{i}_titel")
                     with cols[2]:
-                        url = st.text_input(f"Text für Vorlage {i}", v["text"], key =f"vorlage_{i}_text")
-                    with cols[4]:
+                        url = st.text_area(f"Text für Vorlage {i}", v["text"], height = 500, placeholder="Bitte eingeben", key =f"vorlage_{i}_text")
+                    with cols[3]:
                         st.write("")
                         st.write("")
                         if st.button('✕', key=f'close-e-{i}'):
-                            link_remove_id = i
+                            vor_remove_id = i
                     vorlagen.append({"titel": titel, "text": text})
                 neue_vorlage = st.button('Neue Vorlage', key = "neue_vorlage")
-
+                save2 = st.button("Speichern", key=f"save2-{st.session_state.edit_planer}", type='primary')
+                
                 if neue_vorlage:
-                    vorlagen.append({"title": "", "url": ""})
+                    vorlagen.append({"titel": "", "text": ""})
                     save2 = True
 
-                if link_remove_id >= 0:
-                    vorlagen = [v for v in vorlagen if vorlagen.index(v) != link_remove_id]
+                if vor_remove_id >= 0:
+                    vorlagen = [v for v in vorlagen if vorlagen.index(v) != vor_remove_id]
                     save2 = True
  
  

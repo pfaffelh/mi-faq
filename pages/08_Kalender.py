@@ -34,7 +34,7 @@ if st.session_state.logged_in:
     mode = col[0].selectbox("Ansicht:", mode_dict.keys(), format_func=lambda a: mode_dict[a])
     semesters = list(util.semester.find(sort=[("kurzname", pymongo.DESCENDING)]))
     
-    pakete = col[1].multiselect("Semester", options = [x["_id"] for x in semesters], default = st.session_state.semester_id, format_func = (lambda a: f"{util.semester.find_one({'_id': a})['kurzname']}"), label_visibility = "visible", key = "master_semester_choice")
+    pakete = col[1].multiselect("Semester", options = [x["_id"] for x in semesters], default = [x["_id"] for x in semesters], format_func = (lambda a: f"{util.semester.find_one({'_id': a})['kurzname']}"), label_visibility = "visible", key = "master_semester_choice")
     pakete = list(semester.find({"_id" : {"$in" : pakete}}))
     prozesse = list(prozess.find({"parent" : {"$in" : [p["_id"] for p in pakete]}}, sort=[("rang", pymongo.ASCENDING)]))
     st.session_state.aufgaben = list(aufgabe.find({"parent" : {"$in" : [p["_id"] for p in prozesse]}}, sort=[("rang", pymongo.ASCENDING)]))
