@@ -293,7 +293,7 @@ prozess_validator = {
      "$jsonSchema": {
         "bsonType": "object",
         "title": "Beschreibung eines Prozesses.",
-        "required": ["kurzname", "sichtbar", "name", "parent", "verantwortlicher", "beteiligte", "text", "quicklinks", "bearbeitet", "vorlagen", "kommentar", "rang", "color"],
+        "required": ["kurzname", "sichtbar", "name", "parent", "verantwortlicher", "beteiligte", "text", "quicklinks", "bearbeitet", "kommentar", "rang", "color"],
         "properties": {
             "kurzname": {
                 "bsonType": "string",
@@ -341,21 +341,21 @@ prozess_validator = {
                     }
                 }            
             },
-            "vorlagen" : {
-                "bsonType": "array",
-                "description": "Vorlagen für den Prozess.",
-                "required": ["titel", "text"],
-                "properties": {
-                    "titel": {
-                        "bsonType": "string",
-                        "description": "Text auf dem Button (de)"
-                    },
-                    "text": {
-                        "bsonType": "string",
-                        "description": "Text für die Vorlage."
-                    }
-                }            
-            },
+            # "vorlagen" : {
+            #     "bsonType": "array",
+            #     "description": "Vorlagen für den Prozess.",
+            #     "required": ["titel", "text"],
+            #     "properties": {
+            #         "titel": {
+            #             "bsonType": "string",
+            #             "description": "Text auf dem Button (de)"
+            #         },
+            #         "text": {
+            #             "bsonType": "string",
+            #             "description": "Text für die Vorlage."
+            #         }
+            #     }            
+            # },
             "color": {
                 "bsonType": "string",
                 "description": "Hex-Code der Farbe zur Anzeige im Kalender"
@@ -380,7 +380,7 @@ aufgabe_validator = {
      "$jsonSchema": {
         "bsonType": "object",
         "title": "Beschreibung einer Aufgabe.",
-        "required": ["name", "parent", "nurtermin", "bestätigt", "angefangen", "erledigt", "ankerdatum", "start", "ende", "verantwortlicher", "beteiligte", "text", "quicklinks", "bearbeitet", "vorlagen", "kommentar"],
+        "required": ["name", "parent", "nurtermin", "bestätigt", "angefangen", "erledigt", "ankerdatum", "start", "ende", "verantwortlicher", "beteiligte", "text", "bearbeitet", "vorlagen", "kommentar"],
         "properties": {
             "name": {
                 "bsonType": "string",
@@ -433,21 +433,21 @@ aufgabe_validator = {
                     "description": "eine rz-Kennung."
                 }
             },
-            "quicklinks" : {
-                "bsonType": "array",
-                "description": "Beschreibung des Quicklink-Buttons.",
-                "required": ["titel", "url"],
-                "properties": {
-                    "titel": {
-                        "bsonType": "string",
-                        "description": "Text auf dem Button (de)"
-                    },
-                    "url": {
-                        "bsonType": "string",
-                        "description": "Url für Button (de)"
-                    }
-                }            
-            },
+            # "quicklinks" : {
+            #     "bsonType": "array",
+            #     "description": "Beschreibung des Quicklink-Buttons.",
+            #     "required": ["titel", "url"],
+            #     "properties": {
+            #         "titel": {
+            #             "bsonType": "string",
+            #             "description": "Text auf dem Button (de)"
+            #         },
+            #         "url": {
+            #             "bsonType": "string",
+            #             "description": "Url für Button (de)"
+            #         }
+            #     }            
+            # },
             "vorlagen" : {
                 "bsonType": "array",
                 "description": "Vorlagen für den Prozess.",

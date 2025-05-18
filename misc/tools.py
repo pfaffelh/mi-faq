@@ -337,3 +337,10 @@ def semester_anlegen(prozesse_ids = []):
     for pro_id in prozesse_ids:
         pro_neu = kopiere_prozess(pro_id, sem_neu.inserted_id)
     return sem_neu.inserted_id
+
+def get_users(list_of_add_users):
+    users = st.session_state.faq_users
+    for u in list_of_add_users:
+        if u not in [u["rz"] for u in users]:
+            users.append({"rz" : u, "vorname" : "", "name": u})
+    return users

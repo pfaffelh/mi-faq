@@ -116,12 +116,10 @@ def switch_edit():
 if st.session_state.logged_in:
     st.header("Planer")
     semesters = list(util.semester.find(sort=[("kurzname", pymongo.DESCENDING)]))
-    col = st.columns([1,10,10,2])
+    col = st.columns([1,10,10,5])
     back = col[0].button("🔄")
     if st.session_state.level_planer[0] != []:
         st.session_state.semester_id = st.session_state.level_planer[0][0]
-    st.write(semesters)
-    st.write(st.session_state.semester_id)
     sem = col[1].selectbox(label="Semester", options = [x["_id"] for x in semesters], index = [x["_id"] for x in semesters].index(st.session_state.semester_id), format_func = (lambda a: f"{util.semester.find_one({'_id': a})['name']}"), label_visibility = "collapsed", key = "master_semester_choice")
     # st.session_state.semester_id = st.pills(label="Semester", options = [x["_id"] for x in semesters], selection_mode = "single", default = st.session_state.semester_id, format_func = (lambda a: f"{util.semester.find_one({'_id': a})['kurzname']}"), label_visibility = "collapsed", on_change = switch_edit, key = "master_semester_choice")
     if back or [sem] != st.session_state.level_planer[0]:
@@ -150,11 +148,9 @@ if st.session_state.logged_in:
             st.session_state.kalender.delete_many({"_id" : {"$in" : st.session_state.semester.find_one({"_id" : st.session_state.semester_id})["kalender"]}})
             st.session_state.semester.delete_one({"_id" : st.session_state.semester_id})
             semesters = list(util.semester.find(sort=[("kurzname", pymongo.DESCENDING)]))
+            st.session_state.edit_planer = semesters[0]["_id"]
             st.session_state.semester_id = semesters[0]["_id"]
-            st.session_state.level_planer = [[],[],[]]
             st.success("Gelöscht!")
-            
-        
     
     if st.session_state.level_planer[1] != []:
         col = st.columns([1,1])
@@ -351,30 +347,90 @@ if st.session_state.logged_in:
                 st.write(z["bearbeitet"])
                 l = list(collection.find({"kurzname" : z["kurzname"]}))
                 if len(l) > 1:
-                    st.warning("Warnung: Kurzname ist nicht eindeutig!")
-                kurzname = st.text_input("Kurzname", z["kurzname"], key = f"kurzname_{z['_id']}", disabled = False)
-                name = st.text_input("Name", z["name"], key = f"name_{z['_id']}", disabled = False)
+                    st.warning("Warnung: Kurzname ist nicht eindeutig! Das kann bei der Erstellung von Webpages Probleme verursachen.")
+                kurzname = st.text_input("Kurzname", z["kurzname"], key = f"kurzname_{z['_id']}", disabled = True)
+                name = st.text_input("Name", z["name"], key = f"name_{z['_id']}", disabled = True)
                 sichtbar = st.checkbox("Homepage erstellen", z["sichtbar"])
                 kommentar = st.text_input("Kommentar", z["kommentar"])
-
+                if save1: 
+                    util.semester.update_one({"_id" : z["_id"]}, {"$set" : { "kurzname" : kurzname, "name" : name, "sichtbar" : sichtbar, "kommentar" : kommentar, "bearbeitet" : bearbeitet}})
 
         elif prozess.find_one({"_id" : st.session_state.edit_planer}):
             z = st.session_state.prozess.find_one({"_id" : st.session_state.edit_planer})
-            # Daten für Prozess
-            with st.expander(f"Daten für {tools.repr(st.session_state.prozess, z["_id"], False, False)}"):
+            # Grunddaten für Prozess
+            with st.expander(f"Grunddaten für {tools.repr(st.session_state.prozess, z["_id"], False, False)}"):
                 save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
                 st.write(z["bearbeitet"])
                 l = list(collection.find({"kurzname" : z["kurzname"]}))
                 if len(l) > 1:
-                    st.warning("Warnung: Kurzname ist nicht eindeutig!")
-                kurzname = st.text_input("Kurzname", z["kurzname"], key = f"kurzname_{z['_id']}", disabled = False)
-                name = st.text_input("Name", z["name"], key = f"name_{z['_id']}", disabled = False)
-                sichtbar = st.checkbox("Homepage erstellen", z["sichtbar"])
-                kommentar = st.text_input("Kommentar", z["kommentar"])
+                    st.warning("Warnung: Kurzname ist nicht eindeutig! Das kann bei der Generierung von Webpages zu Komplikationen führen.")
+                col = st.columns([2,2,1])
+                name = col[0].text_input("Name", z["name"], key = f"name_{z['_id']}", disabled = False)
+                kurzname = col[1].text_input("Kurzname", z["kurzname"], key = f"kurzname_{z['_id']}", disabled = False)
+                color = col[2].color_picker("Darstellungsfarbe", value = z["color"])
+                col = st.columns([4,1])
+                kommentar = col[0].text_input("Kommentar", z["kommentar"], key = f"kommentar-{z["_id"]}")
+                sichtbar = st.checkbox("In Homepage übernehmen", z["sichtbar"])
+                users = tools.get_users([z["verantwortlicher"]] + z["beteiligte"])
+                rz_users = [u["rz"] for u in users]
+                col = st.columns([1,3])
+                verantwortlicher = col[0].selectbox("Verantwortlicher", rz_users, rz_users.index(z["verantwortlicher"]), format_func = lambda a: "".join([f"{r['vorname']} {r['name']}" for r in users if r["rz"] == a]), key = f"verantwortlicher-{z["_id"]}")
+                beteiligte = col[1].multiselect("Weitere Beteiligte", rz_users, z["beteiligte"], format_func = lambda a: "".join([f"{r['vorname']} {r['name']}" for r in users if r["rz"] == a]), placeholder = "Bitte auswählen", key = f"beteiligte-{z["_id"]}")
+                beteiligte = sorted(beteiligte, key = lambda a: [f"{r['name']} {r['vorname']}" for r in users if r["rz"] == a])
+
+            with st.expander("Prozessbeschreibung und Links"):
+                # Beschreibung
+                save2 = st.button("Speichern", key=f"save2-{z['_id']}", type='primary')
+                text = st.text_area('Beschreibung', z["text"], height = 500, placeholder="Bitte eingeben", key = f"text_{z['_id']}")
+                # Quicklinks
+                qu = z["quicklinks"]
+                link_remove_id = -1
+                quicklinks = []
+                for i, q in enumerate(qu):
+                    cols = st.columns([1,1,5,10,1])
+                    with cols[0]:
+                        st.write("")
+                        st.write("")
+                        st.button('↓', key=f'down-e-{i}', on_click = tools.move_down_list, args = (st.session_state.prozess, z["_id"], "quicklinks", q,))
+                    with cols[1]:
+                        st.write("")
+                        st.write("")
+                        st.button('↑', key=f'up-e-{i}', on_click = tools.move_up_list, args = (st.session_state.prozess, z["_id"], "quicklinks", q,))
+                    with cols[2]:
+                        titel = st.text_input("Button-Text", q["titel"], key =f"quicklinks_{i}_titel")
+                    with cols[3]:
+                        url = st.text_input("Url für Button", q["url"], key =f"quicklinks_{i}_url")
+                    with cols[4]:
+                        st.write("")
+                        st.write("")
+                        if st.button('✕', key=f'close-e-{i}'):
+                            link_remove_id = i
+                    quicklinks.append({"titel": titel, "url": url})
+                neuer_link = st.button('Neuer Quicklink', key = "neuer_quicklink")
+
+                if neuer_link:
+                    quicklinks.append({"title": "", "url": ""})
+                    save2 = True
+
+                if link_remove_id >= 0:
+                    quicklinks = [q for q in quicklinks if quicklinks.index(q) != link_remove_id]
+                    save2 = True
+
+            if save1: 
+                util.prozess.update_one({"_id" : z["_id"]}, {"$set" : { "kurzname" : kurzname, "name" : name, "sichtbar" : sichtbar, "color" : color, "kommentar" : kommentar, "bearbeitet" : bearbeitet, "verantwortlicher" : verantwortlicher, "beteiligte" : beteiligte}})
+                st.toast("Erfolgreich gespeichert!")
+                time.sleep(0.5)
+                st.rerun()  
+            if save2:
+                util.prozess.update_one({"_id" : z["_id"]}, {"$set" : { "text" : text, "quicklinks" : quicklinks, "bearbeitet" : bearbeitet}})
+                st.toast("Erfolgreich gespeichert!")
+                time.sleep(0.5)
+                st.rerun()  
+
         elif aufgabe.find_one({"_id" : st.session_state.edit_planer}):
             # Daten für Aufgabe
             z = st.session_state.aufgabe.find_one({"_id" : st.session_state.edit_planer})
-            with st.expander(f"Daten für {tools.repr(st.session_state.aufgabe, z["_id"], False, False)}"):
+            with st.expander(f"Grunddaten für {tools.repr(st.session_state.aufgabe, z["_id"], False, False)}"):
                 save1 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
                 st.write(z["bearbeitet"])
                 name = st.text_input("Name", z["name"], key = f"name_{z['_id']}", disabled = False)
@@ -388,8 +444,6 @@ if st.session_state.logged_in:
                 else:
                     angefangen = False
                     erledigt = False
-                # TODO: Beim Verschieben einer Aufgabe in einen Prozess eines anderen semesters müssen Ankerdaten neu gesetzt werden!
-                # Finde semester
                 pr = prozess.find_one({"_id" : z["parent"]})
                 prpa = semester.find_one({"_id" : pr["parent"]})            
                 cols = st.columns([5,5,5])
@@ -401,29 +455,62 @@ if st.session_state.logged_in:
                 endedatum = cols[2].date_input("Ende", ankerdatum + relativedelta(days = z["ende"]), format="DD.MM.YYYY", key = f"ende-{z["_id"]}")
                 ende = (endedatum - ankerdatum.date()).days
           
-                users = st.session_state.faq_users
-                rz_users = [u["rz"] for u in users]
-                if z["verantwortlicher"] not in rz_users:
-                    users.append({"rz" : z["verantwortlicher"], "vorname" : "", "name": z["verantwortlicher"]})
-                for i in z["beteiligte"]:
-                    if i not in rz_users:
-                        users.append({"rz" : i, "vorname" : "", "name": i})
+                users = tools.get_users([z["verantwortlicher"]] + z["beteiligte"])
                 rz_users = [u["rz"] for u in users]
                 col = st.columns([1,3])
                 verantwortlicher = col[0].selectbox("Verantwortlicher", rz_users, rz_users.index(z["verantwortlicher"]), format_func = lambda a: "".join([f"{r['vorname']} {r['name']}" for r in users if r["rz"] == a]), key = f"verantwortlicher-{z["_id"]}")
                 beteiligte = col[1].multiselect("Weitere Beteiligte", rz_users, z["beteiligte"], format_func = lambda a: "".join([f"{r['vorname']} {r['name']}" for r in users if r["rz"] == a]), placeholder = "Bitte auswählen", key = f"beteiligte-{z["_id"]}")
                 beteiligte = sorted(beteiligte, key = lambda a: [f"{r['name']} {r['vorname']}" for r in users if r["rz"] == a])
-                text = "" # st.text_area
-                quicklinks = []
-                vorlagen = []
-                kommentar = ""
-                save3 = st.button("Speichern", key=f"save3-{z['_id']}", type='primary')
 
-                if save3:
-                    collection.update_one({"_id": z["_id"]}, { "$set": {"name" : name, "nurtermin": nurtermin, "bestätigt": bestätigt, "angefangen" : angefangen,  "erledigt": erledigt, "ankerdatum": anker, "start" : start, "ende" : ende, "verantwortlicher" : verantwortlicher, "beteiligte" : beteiligte, "text" : text, "quicklinks" : quicklinks, "bearbeitet" : bearbeitet, "vorlagen" : vorlagen, "kommentar": kommentar}})
-                    st.toast("Erfolgreich gespeichert!")
-                    time.sleep(0.5)
-                    st.rerun()  
+            with st.expander(f"Vorlagen für {tools.repr(st.session_state.aufgabe, z["_id"], False, False)}"):
+                save2 = st.button("Speichern", key=f"save1-{st.session_state.edit_planer}", type='primary')
+                text = st.text_area('Beschreibung', z["text"], height = 500, placeholder="Bitte eingeben", key = f"text_{z['_id']}")
+                # Vorlagen
+                vor = z["vorlagen"]
+                vor_remove_id = -1
+                vorlagen = []
+                for i, v in enumerate(vor):
+                    cols = st.columns([1,1,15,1])
+                    with cols[0]:
+                        st.write("")
+                        st.write("")
+                        st.button('↓', key=f'down-e-{i}', on_click = tools.move_down_list, args = (st.session_state.aufgabe, z["_id"], "vorlagen", v,))
+                    with cols[1]:
+                        st.write("")
+                        st.write("")
+                        st.button('↑', key=f'up-e-{i}', on_click = tools.move_up_list, args = (st.session_state.aufgabe, z["_id"], "vorlagen", v,))
+                    with cols[2]:
+                        titel = st.text_input(f"Titel Vorlage {i}", v["titel"], key =f"vorlage_{i}_titel")
+                    with cols[2]:
+                        url = st.text_input(f"Text für Vorlage {i}", v["text"], key =f"vorlage_{i}_text")
+                    with cols[4]:
+                        st.write("")
+                        st.write("")
+                        if st.button('✕', key=f'close-e-{i}'):
+                            link_remove_id = i
+                    vorlagen.append({"titel": titel, "text": text})
+                neue_vorlage = st.button('Neue Vorlage', key = "neue_vorlage")
+
+                if neue_vorlage:
+                    vorlagen.append({"title": "", "url": ""})
+                    save2 = True
+
+                if link_remove_id >= 0:
+                    vorlagen = [v for v in vorlagen if vorlagen.index(v) != link_remove_id]
+                    save2 = True
+ 
+ 
+            if save1: 
+                util.aufgabe.update_one({"_id" : z["_id"]}, {"$set" : { "name" : name, "kommentar" : kommentar, "nurtermin": nurtermin, "bestätigt": bestätigt, "angefangen" : angefangen, "erledigt" : erledigt, "bearbeitet" : bearbeitet, "verantwortlicher" : verantwortlicher, "beteiligte" : beteiligte}})
+                st.toast("Erfolgreich gespeichert!")
+                time.sleep(0.5)
+                st.rerun()  
+            if save2:
+                util.aufgabe.update_one({"_id" : z["_id"]}, {"$set" : { "text" : text, "vorlagen" : vorlagen, "bearbeitet" : bearbeitet}})
+                st.toast("Erfolgreich gespeichert!")
+                time.sleep(0.5)
+                st.rerun()  
+            
 
 
 else: 

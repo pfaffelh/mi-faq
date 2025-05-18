@@ -76,7 +76,6 @@ prozess_leer =     {
             "text": "", 
             "quicklinks": [], 
             "bearbeitet": "Initialer Eintrag", 
-            "vorlagen": [], 
             "color" : "#000000",
             "kommentar": "",
             "rang": 2
@@ -95,7 +94,6 @@ aufgabe_leer = {
             "verantwortlicher": "junker", 
             "beteiligte": [], 
             "text": "", 
-            "quicklinks": [], 
             "bearbeitet": "Initialer Eintrag", 
             "vorlagen": [], 
             "kommentar": "",
