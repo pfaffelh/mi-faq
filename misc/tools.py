@@ -300,11 +300,7 @@ def string_to_next_semester(string, kurzname):
 
 def semester_anlegen(prozesse_ids = []):
     # Finde das letzte Semester
-#    sem = util.semester.find_one({}, sort = [("kurzname",pymongo.DESCENDING)])
-        
     sem = list(util.semester.find({}, sort=[("kurzname", pymongo.DESCENDING)]))[0]
-    st.write(f"prozesse: {prozesse_ids}")
-    st.write(sem["kurzname"])
     if prozesse_ids == []:
         prozesse_ids = [p["_id"] for p in list(util.prozess.find({"parent" : sem["_id"]}))]
     del sem["_id"]

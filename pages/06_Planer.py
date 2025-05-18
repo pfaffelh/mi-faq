@@ -116,10 +116,12 @@ def switch_edit():
 if st.session_state.logged_in:
     st.header("Planer")
     semesters = list(util.semester.find(sort=[("kurzname", pymongo.DESCENDING)]))
-    col = st.columns([1,10,10])
+    col = st.columns([1,10,10,2])
     back = col[0].button("🔄")
     if st.session_state.level_planer[0] != []:
         st.session_state.semester_id = st.session_state.level_planer[0][0]
+    st.write(semesters)
+    st.write(st.session_state.semester_id)
     sem = col[1].selectbox(label="Semester", options = [x["_id"] for x in semesters], index = [x["_id"] for x in semesters].index(st.session_state.semester_id), format_func = (lambda a: f"{util.semester.find_one({'_id': a})['name']}"), label_visibility = "collapsed", key = "master_semester_choice")
     # st.session_state.semester_id = st.pills(label="Semester", options = [x["_id"] for x in semesters], selection_mode = "single", default = st.session_state.semester_id, format_func = (lambda a: f"{util.semester.find_one({'_id': a})['kurzname']}"), label_visibility = "collapsed", on_change = switch_edit, key = "master_semester_choice")
     if back or [sem] != st.session_state.level_planer[0]:
@@ -128,14 +130,31 @@ if st.session_state.logged_in:
     with col[2].expander("Neues Semester anlegen"):
         sem_alt = util.semester.find_one({}, sort = [("kurzname",pymongo.DESCENDING)])
         st.write(f"{tools.semester_name(tools.next_semester_kurzname(sem_alt['kurzname']))} wirklich anlegen?")
+        alle_prozesse_ids = [p["_id"] for p in list(st.session_state.prozess.find({"parent" : sem_alt["_id"]}))]
+        prozesse_ids = st.multiselect("Welche Prozesse sollen kopiert werden?", alle_prozesse_ids, default = alle_prozesse_ids, format_func=lambda a: tools.repr(st.session_state.prozess, a, False, True))
         submit = st.button(label = "Anlegen!", type = 'primary', key = f"new_semester")
         if submit:
-            kopie = tools.semester_anlegen()
+            kopie = tools.semester_anlegen(prozesse_ids)
             st.success("Semester angelegt!")
             st.session_state.semester_id = kopie
             st.session_state.edit_planer = kopie            
             st.rerun()
+    with col[3].expander("Löschen"):
+        submit = st.button(label = f"{tools.repr(st.session_state.semester, st.session_state.semester_id, False, False)} wirklich löschen!", type = 'primary', key = f"delete-semester")
+        if submit:
+            st.session_state.edit_planer = ""
+            for p in list(st.session_state.prozess.find({"parent" : st.session_state.semester_id})):
+                st.session_state.aufgabe.delete_many({"parent" : p["_id"]})
+                st.session_state.prozess.delete_one({"_id" : p["_id"]})
 
+            st.session_state.kalender.delete_many({"_id" : {"$in" : st.session_state.semester.find_one({"_id" : st.session_state.semester_id})["kalender"]}})
+            st.session_state.semester.delete_one({"_id" : st.session_state.semester_id})
+            semesters = list(util.semester.find(sort=[("kurzname", pymongo.DESCENDING)]))
+            st.session_state.semester_id = semesters[0]["_id"]
+            st.session_state.level_planer = [[],[],[]]
+            st.success("Gelöscht!")
+            
+        
     
     if st.session_state.level_planer[1] != []:
         col = st.columns([1,1])
@@ -180,9 +199,11 @@ if st.session_state.logged_in:
                                 sortiert = sorted(sem_dict.items(), key=lambda item: item[1])
                                 sem_dict = dict(sortiert)
                                 se = st.selectbox("Wohin?", sem_dict.keys(), format_func=lambda a: sem_dict[a], key = f"select_copy_{z["_id"]}")
+                                alle_aufgaben_ids = [a["_id"] for a in list(st.session_state.aufgabe.find({"parent" : z["_id"]}))]
+                                aufgaben_ids = st.multiselect("Welche Aufgaben sollen kopiert werden?", alle_aufgaben_ids, default = alle_aufgaben_ids, format_func=lambda a: tools.repr(st.session_state.aufgabe, a, False, True))
                                 submit = st.button(label = "Kopieren!", type = 'primary', key = f"copy-{z['_id']}")
                                 if submit:
-                                    kopie = tools.kopiere_prozess(z["_id"], se)
+                                    kopie = tools.kopiere_prozess(z["_id"], se, aufgaben_ids)
                                     st.success("Item kopiert!")
                                     st.session_state.edit_planer = kopie
                                     st.session_state.level_planer = level(st.session_state.edit_planer)
