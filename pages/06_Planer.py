@@ -116,11 +116,17 @@ def switch_edit():
 if st.session_state.logged_in:
     st.header("Planer")
     semesters = list(util.semester.find(sort=[("kurzname", pymongo.DESCENDING)]))
+    
     col = st.columns([1,10,10,5])
     back = col[0].button("🔄")
     if st.session_state.level_planer[0] != []:
         st.session_state.semester_id = st.session_state.level_planer[0][0]
-    sem = col[1].selectbox(label="Semester", options = [x["_id"] for x in semesters], index = [x["_id"] for x in semesters].index(st.session_state.semester_id), format_func = (lambda a: f"{util.semester.find_one({'_id': a})['name']}"), label_visibility = "collapsed", key = "master_semester_choice")
+    
+    sem = col[1].selectbox(label="Semester", options = [x["_id"] for x in list(st.session_state.semester.find(sort=[("kurzname", pymongo.DESCENDING)]))], index = 0 if st.session_state.semester_id not in [x["_id"] for x in semesters] else [x["_id"] for x in semesters].index(st.session_state.semester_id), format_func = (lambda a: f"{st.session_state.semester.find_one({'_id': a})['name']}"), label_visibility = "collapsed", key = "master_semester_choice")
+    if st.session_state.semester_id not in [x["_id"] for x in semesters]:
+        st.session_state.semester_id = semesters[0]["_id"]
+        st.session_state.level_planer = level(st.session_state.semester_id)
+        
     # st.session_state.semester_id = st.pills(label="Semester", options = [x["_id"] for x in semesters], selection_mode = "single", default = st.session_state.semester_id, format_func = (lambda a: f"{util.semester.find_one({'_id': a})['kurzname']}"), label_visibility = "collapsed", on_change = switch_edit, key = "master_semester_choice")
     if back or [sem] != st.session_state.level_planer[0]:
         st.session_state.edit_planer = sem
@@ -144,14 +150,15 @@ if st.session_state.logged_in:
             for p in list(st.session_state.prozess.find({"parent" : st.session_state.semester_id})):
                 st.session_state.aufgabe.delete_many({"parent" : p["_id"]})
                 st.session_state.prozess.delete_one({"_id" : p["_id"]})
-
             st.session_state.kalender.delete_many({"_id" : {"$in" : st.session_state.semester.find_one({"_id" : st.session_state.semester_id})["kalender"]}})
             st.session_state.semester.delete_one({"_id" : st.session_state.semester_id})
-            semesters = list(util.semester.find(sort=[("kurzname", pymongo.DESCENDING)]))
+            semesters = list(st.session_state.semester.find(sort=[("kurzname", pymongo.DESCENDING)]))
             st.session_state.edit_planer = semesters[0]["_id"]
             st.session_state.semester_id = semesters[0]["_id"]
             st.success("Gelöscht!")
-    
+            time.sleep(1)
+            st.rerun()
+            
     if st.session_state.level_planer[1] != []:
         col = st.columns([1,1])
         col[0].write("## Prozess")
