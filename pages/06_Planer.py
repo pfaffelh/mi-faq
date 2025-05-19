@@ -279,21 +279,23 @@ if st.session_state.logged_in:
                 kal = []
                 for i, k in enumerate(z["kalender"]):
                     ka = kalender.find_one({"_id" : k})
-                    cols = st.columns([1,2,1,2,1])
+                    cols = st.columns([1,1,2,1,2,1])
                     datum = cols[0].date_input("Datum", value = ka["datum"], format = "DD.MM.YYYY", key = f"date_{i}")
-                    name = cols[1].text_input("Name des Datums", ka["name"], key = f"name_{i}", disabled = False)
+                    zeit = cols[1].time_input("Uhrzeit", value =ka["datum"].time(), key = f"time_{i}") 
+                    name = cols[2].text_input("Name des Datums", ka["name"], key = f"name_{i}", disabled = False)
                     if len(list(kalender.find({"_id" : { "$in" : z["kalender"]}, "name" : ka["name"]}))) > 1:
                         st.warning("Name des Datums sollte eindeutig sein. Andernfalls kann es zu Problemen beim Kopieren von Aufgaben und Prozessen, und beim Neu-Anlegen von Semestern kommen.")
                     
-                    ist_relativdatum = cols[2].toggle("Relativdatum", ka["ankerdatum"] != st.session_state.leer[kalender], key = f"ist_relativdatum_{i}")
+                    ist_relativdatum = cols[3].toggle("Relativdatum", ka["ankerdatum"] != st.session_state.leer[kalender], key = f"ist_relativdatum_{i}")
                     if ist_relativdatum:
                         se = [a for a in tools.find_ankerdaten(z["kalender"]) if a != k]
                         ind = se.index(ka["ankerdatum"]) if ka["ankerdatum"] in se else 0
-                        ankerdatum = cols[3].selectbox("...zu", se, index = ind, format_func = lambda a: tools.repr(kalender, a), key = f"ankerdatum_{i}")
+                        ankerdatum = cols[4].selectbox("...zu", se, index = ind, format_func = lambda a: tools.repr(kalender, a), key = f"ankerdatum_{i}")
                     else:
                         ankerdatum = st.session_state.leer[kalender]
 
-                    with cols[4].popover("Löschen", use_container_width=True):
+                    cols[5].write("")
+                    with cols[5].popover("Löschen", use_container_width=True):
                         dep = tools.find_dependent_items(kalender, k)
                         if dep != []:
                             st.write("Abhängige Items sind:  \n" + ",  \n".join(dep))
@@ -311,14 +313,14 @@ if st.session_state.logged_in:
                             st.button(label="Abbrechen", on_click = st.success, args=("Nicht gelöscht!",), key = f"not-deleted-{i}")
                     kal.append({
                         "_id" : k,
-                        "datum" : datetime.combine(datum, datetime.min.time()),
+                        "datum" : datetime.combine(datum, zeit),
                         "name": name,
                         "ankerdatum" : ankerdatum
                     })
                     st.divider()
                 neues_datum = st.button('Neues Datum', key = "neues_datum")
                 if neues_datum: 
-                    k = kalender.insert_one({"datum": datetime.now(), "name": "", "ankerdatum": st.session_state.leer[kalender]})
+                    k = kalender.insert_one({"datum": datetime.now().replace(hour=0, minute=0, second=0, microsecond=0), "name": "", "ankerdatum": st.session_state.leer[kalender]})
                     semester.update_one({"_id" : z["_id"]}, {"$push" : {"kalender" : k.inserted_id}})
                     st.toast("Erfolgreich gespeichert!")
                     time.sleep(0.5)
@@ -339,7 +341,7 @@ if st.session_state.logged_in:
                                 ankerdaten_korrekt = False
                     if ankerdaten_korrekt:
                         for k in kal:  
-                            kalender.update_one({"_id": k["_id"]}, { "$set": {"datum" : datetime.combine(k["datum"], datetime.min.time()), "name" : k["name"], "ankerdatum" : k["ankerdatum"]}})
+                            kalender.update_one({"_id": k["_id"]}, { "$set": {"datum" : k["datum"], "name" : k["name"], "ankerdatum" : k["ankerdatum"]}})
                         semester.update_one({"_id" : z["_id"]}, {"$set" : {"kalender" : tools.sort_kalender(z["kalender"])}})
 
                         st.toast("Erfolgreich gespeichert!")

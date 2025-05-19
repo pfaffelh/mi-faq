@@ -36,6 +36,9 @@ if st.session_state.logged_in:
     
     pakete = col[1].multiselect("Semester", options = [x["_id"] for x in semesters], default = [x["_id"] for x in semesters], format_func = (lambda a: f"{util.semester.find_one({'_id': a})['kurzname']}"), label_visibility = "visible", key = "master_semester_choice")
     pakete = list(semester.find({"_id" : {"$in" : pakete}}))
+    alle_kalender = [s["kalender"] for s in pakete]
+    alle_kalender = [k for x in alle_kalender for k in x]
+    alle_semestertermine = list(kalender.find({"_id" : {"$in" : alle_kalender}}))
     prozesse = list(prozess.find({"parent" : {"$in" : [p["_id"] for p in pakete]}}, sort=[("rang", pymongo.ASCENDING)]))
     st.session_state.aufgaben = list(aufgabe.find({"parent" : {"$in" : [p["_id"] for p in prozesse]}}, sort=[("rang", pymongo.ASCENDING)]))
     #select_personen = st.toggle("Personanauswahl", key = "personenauswahl")
@@ -51,7 +54,17 @@ if st.session_state.logged_in:
                 "color": prozess.find_one({"_id" : r["parent"]})["color"],
                 "start": (kalender.find_one({"_id" : r["ankerdatum"]})["datum"] + relativedelta(days = r["start"])).strftime("%Y-%m-%d"),
                 "end": (kalender.find_one({"_id" : r["ankerdatum"]})["datum"] + relativedelta(days = r["ende"])).strftime("%Y-%m-%d"),
+                "allDay" : True,
                 "resourceId": str(r["_id"]),} for r in st.session_state.aufgaben]
+    events = events +  [{"title": r["name"],
+            "color" : "#FFFFFF",
+            "textColor" : "#000000",
+            "start": r["datum"].isoformat(),
+            "end": (r["datum"] + relativedelta(hours = 1)).isoformat(),
+            "allDay" : True if r["datum"].time() == datetime.min.time() else False,
+            "resourceId": str(r["_id"]),} 
+         for r in alle_semestertermine]
+#    st.write(events)
     calendar_resources = [{"id" : str(r["_id"]), "Aufgabe" : r["name"]} for r in st.session_state.aufgaben]
     
     calendar_options = {
