@@ -317,7 +317,6 @@ if st.session_state.logged_in:
                         "name": name,
                         "ankerdatum" : ankerdatum
                     })
-                    st.divider()
                 neues_datum = st.button('Neues Datum', key = "neues_datum")
                 if neues_datum: 
                     k = kalender.insert_one({"datum": datetime.now().replace(hour=0, minute=0, second=0, microsecond=0), "name": "", "ankerdatum": st.session_state.leer[kalender]})
@@ -464,7 +463,8 @@ if st.session_state.logged_in:
                 start = (startdatum - ankerdatum.date()).days
                 endedatum = cols[2].date_input("Ende", ankerdatum + relativedelta(days = z["ende"]), format="DD.MM.YYYY", key = f"ende-{z["_id"]}")
                 ende = (endedatum - ankerdatum.date()).days
-          
+                if ende < start:
+                    end = start
                 users = tools.get_users([z["verantwortlicher"]] + z["beteiligte"])
                 rz_users = [u["rz"] for u in users]
                 col = st.columns([1,3])
@@ -510,10 +510,9 @@ if st.session_state.logged_in:
                 if vor_remove_id >= 0:
                     vorlagen = [v for v in vorlagen if vorlagen.index(v) != vor_remove_id]
                     save2 = True
- 
- 
+  
             if save1: 
-                util.aufgabe.update_one({"_id" : z["_id"]}, {"$set" : { "name" : name, "kommentar" : kommentar, "nurtermin": nurtermin, "bestätigt": bestätigt, "angefangen" : angefangen, "erledigt" : erledigt, "bearbeitet" : bearbeitet, "verantwortlicher" : verantwortlicher, "beteiligte" : beteiligte}})
+                util.aufgabe.update_one({"_id" : z["_id"]}, {"$set" : { "name" : name, "kommentar" : kommentar, "nurtermin": nurtermin, "bestätigt": bestätigt, "angefangen" : angefangen, "erledigt" : erledigt, "bearbeitet" : bearbeitet, "start" : start, "ende" : ende, "verantwortlicher" : verantwortlicher, "beteiligte" : beteiligte}})
                 st.toast("Erfolgreich gespeichert!")
                 time.sleep(0.5)
                 st.rerun()  
