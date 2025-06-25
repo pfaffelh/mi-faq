@@ -89,6 +89,7 @@ def display_navigation():
 
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
     st.sidebar.page_link("pages/01_knoten.py", label="Accordion-Seiten")
+    st.sidebar.page_link("pages/02_overview.py", label="Übersicht")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
     st.sidebar.page_link("pages/04_stdekanat.py", label="Studiendekanat")
     st.sidebar.write("<hr style='height:1px;margin:0px;;border:none;color:#333;background-color:#333;' /> ", unsafe_allow_html=True)
