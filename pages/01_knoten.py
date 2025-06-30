@@ -175,13 +175,13 @@ if st.session_state.logged_in:
                         st.rerun()
             co1, co2, co3 = st.columns([1,1,10]) 
             with co3.popover(f'Neues Item anlegen'):
-                kurzname = st.text_input("Kurzname", "", key = "new_kurzname")
-                titel_de = st.text_input("Titel (de)", "", key = "new_titel_de")
-                titel_en = st.text_input("Titel (en)", "", key = "new_titel_en")        
-                kommentar = st.text_input("Kommentar", "", key = "new_kommentar")
-
-                btn = st.button("Item anlegen", on_click=savenew, args = [{"kurzname" : kurzname, "titel_de": titel_de, "titel_en": titel_en, "kommentar": kommentar,},])
-
+                kurzname = st.text_input("Kurzname", "", key = "neu_kurzname")
+                titel_de = st.text_input("Titel (de)", "", key = "neu_titel_de")
+                titel_en = st.text_input("Titel (en)", "", key = "neu_titel_en")        
+                kommentar = st.text_input("Kommentar", "", key = "neu_kommentar")
+                btn = st.button("Item anlegen")
+                if btn:
+                    savenew({"kurzname" : kurzname, "titel_de": titel_de, "titel_en": titel_en, "kommentar": kommentar,})
     if len(st.session_state.level):
         with st.expander("Daten"):
             save1 = st.button("Speichern", key=f"save1-{x['_id']}", type='primary')
