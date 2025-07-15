@@ -287,7 +287,7 @@ if st.session_state.logged_in:
                     if zeit != time(0,0):
                         dauer = cols[3].number_input("Dauer (Min)", value =ka["dauer"], key = f"dauer_{i}") 
                     else:
-                        cols[2].write("Uhrzeit 00:00 erzeugt einen ganztägigen Termin.")
+                        cols[3].write("Uhrzeit 00:00 erzeugt einen ganztägigen Termin.")
                         dauer = 0
                     name = cols[4].text_input("Name des Datums", ka["name"], key = f"name_{i}", disabled = False)
                     if len(list(kalender.find({"_id" : { "$in" : z["kalender"]}, "name" : ka["name"]}))) > 1:
