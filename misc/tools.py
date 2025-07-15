@@ -321,7 +321,7 @@ def semester_anlegen(prozesse_ids = []):
             "datum" : ka["datum"] + relativedelta(months = 6),
             "ankerdatum" : ka["ankerdatum"],
             "dauer" : ka["dauer"],
-            "sichtbar" : ka["sichtbar"],
+            "sichtbar" : False,
             "name" : string_to_next_semester(ka["name"], kn) 
         })
         kalender_neu.append(ka_neu.inserted_id)

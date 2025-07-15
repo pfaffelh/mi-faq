@@ -13,7 +13,7 @@ mongo_db.command('collMod','kalender', validator=schema20250604.kalender_validat
 
 kalender = mongo_db["kalender"]
 
-kalender.update_many({}, { "$set" : { "_public" : True}})
+kalender.update_many({}, { "$set" : { "sichtbar" : True}})
 
 # Diesem Schema soll die Datenbank am Ende der Änderung folgen
 print("Check schema")

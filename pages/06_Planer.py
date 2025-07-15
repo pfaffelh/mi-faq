@@ -322,12 +322,13 @@ if st.session_state.logged_in:
                         "_id" : k,
                         "datum" : datetime.combine(datum, zeit),
                         "dauer": dauer,
+                        "sichtbar": sichtbar,
                         "name": name,
                         "ankerdatum" : ankerdatum
                     })
                 neues_datum = st.button('Neues Datum', key = "neues_datum")
                 if neues_datum: 
-                    k = kalender.insert_one({"datum": datetime.now().replace(hour=0, minute=0, second=0, microsecond=0), "name": "", "dauer" : 0, "ankerdatum": st.session_state.leer[kalender]})
+                    k = kalender.insert_one({"datum": datetime.now().replace(hour=0, minute=0, second=0, microsecond=0), "name": "", "dauer" : 0, "sichtbar" : False, "ankerdatum": st.session_state.leer[kalender]})
                     semester.update_one({"_id" : z["_id"]}, {"$push" : {"kalender" : k.inserted_id}})
                     st.toast("Erfolgreich gespeichert!")
                     t.sleep(0.5)
@@ -348,7 +349,7 @@ if st.session_state.logged_in:
                                 ankerdaten_korrekt = False
                     if ankerdaten_korrekt:
                         for k in kal:  
-                            kalender.update_one({"_id": k["_id"]}, { "$set": {"datum" : k["datum"], "name" : k["name"], "dauer" : k["dauer"], "ankerdatum" : k["ankerdatum"]}})
+                            kalender.update_one({"_id": k["_id"]}, { "$set": {"datum" : k["datum"], "name" : k["name"], "dauer" : k["dauer"], "sichtbar": k["sichtbar"], "ankerdatum" : k["ankerdatum"]}})
                         semester.update_one({"_id" : z["_id"]}, {"$set" : {"kalender" : tools.sort_kalender(z["kalender"])}})
 
                         st.toast("Erfolgreich gespeichert!")
