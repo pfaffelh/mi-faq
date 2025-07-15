@@ -280,7 +280,7 @@ if st.session_state.logged_in:
                 kal = []
                 for i, k in enumerate(z["kalender"]):
                     ka = kalender.find_one({"_id" : k})
-                    cols = st.columns([1,1,1,1,2,1,2,1])
+                    cols = st.columns([.4,1,1,1,2,1,2,1])
                     sichtbar = cols[0].toggle("😎", ka["sichtbar"], key = f"sichtbar_{i}")
                     datum = cols[1].date_input("Datum", value = ka["datum"], format = "DD.MM.YYYY", key = f"date_{i}")
                     zeit = cols[2].time_input("Uhrzeit", value =ka["datum"].time(), key = f"time_{i}") 
