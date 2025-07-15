@@ -276,31 +276,33 @@ if st.session_state.logged_in:
 
             with st.expander(f"Termine für {tools.repr(st.session_state.semester, z["_id"], False, False)}", expanded = True):
                 st.write("Hier werden grundlegende Daten für das Semester bereitgestellt. Falls ein Datum relativ zu einem anderen festgelegt wird, wird es bei Änderung des Ankerdatums ebenfalls geändert.")
+                st.write("😎: Im Kalender sichtbar.")
                 kal = []
                 for i, k in enumerate(z["kalender"]):
                     ka = kalender.find_one({"_id" : k})
-                    cols = st.columns([1,1,1,2,1,2,1])
-                    datum = cols[0].date_input("Datum", value = ka["datum"], format = "DD.MM.YYYY", key = f"date_{i}")
-                    zeit = cols[1].time_input("Uhrzeit", value =ka["datum"].time(), key = f"time_{i}") 
+                    cols = st.columns([1,1,1,1,2,1,2,1])
+                    sichtbar = cols[0].toggle("😎", ka["sichtbar"], key = f"sichtbar_{i}")
+                    datum = cols[1].date_input("Datum", value = ka["datum"], format = "DD.MM.YYYY", key = f"date_{i}")
+                    zeit = cols[2].time_input("Uhrzeit", value =ka["datum"].time(), key = f"time_{i}") 
                     if zeit != time(0,0):
-                        dauer = cols[2].number_input("Dauer (Min)", value =ka["dauer"], key = f"dauer_{i}") 
+                        dauer = cols[3].number_input("Dauer (Min)", value =ka["dauer"], key = f"dauer_{i}") 
                     else:
                         cols[2].write("Uhrzeit 00:00 erzeugt einen ganztägigen Termin.")
                         dauer = 0
-                    name = cols[3].text_input("Name des Datums", ka["name"], key = f"name_{i}", disabled = False)
+                    name = cols[4].text_input("Name des Datums", ka["name"], key = f"name_{i}", disabled = False)
                     if len(list(kalender.find({"_id" : { "$in" : z["kalender"]}, "name" : ka["name"]}))) > 1:
                         st.warning("Name des Datums sollte eindeutig sein. Andernfalls kann es zu Problemen beim Kopieren von Aufgaben und Prozessen, und beim Neu-Anlegen von Semestern kommen.")
                     
-                    ist_relativdatum = cols[4].toggle("Relativdatum", ka["ankerdatum"] != st.session_state.leer[kalender], key = f"ist_relativdatum_{i}")
+                    ist_relativdatum = cols[5].toggle("Relativdatum", ka["ankerdatum"] != st.session_state.leer[kalender], key = f"ist_relativdatum_{i}")
                     if ist_relativdatum:
                         se = [a for a in tools.find_ankerdaten(z["kalender"]) if a != k]
                         ind = se.index(ka["ankerdatum"]) if ka["ankerdatum"] in se else 0
-                        ankerdatum = cols[5].selectbox("...zu", se, index = ind, format_func = lambda a: tools.repr(kalender, a), key = f"ankerdatum_{i}")
+                        ankerdatum = cols[6].selectbox("...zu", se, index = ind, format_func = lambda a: tools.repr(kalender, a), key = f"ankerdatum_{i}")
                     else:
                         ankerdatum = st.session_state.leer[kalender]
 
                     cols[5].write("")
-                    with cols[6].popover("Löschen", use_container_width=True):
+                    with cols[7].popover("Löschen", use_container_width=True):
                         dep = tools.find_dependent_items(kalender, k)
                         if dep != []:
                             st.write("Abhängige Items sind:  \n" + ",  \n".join(dep))
