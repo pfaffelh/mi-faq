@@ -44,7 +44,7 @@ def translate_knoten(id):
         print(res.text)
         knoten.update_one({"_id" : id}, { "$set" : { "suffix_en" : res.text}})
 
-knoten_ids = ["faqstud", "pruefungen-begriffe-regeln", "veransatltungen2", "leistungen", "abschlussarbeiten", "ausland"]
+knoten_ids = ["veranstaltungen"]
 
 for id in knoten_ids:
     kn = list(knoten.find({"kurzname" : id}))
