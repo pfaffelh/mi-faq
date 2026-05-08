@@ -11,6 +11,17 @@ from dateutil.relativedelta import relativedelta
 
 date_format = '%d.%m.%Y um %H:%M:%S.'
 
+# st.toast() direkt vor st.rerun() (oder am Ende eines on_click-Callbacks) wird oft nur
+# als Flash gezeigt: der Rerun beginnt, bevor das Frontend den Toast voll dargestellt hat.
+# flash() parkt die Nachricht in session_state; show_pending_toasts() (im display_navigation
+# aufgerufen) zeigt sie auf dem nächsten Run mit voller Standard-Dauer an.
+def flash(msg):
+    st.session_state.setdefault("_pending_toasts", []).append(msg)
+
+def show_pending_toasts():
+    for msg in st.session_state.pop("_pending_toasts", []):
+        st.toast(msg)
+
 # Die Authentifizierung gegen den Uni-LDAP-Server
 def authenticate(username, password):
     ldap.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
@@ -80,9 +91,10 @@ def update_confirm(collection, x, x_updated, reset = True):
     collection.update_one({"_id" : x["_id"]}, {"$set": x_updated })
     if reset:
         reset_vars("")
-    st.toast("🎉 Erfolgreich geändert!")
+    flash("🎉 Erfolgreich geändert!")
 
 def display_navigation():
+    show_pending_toasts()
     st.markdown("<style>.st-emotion-cache-16txtl3 { padding: 2rem 2rem; }</style>", unsafe_allow_html=True)
     with st.sidebar:
         st.image("static/ufr.png", use_container_width=True)
@@ -133,7 +145,7 @@ def find_dependent_items(collection, id):
 
 def delete_item_update_dependent_items(collection, id, switch = False):
     if collection in st.session_state.leer.keys() and id == st.session_state.leer[collection]:
-            st.toast("Fehler! Dieses Item kann nicht gelöscht werden!")
+            flash("Fehler! Dieses Item kann nicht gelöscht werden!")
             reset_vars("")
     else:
         for x in st.session_state.abhaengigkeit[collection]:
@@ -149,14 +161,20 @@ def delete_item_update_dependent_items(collection, id, switch = False):
         util.logger.info(f"User {st.session_state.user} hat in {st.session_state.collection_name[collection]} item {repr(collection, id)} gelöscht, und abhängige Felder geändert.")
         collection.delete_one({"_id": id})
         reset_vars("")
-        st.success(f"🎉 Erfolgreich gelöscht!  {s}")
-        time.sleep(1)
+        flash(f"🎉 Erfolgreich gelöscht!  {s}")
         if switch:
             switch_page(st.session_state.collection_name[collection].lower())
 
+# Kurzlebiger Cache für Einzeldokument-Lookups, vor allem für repr() und format_func-Lambdas.
+# TTL klein halten, damit Edits zeitnah sichtbar werden.
+# hash_funcs nötig, weil Streamlits Hasher bson.ObjectId nicht von Haus aus kennt.
+@st.cache_data(ttl=5, show_spinner=False, hash_funcs={ObjectId: str})
+def _doc(coll_name, doc_id):
+    return util.get_mongo_client()["faq"][coll_name].find_one({"_id": doc_id})
+
 # short Version ohne abhängige Variablen
 def repr(collection, id, show_collection = False, short = False):
-    x = collection.find_one({"_id": id})
+    x = _doc(collection.name, id)
     if collection == util.knoten:
         if short:
             res = x["kurzname"]
@@ -180,9 +198,9 @@ def repr(collection, id, show_collection = False, short = False):
             res = f"{repr(util.semester, x["parent"], False, True)}: {x['name']}"
     elif collection == util.aufgabe:
         if short:
-            a = st.session_state.kalender.find_one({"_id" : x["ankerdatum"]})
-            x["endedatum"] = a["datum"] + relativedelta(days = x["ende"])
-            res = f"{x["name"]} ({x["endedatum"].strftime("%-d.%-m.%Y")})"
+            a = _doc("kalender", x["ankerdatum"])
+            endedatum = a["datum"] + relativedelta(days = x["ende"])
+            res = f"{x["name"]} ({endedatum.strftime("%-d.%-m.%Y")})"
         else:
             res = f"{repr(st.session_state.prozess, x["parent"], False, False)}: {repr(st.session_state.aufgabe, x["_id"], False, True)}"
     if show_collection:
@@ -341,11 +359,19 @@ def semester_anlegen(prozesse_ids = []):
     sem_neu = util.semester.insert_one(sem)
     for pro_id in prozesse_ids:
         pro_neu = kopiere_prozess(pro_id, sem_neu.inserted_id)
+    list_semesters.clear()
     return sem_neu.inserted_id
 
 def get_users(list_of_add_users):
-    users = st.session_state.faq_users
+    # Kopie statt Referenz: ohne list(...) würde st.session_state.faq_users bei jedem Render
+    # mit denselben Add-Usern weiter wachsen.
+    users = list(st.session_state.faq_users)
     for u in list_of_add_users:
         if u not in [u["rz"] for u in users]:
             users.append({"rz" : u, "vorname" : "", "name": u})
     return users
+
+# Sortierte Semester-Liste — wird auf der Planer-Seite mehrfach pro Rerun abgefragt.
+@st.cache_data(ttl=10, show_spinner=False)
+def list_semesters():
+    return list(util.semester.find(sort=[("kurzname", pymongo.DESCENDING)]))

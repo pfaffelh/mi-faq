@@ -1,7 +1,7 @@
 import streamlit as st
 from datetime import datetime, time
 from dateutil.relativedelta import relativedelta
-import time as t
+from collections import Counter
 import pymongo
 
 # Seiten-Layout
@@ -115,24 +115,35 @@ def switch_edit():
 # Ab hier wird die Webseite erzeugt
 if st.session_state.logged_in:
     st.header("Planer")
-    semesters = list(util.semester.find(sort=[("kurzname", pymongo.DESCENDING)]))
-    
+    # Sortierte Semester einmal pro Rerun (gecached über tools.list_semesters); vorher
+    # liefen identische Queries bei der Selectbox doppelt.
+    semesters = tools.list_semesters()
+    sem_ids = [x["_id"] for x in semesters]
+    sem_names = {x["_id"]: x["name"] for x in semesters}
+
     col = st.columns([1,10,10,5])
     back = col[0].button("🔄")
     if st.session_state.level_planer[0] != []:
         st.session_state.semester_id = st.session_state.level_planer[0][0]
-    
-    sem = col[1].selectbox(label="Semester", options = [x["_id"] for x in list(st.session_state.semester.find(sort=[("kurzname", pymongo.DESCENDING)]))], index = 0 if st.session_state.semester_id not in [x["_id"] for x in semesters] else [x["_id"] for x in semesters].index(st.session_state.semester_id), format_func = (lambda a: f"{st.session_state.semester.find_one({'_id': a})['name']}"), label_visibility = "collapsed", key = "master_semester_choice")
-    if st.session_state.semester_id not in [x["_id"] for x in semesters]:
+
+    sem = col[1].selectbox(
+        label="Semester",
+        options=sem_ids,
+        index=sem_ids.index(st.session_state.semester_id) if st.session_state.semester_id in sem_ids else 0,
+        format_func=lambda a: sem_names[a],
+        label_visibility="collapsed",
+        key="master_semester_choice",
+    )
+    if st.session_state.semester_id not in sem_ids:
         st.session_state.semester_id = semesters[0]["_id"]
         st.session_state.level_planer = level(st.session_state.semester_id)
-        
-    # st.session_state.semester_id = st.pills(label="Semester", options = [x["_id"] for x in semesters], selection_mode = "single", default = st.session_state.semester_id, format_func = (lambda a: f"{util.semester.find_one({'_id': a})['kurzname']}"), label_visibility = "collapsed", on_change = switch_edit, key = "master_semester_choice")
+
     if back or [sem] != st.session_state.level_planer[0]:
         st.session_state.edit_planer = sem
     st.session_state.level_planer = level(st.session_state.edit_planer)
     with col[2].expander("Neues Semester anlegen"):
-        sem_alt = util.semester.find_one({}, sort = [("kurzname",pymongo.DESCENDING)])
+        # semesters ist DESCENDING sortiert; [0] ist das jüngste.
+        sem_alt = semesters[0]
         st.write(f"{tools.semester_name(tools.next_semester_kurzname(sem_alt['kurzname']))} wirklich anlegen?")
         alle_prozesse_ids = [p["_id"] for p in list(st.session_state.prozess.find({"parent" : sem_alt["_id"]}))]
         prozesse_ids = st.multiselect("Welche Prozesse sollen kopiert werden?", alle_prozesse_ids, default = alle_prozesse_ids, format_func=lambda a: tools.repr(st.session_state.prozess, a, False, True))
@@ -152,11 +163,11 @@ if st.session_state.logged_in:
                 st.session_state.prozess.delete_one({"_id" : p["_id"]})
             st.session_state.kalender.delete_many({"_id" : {"$in" : st.session_state.semester.find_one({"_id" : st.session_state.semester_id})["kalender"]}})
             st.session_state.semester.delete_one({"_id" : st.session_state.semester_id})
-            semesters = list(st.session_state.semester.find(sort=[("kurzname", pymongo.DESCENDING)]))
+            tools.list_semesters.clear()
+            semesters = tools.list_semesters()
             st.session_state.edit_planer = semesters[0]["_id"]
             st.session_state.semester_id = semesters[0]["_id"]
-            st.success("Gelöscht!")
-            t.sleep(1)
+            tools.flash("Gelöscht!")
             st.rerun()
             
     if st.session_state.level_planer[1] != []:
@@ -197,7 +208,7 @@ if st.session_state.logged_in:
                     if st.session_state.edit_planer == z["_id"]:
                         with co[1].popover('Kopieren', use_container_width=True):
                             if n == 1:
-                                sem = list(st.session_state.semester.find({}))
+                                sem = tools.list_semesters()
                                 sem_dict = { s["_id"] : tools.repr(st.session_state.semester, s["_id"], False, False) for s in sem }
                                 sortiert = sorted(sem_dict.items(), key=lambda item: item[1])
                                 sem_dict = dict(sortiert)
@@ -277,29 +288,37 @@ if st.session_state.logged_in:
             with st.expander(f"Termine für {tools.repr(st.session_state.semester, z["_id"], False, False)}", expanded = True):
                 st.write("Hier werden grundlegende Daten für das Semester bereitgestellt. Falls ein Datum relativ zu einem anderen festgelegt wird, wird es bei Änderung des Ankerdatums ebenfalls geändert.")
                 st.write("😎: Im Kalender sichtbar.")
+
+                # Alle Kalendereinträge des Semesters einmalig laden, dann nur noch dict-Lookups im Loop.
+                kal_docs = list(kalender.find({"_id": {"$in": z["kalender"]}}))
+                kal_by_id = {ka["_id"]: ka for ka in kal_docs}
+                name_counts = Counter(ka["name"] for ka in kal_docs)
+                leer_kalender = st.session_state.leer[kalender]
+                ankerdaten_ids = [ka["_id"] for ka in kal_docs if ka["ankerdatum"] == leer_kalender]
+
                 kal = []
                 for i, k in enumerate(z["kalender"]):
-                    ka = kalender.find_one({"_id" : k})
+                    ka = kal_by_id[k]
                     cols = st.columns([.4,1,1,1,2,1,2,1])
                     sichtbar = cols[0].toggle("😎", ka["sichtbar"], key = f"sichtbar_{i}")
                     datum = cols[1].date_input("Datum", value = ka["datum"], format = "DD.MM.YYYY", key = f"date_{i}")
-                    zeit = cols[2].time_input("Uhrzeit", value =ka["datum"].time(), key = f"time_{i}") 
+                    zeit = cols[2].time_input("Uhrzeit", value =ka["datum"].time(), key = f"time_{i}")
                     if zeit != time(0,0):
-                        dauer = cols[3].number_input("Dauer (Min)", value =ka["dauer"], key = f"dauer_{i}") 
+                        dauer = cols[3].number_input("Dauer (Min)", value =ka["dauer"], key = f"dauer_{i}")
                     else:
                         cols[3].write("Uhrzeit 00:00 erzeugt einen ganztägigen Termin.")
                         dauer = 0
                     name = cols[4].text_input("Name des Datums", ka["name"], key = f"name_{i}", disabled = False)
-                    if len(list(kalender.find({"_id" : { "$in" : z["kalender"]}, "name" : ka["name"]}))) > 1:
+                    if name_counts[ka["name"]] > 1:
                         st.warning("Name des Datums sollte eindeutig sein. Andernfalls kann es zu Problemen beim Kopieren von Aufgaben und Prozessen, und beim Neu-Anlegen von Semestern kommen.")
-                    
-                    ist_relativdatum = cols[5].toggle("Relativdatum", ka["ankerdatum"] != st.session_state.leer[kalender], key = f"ist_relativdatum_{i}")
+
+                    ist_relativdatum = cols[5].toggle("Relativdatum", ka["ankerdatum"] != leer_kalender, key = f"ist_relativdatum_{i}")
                     if ist_relativdatum:
-                        se = [a for a in tools.find_ankerdaten(z["kalender"]) if a != k]
+                        se = [a for a in ankerdaten_ids if a != k]
                         ind = se.index(ka["ankerdatum"]) if ka["ankerdatum"] in se else 0
                         ankerdatum = cols[6].selectbox("...zu", se, index = ind, format_func = lambda a: tools.repr(kalender, a), key = f"ankerdatum_{i}")
                     else:
-                        ankerdatum = st.session_state.leer[kalender]
+                        ankerdatum = leer_kalender
 
                     cols[5].write("")
                     with cols[7].popover("Löschen", use_container_width=True):
@@ -330,9 +349,8 @@ if st.session_state.logged_in:
                 if neues_datum: 
                     k = kalender.insert_one({"datum": datetime.now().replace(hour=0, minute=0, second=0, microsecond=0), "name": "", "dauer" : 0, "sichtbar" : False, "ankerdatum": st.session_state.leer[kalender]})
                     semester.update_one({"_id" : z["_id"]}, {"$push" : {"kalender" : k.inserted_id}})
-                    st.toast("Erfolgreich gespeichert!")
-                    t.sleep(0.5)
-                    st.rerun()  
+                    tools.flash("Erfolgreich gespeichert!")
+                    st.rerun()
 
                 semester_save2 = st.button("Speichern", key=f"semester_save2-{z['_id']}", type='primary')
                 if semester_save2:
@@ -352,8 +370,7 @@ if st.session_state.logged_in:
                             kalender.update_one({"_id": k["_id"]}, { "$set": {"datum" : k["datum"], "name" : k["name"], "dauer" : k["dauer"], "sichtbar": k["sichtbar"], "ankerdatum" : k["ankerdatum"]}})
                         semester.update_one({"_id" : z["_id"]}, {"$set" : {"kalender" : tools.sort_kalender(z["kalender"])}})
 
-                        st.toast("Erfolgreich gespeichert!")
-                        t.sleep(.5)
+                        tools.flash("Erfolgreich gespeichert!")
                         st.rerun()
                     else:
                         st.toast("Speichern nicht möglich. Ankerdaten dürfen keine Relativdaten sein!")
@@ -438,9 +455,8 @@ if st.session_state.logged_in:
             if prozess_save1 or prozess_save2: 
                 util.prozess.update_one({"_id" : z["_id"]}, {"$set" : { "kurzname" : kurzname, "name" : name, "sichtbar" : sichtbar, "color" : color, "kommentar" : kommentar, "bearbeitet" : bearbeitet, "verantwortlicher" : verantwortlicher, "beteiligte" : beteiligte}})
                 util.prozess.update_one({"_id" : z["_id"]}, {"$set" : { "text" : text, "quicklinks" : quicklinks, "bearbeitet" : bearbeitet}})
-                st.toast("Erfolgreich gespeichert!")
-                t.sleep(0.5)
-                st.rerun()  
+                tools.flash("Erfolgreich gespeichert!")
+                st.rerun()
 
         elif aufgabe.find_one({"_id" : st.session_state.edit_planer}):
             # Daten für Aufgabe
@@ -519,9 +535,8 @@ if st.session_state.logged_in:
             if aufgabe_save1 or aufgabe_save2: 
                 util.aufgabe.update_one({"_id" : z["_id"]}, {"$set" : { "name" : name, "kommentar" : kommentar, "nurtermin": nurtermin, "bestätigt": bestätigt, "angefangen" : angefangen, "erledigt" : erledigt, "bearbeitet" : bearbeitet, "start" : start, "ende" : ende, "verantwortlicher" : verantwortlicher, "beteiligte" : beteiligte}})
                 util.aufgabe.update_one({"_id" : z["_id"]}, {"$set" : { "text" : text, "vorlagen" : vorlagen, "bearbeitet" : bearbeitet}})
-                st.toast("Erfolgreich gespeichert!")
-                t.sleep(0.5)
-                st.rerun()  
+                tools.flash("Erfolgreich gespeichert!")
+                st.rerun()
             
 
 

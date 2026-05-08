@@ -2,6 +2,7 @@ import streamlit as st
 import time
 import pymongo
 from datetime import datetime
+from collections import Counter
 import json
 from bson import json_util
 import io
@@ -23,33 +24,36 @@ tools.display_navigation()
 # Es geht hier vor allem um diese Collection:
 collection = st.session_state.knoten
 
-def kurznameuinque(kurzname, warn = "Warnung: Kurzname ist nicht eindeutig!"):
-    l = list(collection.find({"kurzname" : kurzname}))
-    if len(l) > 1:
-        st.warning(warn)
-
 # Ab hier wird die Webseite erzeugt
 if st.session_state.logged_in:
     st.header("Übersicht aller Accordion-Seiten")
-    z = collection.find_one({"kurzname" : "wurzel"})
 
-    firstlevel = list(collection.find({"_id" : { "$in" : z["kinder"]}}))
+    # Alle Knoten einmalig laden und in einen Lookup-Dict packen — spart die per-Knoten find_one-Aufrufe.
+    by_id = {x["_id"]: x for x in collection.find()}
+    kurzname_counts = Counter(x["kurzname"] for x in by_id.values())
 
-    for k in firstlevel:
+    def warn_kurzname(kurzname, warn="Kurzname nicht eindeutig, der Link ist vermutlich falsch!"):
+        if kurzname_counts[kurzname] > 1:
+            st.warning(warn)
+
+    z = next((x for x in by_id.values() if x["kurzname"] == "wurzel"), None)
+
+    for k_id in z["kinder"]:
+        k = by_id[k_id]
         st.write(f"### {k['titel_de']} ({k['kurzname']})")
-        kurznameuinque(k["kurzname"], "Kurzname nicht eindeutig, der Link ist vermutlich falsch!")
+        warn_kurzname(k["kurzname"])
         url = f"https://www.math.uni-freiburg.de/nlehre/de/page/{k['kurzname']}/"
         st.write(f"`{url}` [Link]({url})")
-        secondlevel = list(collection.find({"_id" : { "$in" : k["kinder"]}}))
-        for l in secondlevel:
-            st.write(f"#### {l["titel_de"]} ({l['kurzname']})")
-            kurznameuinque(l["kurzname"], "Kurzname nicht eindeutig, der Link ist vermutlich falsch!")
+        for l_id in k["kinder"]:
+            l = by_id[l_id]
+            st.write(f"#### {l['titel_de']} ({l['kurzname']})")
+            warn_kurzname(l["kurzname"])
             url = f"https://www.math.uni-freiburg.de/nlehre/de/page/{k['kurzname']}/{l['kurzname']}"
             st.write(f"`{url}` [Link]({url})")
-            thirdlevel = list(collection.find({"_id" : { "$in" : l["kinder"]}}))
-            for m in thirdlevel:
-                st.write(f"{m["titel_de"]} ({m['kurzname']})")
-                kurznameuinque(m["kurzname"], "Kurzname nicht eindeutig, der Link ist vermutlich falsch!")
+            for m_id in l["kinder"]:
+                m = by_id[m_id]
+                st.write(f"{m['titel_de']} ({m['kurzname']})")
+                warn_kurzname(m["kurzname"])
                 url = f"https://www.math.uni-freiburg.de/nlehre/de/page/{k['kurzname']}/{m['kurzname']}"
                 st.write(f"`{url}` [Link]({url})")
 
