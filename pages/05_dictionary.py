@@ -1,5 +1,4 @@
 import streamlit as st
-import time
 import pymongo
 from pymongo.collation import Collation
 
@@ -25,7 +24,7 @@ collection = util.dictionary
 
 def saveneu(ini):
     collection.insert_one(ini)
-    st.toast("Erfolgreich gespeichert!")
+    tools.flash("Erfolgreich gespeichert!")
     st.session_state.de_new = ""
     st.session_state.en_new = ""
     st.session_state.kommentar_new = ""
@@ -64,8 +63,7 @@ if st.session_state.logged_in:
                 if save:
                     collection.update_one({"_id": st.session_state.edit}, { "$set" : { "de" : de, "en": en, "kommentar": kommentar}})
                     st.session_state.edit = ""
-                    st.toast("Erfolgreich gespeichert!")
-                    time.sleep(0.5)
+                    tools.flash("Erfolgreich gespeichert!")
                     st.rerun()
         else:
             with col[0]:

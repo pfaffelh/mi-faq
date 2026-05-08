@@ -1,5 +1,4 @@
 import streamlit as st
-import time
 import pymongo
 from datetime import datetime
 import json
@@ -252,9 +251,8 @@ if st.session_state.logged_in:
 
             if save1 or save2 or save3:
                 collection.update_one({"_id": x["_id"]}, { "$set": {"kurzname" : kurzname, "sichtbar" : sichtbar, "titel_de": titel_de, "titel_en": titel_en, "titel_html" : titel_html,  "prefix_de": prefix_de, "prefix_en": prefix_en, "prefix_html" : prefix_html, "quicklinks" : quicklinks, "suffix_de": suffix_de, "suffix_en": suffix_en, "suffix_html" : suffix_html, "bearbeitet_de": bearbeitet_de, "bearbeitet_en" : bearbeitet_en, "kommentar": kommentar}})
-                st.toast("Erfolgreich gespeichert!")
-                time.sleep(0.5)
-                st.rerun()  
+                tools.flash("Erfolgreich gespeichert!")
+                st.rerun()
 
 else: 
   st.switch_page("FAQ.py")

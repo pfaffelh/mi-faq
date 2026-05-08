@@ -1,6 +1,5 @@
 import streamlit as st
 from datetime import datetime
-import time
 import pymongo
 
 # Seiten-Layout
@@ -78,8 +77,7 @@ if st.session_state.logged_in:
                 save = st.button("Speichern", key=f"save-{x['_id']}")
                 if save:
                     collection.update_one({"_id": x["_id"]}, { "$set": {"showstudiendekanat" : showstudiendekanat, "showstudienberatung": showstudienberatung, "showpruefungsamt": showpruefungsamt, "name_de": name_de, "name_en": name_en, "link": link, "rolle_de": rolle_de, "rolle_en": rolle_en, "raum_de": raum_de, "raum_en":raum_en, "tel_de": tel_de, "tel_en": tel_en, "mail": mail, "sprechstunde_de": sprechstunde_de, "sprechstunde_en": sprechstunde_en, "prefix_de": prefix_de, "prefix_en": prefix_en, "text_de": text_de, "text_en": text_en, "news_ende": news_ende, "news_de": news_de, "news_en": news_en}})
-                    st.toast("Erfolgreich gespeichert!")
-                    time.sleep(0.5)
+                    tools.flash("Erfolgreich gespeichert!")
                     st.rerun()
 
         with co4:

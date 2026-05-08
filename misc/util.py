@@ -21,6 +21,10 @@ def configure_logging(file_path, level=logging.INFO):
 
 logger = configure_logging(log_file)
 
+@st.cache_resource
+def get_mongo_client():
+    return pymongo.MongoClient(mongo_location)
+
 def login():
     st.session_state.logged_in = True
     st.success("Login erfolgreich.")
@@ -55,7 +59,7 @@ def setup_session_state():
     # knoten enthält alle Daten für die Akkordion-Seiten
     # user ist aus dem Cluster users und wird nur bei der Authentifizierung benötigt
     try:
-        cluster = pymongo.MongoClient(mongo_location)
+        cluster = get_mongo_client()
         mongo_db = cluster["faq"]
         mongo_db_users = cluster["user"]
         st.session_state.knoten = mongo_db["knoten"]
@@ -269,12 +273,11 @@ def can_edit(username):
     faq_id = st.session_state.group.find_one({"name": "faq"})["_id"]
     return (True if faq_id in u["groups"] else False)
 
-setup_session_state()
-
-knoten = st.session_state.knoten
-studiendekanat = st.session_state.studiendekanat
-dictionary = st.session_state.dictionary
-kalender = st.session_state.kalender
-semester = st.session_state.semester
-prozess = st.session_state.prozess
-aufgabe = st.session_state.aufgabe
+_faq_db = get_mongo_client()["faq"]
+knoten = _faq_db["knoten"]
+studiendekanat = _faq_db["studiendekanat"]
+dictionary = _faq_db["dictionary"]
+kalender = _faq_db["kalender"]
+semester = _faq_db["semester"]
+prozess = _faq_db["prozess"]
+aufgabe = _faq_db["aufgabe"]

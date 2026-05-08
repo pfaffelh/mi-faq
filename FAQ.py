@@ -1,5 +1,4 @@
 import streamlit as st
-import time
 
 # Seiten-Layout
 st.set_page_config(page_title="FAQ-App", page_icon=None, initial_sidebar_state="auto", menu_items=None)
@@ -7,7 +6,6 @@ st.set_page_config(page_title="FAQ-App", page_icon=None, initial_sidebar_state="
 from misc.config import *
 import misc.util as util
 import misc.tools as tools
-import time
 # make all neccesary variables available to session_state
 util.setup_session_state()
 
@@ -42,11 +40,8 @@ if submit:
         else:
             st.error("Nicht genügend Rechte, um FAQ zu editieren.")
             util.logger.info(f"User {kennung} hatte nicht gebügend Rechte, um sich einzuloggen.")
-            time.sleep(2)
-            st.rerun()
-    else: 
+    else:
         st.error("Login nicht korrekt, oder RZ-Authentifizierung nicht möglich. (Z.B., falls nicht mit VPN verbunden.)")
         util.logger.info(f"Ein falscher Anmeldeversuch.")
-        time.sleep(2)
 
 
