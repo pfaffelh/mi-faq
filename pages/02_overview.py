@@ -30,7 +30,11 @@ if st.session_state.logged_in:
 
     # Alle Knoten einmalig laden und in einen Lookup-Dict packen — spart die per-Knoten find_one-Aufrufe.
     by_id = {x["_id"]: x for x in collection.find()}
-    kurzname_counts = Counter(x["kurzname"] for x in by_id.values())
+    # Eindeutigkeit nur unter sichtbaren Knoten pruefen — genau die Menge, die
+    # der oeffentliche Resolver (mi-hp) via find_one({kurzname, sichtbar:True})
+    # durchsucht. Waisen/_copy-Artefakte und versteckte Knoten wuerden sonst
+    # Fehlalarme ausloesen.
+    kurzname_counts = Counter(x["kurzname"] for x in by_id.values() if x.get("sichtbar"))
 
     def warn_kurzname(kurzname, warn="Kurzname nicht eindeutig, der Link ist vermutlich falsch!"):
         if kurzname_counts[kurzname] > 1:
