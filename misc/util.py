@@ -146,7 +146,8 @@ def setup_session_state():
 
     st.session_state.abhaengigkeit = {
         st.session_state.knoten : [{"collection": st.session_state.knoten, "field": "kinder", "list": True}],
-        st.session_state.studiendekanat : [],
+        # Wird eine Person gelöscht, muss sie aus knoten.verantwortliche verschwinden.
+        st.session_state.studiendekanat : [{"collection": st.session_state.knoten, "field": "verantwortliche", "list": True}],
         st.session_state.dictionary : [],
         st.session_state.kalender : [{"collection": st.session_state.aufgabe, "field": "relativdatum", "list": False}, {"collection": st.session_state.semester, "field": "kalender", "list": True}, {"collection": st.session_state.kalender, "field": "ankerdatum", "list": False}],
         st.session_state.semester : [{"collection": st.session_state.prozess, "field": "parent", "list": False}],
@@ -170,7 +171,9 @@ def setup_session_state():
             "titel_html" : False,
             "prefix_html" : False,
             "suffix_html" : False,
-            "kinder" : [], 
+            # ObjectIds aus studiendekanat; werden auf der öffentlichen Seite unten angezeigt
+            "verantwortliche" : [],
+            "kinder" : [],
             "bearbeitet_de": f"Angelegt von {st.session_state.username} am {datetime.now().strftime('%d.%m.%Y um %H:%M:%S.')}",
             "bearbeitet_en": f"Initialized by {st.session_state.username} on {datetime.now().strftime('%d/%m/%Y at %H:%M:%S.')}",
             "kommentar": ""},

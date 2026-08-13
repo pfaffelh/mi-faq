@@ -39,6 +39,16 @@ Die App wirkt träge. Streamlit selbst (jeder Tastenanschlag = ganzes Skript lä
 
 **[pages/06_Planer.py](pages/06_Planer.py):** Kalender-Loop bei `z["kalender"]` → `find` einmalig vor dem Loop, dann `kal_by_id`-dict, `name_counts` (Counter) für Eindeutigkeit, `ankerdaten_ids` einmalig statt pro Iteration via `find_ankerdaten`.
 
+**[pages/01_knoten.py](pages/01_knoten.py):** War der schlimmste Fall. `level()` rekursiv mit 2 `find_one` pro Ebene, `knoten_dict()` mit **3 `find_one` pro Eintrag** über alle 207 Knoten der Ebenen 0/1 — und das im Popover „Verschieben", dessen Inhalt Streamlit auch geschlossen rendert. Gemessen: **591 Queries / 114 ms pro Rerun**, also pro Tastenanschlag.
+
+**Fix:** `knoten_index()` mit `@st.cache_data(ttl=5)` liest den kompletten Baum in *einer* Query mit Projektion auf `kurzname`/`titel_de`/`kinder` (70 KB statt 1.6 MB für die vollen Dokumente) und baut daraus `DOCS` (id→doc), `PARENT` (kind→elter) und einen `Counter` der Kurznamen. `level()` ist jetzt ein Aufwärts-Walk über `PARENT`, `knoten_ebene0/1`, `knoten_dict` und der Kurzname-Eindeutigkeitscheck sind reine dict-Zugriffe. Der Download-Button holt den Teilbaum mit einer `$in`-Query statt einem `find_one` pro Kind/Enkel. Ergebnis: **2 Queries / 1.9 ms** — und durch die TTL bei den meisten Reruns 0.
+
+Verifiziert: `level()` und `knoten_dict()` liefern für alle 512 Knoten der Live-DB bit-identische Ergebnisse zur alten Implementierung.
+
+*Cache-Invalidierung:* Helper `invalidate()` (leert `knoten_index` **und** `tools._doc`) an allen Schreibstellen — Save, Löschen, Verschieben, `savenew`, sowie in lokalen Wrappern um `tools.move_up_list`/`move_down_list` (die laufen als `on_click`-Callback, danach reruned Streamlit automatisch mit sonst noch altem Cache).
+
+*Nebenbei:* drei `st.success(...) + st.rerun()` auf `tools.flash` umgestellt (Punkt 4 war auf dieser Seite noch nicht durchgezogen).
+
 **Resterisiko:** `tools.find_dependent_items(kalender, k)` läuft im Popover pro Iteration weiter (Popover-Inhalt wird in Streamlit immer gerendert, nicht erst beim Öffnen). Wenn die Page weiter träge ist, hier batchen. Auch [misc/tools.py:255–260](misc/tools.py#L255) (Copy-Logik) wurde nicht angefasst, läuft aber nur bei Kopieraktionen.
 
 ### 4. Künstliche `time.sleep(...)` raus + Toast-Persistenz ✅
@@ -73,6 +83,18 @@ Die App wirkt träge. Streamlit selbst (jeder Tastenanschlag = ganzes Skript lä
 
 **Daumenregel für Schwester-Apps:** Pro Page nach allen `find(...)`-Aufrufen ohne `"_id"`-Filter suchen. Wenn dieselbe Query mehrfach pro Rerun läuft oder die Daten selten ändern: in einen `@st.cache_data`-Helper auslagern, mit `helper.clear()` an den Stellen, an denen die zugrundeliegende Collection geschrieben wird.
 
+## Verantwortliche Personen pro Knoten
+
+Ein Knoten hat das Feld `verantwortliche`: eine Liste von ObjectIds aus `studiendekanat`. Gepflegt wird sie als `st.multiselect` im „Daten"-Expander von [pages/01_knoten.py](pages/01_knoten.py), angezeigt wird sie in mi-hp direkt **vor** dem Suffix (`get_verantwortliche()` in `utils/util_faq.py`, Jinja-Makro `verantwortliche()` in `templates/accordion_nlehre.html`). Gilt für alle drei Ebenen.
+
+Die Feldreihenfolge im Editor spiegelt die Anzeige auf der Homepage: Titel → Prefix → Quicklinks → *(Akkordion mit den Kinder-Knoten)* → Verantwortliche → Suffix. Für das Akkordion, das ja nicht in diesem Formular bearbeitet wird, steht an der passenden Stelle ein `st.divider()` mit Hinweistext, damit die Reihenfolge nachvollziehbar bleibt.
+
+- **Migration:** [mongo/schema20260814.py](mongo/schema20260814.py) (Kopie von `schema20250715.py`, `verantwortliche` in `required` und `properties` des `knoten_validator`) und [mongo/change20260814.py](mongo/change20260814.py) nach dem Muster von `change20241216.py`, mit dem damals `quicklinks` kam: Backfill, dann `collMod` mit `validationLevel='moderate'`. Der Backfill setzt bewusst nur `{"verantwortliche": {"$exists": False}}` — ein `update_many({})` wie in `change20241216.py` würde bereits gepflegte Einträge wieder leeren. Muss auf **jeder** Datenbank laufen, lokal wie produktiv.
+- Lesestellen benutzen trotzdem `x.get("verantwortliche", [])`, damit mi-hp auch gegen eine noch nicht migrierte DB nicht umfällt.
+- `st.session_state.abhaengigkeit[studiendekanat]` enthält jetzt `{"collection": knoten, "field": "verantwortliche", "list": True}` — beim Löschen einer Person zieht `delete_item_update_dependent_items` sie per `$pull` aus allen Knoten.
+- Zusätzlich filtert das Multiselect verwaiste IDs aus der Vorauswahl (`st.multiselect` wirft sonst, wenn ein default nicht in den options steht), und speichert in `rang`-Reihenfolge statt in Klickreihenfolge.
+- **Nicht** in `templates/accordion_wochenprogramm.html` eingebaut, obwohl die Seite dieselbe `get_accordion_data()` benutzt. Wenn dort ein Knoten Verantwortliche bekommt, werden sie stillschweigend nicht angezeigt.
+
 ## Verwandte Apps
 
 Drei weitere Streamlit-CRUD-Apps mit demselben MongoDB-Backend warten auf dieselbe Behandlung. Die fünf Punkte oben sind generisch genug, um sie als Rezept zu übernehmen — jeweils einen Branch `performance`, der Reihe nach durchgehen.
@@ -80,7 +102,7 @@ Drei weitere Streamlit-CRUD-Apps mit demselben MongoDB-Backend warten auf diesel
 ## Bekannte Altlasten (nicht jetzt)
 
 - ~100 binäre `faq_backup_*`-Files unter [mongo/](mongo/) im Git-Repo (~30 MB). Sollte in `.gitignore` und langfristig aus der History.
-- Schema-Validatoren in [misc/schema.py](misc/schema.py) passen nicht zu den Live-Collections und werden nirgends registriert.
+- Schema-Validatoren in [misc/schema.py](misc/schema.py) passen nicht zu den Live-Collections und werden nirgends registriert. **Nicht zu verwechseln** mit den Dateien unter [mongo/](mongo/): `mongo/schemaJJJJMMTT.py` + `mongo/changeJJJJMMTT.py` sind der echte, benutzte Migrationsweg, und der zugehörige Validator ist live registriert (`validationLevel: moderate`, `validationAction: error`). Ein Schema-Wechsel heißt: neue datierte Schema-Datei als Kopie der letzten, neue Change-Datei, aus `mongo/` heraus ausführen (die Skripte importieren `schemaJJJJMMTT` ohne Paketpfad).
 - README beschreibt nicht mehr die aktuelle Page-Struktur.
 - LDAP-TLS-Verifikation ist deaktiviert (`OPT_X_TLS_REQUIRE_CERT = NEVER`) in util.py *und* tools.py.
 - `authenticate()` / `can_edit()` / `next_semester_kurzname()` etc. existieren doppelt in util.py und tools.py.
