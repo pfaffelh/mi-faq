@@ -16,7 +16,6 @@ Man kann dann Kategorien im FAQ definieren, und Frage-Antwort-Paare (QA-Paare) i
 
 Files in `misc`: 
 * `config.py`: Hier werden Basisdaten (hier: alle Studiengänge) bereitsgestellt.
-* `schema.py`: Das Datenbank-Schema
 * `util.py`, `ufr.png`: Hier wird das Uni-Logo bereitgestellt.
 * `import.py`: siehe oben
 

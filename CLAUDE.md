@@ -102,7 +102,7 @@ Drei weitere Streamlit-CRUD-Apps mit demselben MongoDB-Backend warten auf diesel
 ## Bekannte Altlasten (nicht jetzt)
 
 - ~100 binäre `faq_backup_*`-Files unter [mongo/](mongo/) im Git-Repo (~30 MB). Sollte in `.gitignore` und langfristig aus der History.
-- Schema-Validatoren in [misc/schema.py](misc/schema.py) passen nicht zu den Live-Collections und werden nirgends registriert. **Nicht zu verwechseln** mit den Dateien unter [mongo/](mongo/): `mongo/schemaJJJJMMTT.py` + `mongo/changeJJJJMMTT.py` sind der echte, benutzte Migrationsweg, und der zugehörige Validator ist live registriert (`validationLevel: moderate`, `validationAction: error`). Ein Schema-Wechsel heißt: neue datierte Schema-Datei als Kopie der letzten, neue Change-Datei, aus `mongo/` heraus ausführen (die Skripte importieren `schemaJJJJMMTT` ohne Paketpfad).
+- ~~`misc/schema.py`~~ ist raus (beschrieb `category`/`qa_pair` aus dem Datenmodell vor `change20241029.py`, wurde nirgends importiert). Das Schema liegt ausschließlich unter [mongo/](mongo/): `mongo/schemaJJJJMMTT.py` + `mongo/changeJJJJMMTT.py` sind der echte Migrationsweg, der zugehörige Validator ist live registriert (`validationLevel: moderate`, `validationAction: error`). Ein Schema-Wechsel heißt: neue datierte Schema-Datei als Kopie der letzten, neue Change-Datei, aus `mongo/` heraus ausführen (die Skripte importieren `schemaJJJJMMTT` ohne Paketpfad).
 - README beschreibt nicht mehr die aktuelle Page-Struktur.
 - LDAP-TLS-Verifikation ist deaktiviert (`OPT_X_TLS_REQUIRE_CERT = NEVER`) in util.py *und* tools.py.
 - `authenticate()` / `can_edit()` / `next_semester_kurzname()` etc. existieren doppelt in util.py und tools.py.
