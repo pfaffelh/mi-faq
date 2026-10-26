@@ -55,7 +55,7 @@ if st.session_state.logged_in:
                 raum_en = st.text_input("Raum (en)", x["raum_en"], key = f"raum_en_{x['_id']}")
                 tel_de = st.text_input("Tel (de)", x["tel_de"], key = f"tel_de_{x['_id']}")
                 tel_en = st.text_input("Tel (en)", x["tel_en"], key = f"tel_en_{x['_id']}")
-                mail = st.text_input("Mail", x["mail"], key = f"mail_de_{x['_id']}")
+                mail = st.text_input("Mail", x["mail"], key = f"mail_de_{x['_id']}", help = "Mehrere Adressen durch Komma trennen, z.B. a@math.uni-freiburg.de, b@math.uni-freiburg.de")
                 sprechstunde_de = st.text_input("Sprechstunde (de)", x["sprechstunde_de"], key = f"sprechstunde_de_{x['_id']}")
                 sprechstunde_en = st.text_input("Sprechstunde (en)", x["sprechstunde_en"], key = f"sprechstunde_en_{x['_id']}")
                 prefix_de = st.text_input("Prefix (de)", x["prefix_de"], key = f"prefix_de_{x['_id']}")
